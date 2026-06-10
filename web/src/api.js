@@ -78,10 +78,12 @@ export const api = {
 
   // Nómina
   nomina:      (p=1)  => req('GET', `/nomina?pagina=${p}`),
+  empleado:    (id)   => req('GET', `/nomina/${id}`),
   nominaKpis:  ()     => req('GET', '/nomina/kpis'),
 
   // Compras
   compras:      (p=1) => req('GET', `/compras?pagina=${p}`),
+  compra:       (id)  => req('GET', `/compras/${id}`),
   comprasKpis:  ()    => req('GET', '/compras/kpis'),
 
   // Cotizaciones

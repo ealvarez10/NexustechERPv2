@@ -1604,3 +1604,248 @@ body {
 /* Form loading skeleton */
 .o-form-loading { padding: 40px; }
 
+
+/* ═══════════════════════════════════════════════════════════════
+   ODOO ENTERPRISE UI — Additional classes for 5 modules
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── CSS Variables (Odoo alias) ── */
+:root {
+  --o-primary:        var(--primary, #4F46E5);
+  --o-text-secondary: var(--text-400, #9CA3AF);
+}
+
+/* ── Control Panel (ensure o-cp itself) ── */
+.o-cp {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  position: sticky; top: var(--topbar-h, 60px); z-index: 30;
+}
+.o-cp-center { flex: 1; display: flex; align-items: center; }
+
+/* ── Search bar ── */
+.o-search-bar {
+  display: flex; align-items: center; gap: 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  padding: 4px 10px;
+  width: 100%; max-width: 700px;
+  transition: border-color 0.18s;
+}
+.o-search-bar:focus-within { border-color: var(--primary); }
+.o-search-icon { color: var(--text-400); flex-shrink: 0; }
+.o-search-input {
+  border: none; outline: none; background: transparent;
+  font-size: 13px; color: var(--text-900); flex: 1; min-width: 100px;
+}
+.o-search-filters { display: flex; gap: 4px; flex-wrap: wrap; }
+.o-filter-btn {
+  border: none; background: transparent;
+  font-size: 12px; font-weight: 600; color: var(--text-500);
+  padding: 2px 10px; border-radius: 20px; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.o-filter-btn:hover, .o-filter-btn[data-active] {
+  background: var(--primary-light, #EEF2FF); color: var(--primary);
+}
+
+/* ── View Switcher ── */
+.o-view-switcher { display: flex; gap: 2px; background: var(--bg-app); border-radius: 8px; padding: 2px; border: 1px solid var(--border); }
+.o-view-btn {
+  padding: 5px 8px; border: none; background: transparent;
+  color: var(--text-400); border-radius: 6px; cursor: pointer;
+  transition: background 0.15s, color 0.15s; display: flex; align-items: center;
+}
+.o-view-btn.o-active, .o-view-btn[data-active] { background: white; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.o-view-btn:hover:not(.o-active) { color: var(--text-700); }
+
+/* ── Buttons ── */
+.o-btn-primary {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary); color: #fff;
+  border: none; border-radius: 8px;
+  padding: 7px 16px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: opacity 0.15s, transform 0.15s;
+}
+.o-btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+.o-btn-secondary {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg-card); color: var(--text-700);
+  border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 6px 14px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: border-color 0.15s, color 0.15s;
+}
+.o-btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+.o-btn-sm { padding: 5px 12px; font-size: 12px; }
+
+/* ── View Content ── */
+.o-view-content { min-height: 200px; }
+
+/* ── List View ── */
+.o-list-table { width: 100%; border-collapse: collapse; }
+.o-list-table thead tr { background: var(--bg-table-head, #F9FAFB); border-bottom: 2px solid var(--border); }
+.o-list-table thead th {
+  padding: 9px 14px; text-align: left; font-size: 11px; font-weight: 700;
+  color: var(--text-400); text-transform: uppercase; letter-spacing: .05em;
+  cursor: pointer; user-select: none; white-space: nowrap;
+}
+.o-list-table thead th:hover { color: var(--primary); }
+.o-list-chk { width: 40px; text-align: center !important; cursor: default !important; }
+.o-list-num { width: 40px; text-align: right; color: var(--text-400) !important; font-size: 11px !important; }
+.o-list-row { border-bottom: 1px solid var(--border); transition: background .12s; cursor: pointer; }
+.o-list-row:hover { background: #EEF2FF; }
+.o-list-row:active { background: #E0E7FF; }
+.o-list-row td { padding: 9px 14px; font-size: 13px; color: var(--text-900); vertical-align: middle; }
+.o-list-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-top: 1px solid var(--border);
+  background: var(--bg-table-head, #F9FAFB);
+}
+.o-list-count { font-size: 12px; color: var(--text-400); font-weight: 600; }
+.o-col-right { text-align: right !important; }
+.o-col-sortable::after { content: ' ↕'; opacity: .35; font-size: 10px; }
+
+/* ── TD classes ── */
+.o-td-primary { font-weight: 700; color: var(--text-900); }
+.o-td-secondary { font-size: 11px; color: var(--text-400); margin-top: 2px; }
+.o-td-muted { color: var(--text-500); font-size: 12.5px; }
+.o-td-amount { text-align: right; font-variant-numeric: tabular-nums; }
+.o-td-mono { font-family: 'SF Mono','Consolas',monospace; font-size: 11.5px; }
+
+/* ── Badges ── */
+.o-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.o-badge-success { background: #D1FAE5; color: #065F46; }
+.o-badge-info    { background: #DBEAFE; color: #1E40AF; }
+.o-badge-warn    { background: #FEF3C7; color: #92400E; }
+.o-badge-danger  { background: #FEE2E2; color: #991B1B; }
+.o-badge-gray    { background: #F3F4F6; color: #6B7280; }
+
+/* ── Avatar ── */
+.o-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.o-avatar-lg { width: 56px; height: 56px; font-size: 20px; }
+.o-avatar-sm { width: 28px; height: 28px; font-size: 11px; }
+
+/* ── Partner cell with avatar ── */
+.o-partner-cell { display: flex; align-items: center; gap: 10px; }
+
+/* ── Product thumbnail ── */
+.o-prod-thumb {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,.8); font-size: 14px; font-weight: 800;
+}
+.o-prod-thumb-lg { width: 56px; height: 56px; border-radius: 12px; font-size: 22px; }
+
+/* ── Checkbox ── */
+.o-chk { width: 14px; height: 14px; cursor: pointer; accent-color: var(--primary); }
+
+/* ── Status Bar (Odoo lifecycle pipeline) ── */
+.o-status-bar {
+  display: flex; align-items: center;
+  padding: 10px 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  gap: 4px; flex-wrap: wrap;
+}
+.o-status-step {
+  padding: 6px 16px; border-radius: 20px;
+  font-size: 12px; font-weight: 700;
+  color: var(--text-400); background: transparent;
+  transition: all 0.15s;
+}
+.o-status-step.done { color: var(--primary); opacity: .6; }
+.o-status-step.active { background: var(--primary); color: white; }
+.o-status-arrow { color: var(--text-300, #D1D5DB); font-size: 18px; line-height: 1; }
+
+/* ── Kanban grid (Productos) ── */
+.o-kanban-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px; padding: 20px;
+}
+.o-kanban-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 14px); overflow: hidden;
+  cursor: pointer; transition: transform .18s, box-shadow .18s;
+}
+.o-kanban-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.o-kanban-img {
+  height: 120px; display: flex; align-items: center;
+  justify-content: center;
+}
+.o-kanban-body { padding: 12px 14px; }
+
+/* ── Kanban columns (Compras) ── */
+.o-kanban-columns {
+  display: flex; gap: 16px;
+  padding: 20px; overflow-x: auto;
+  min-height: calc(100vh - 260px);
+}
+.o-kanban-col-cards { flex: 1; overflow-y: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+.o-kanban-col-sum { font-size: 12px; font-weight: 700; color: var(--text-400); padding: 6px 16px; border-bottom: 1px solid var(--border); background: var(--bg-app); }
+.o-kanban-empty-col { text-align: center; padding: 24px; color: var(--text-300); font-size: 12px; }
+
+/* ── Chatter ── */
+.o-chatter {
+  background: var(--bg-card); border-radius: var(--radius-lg, 14px);
+  margin: 20px 24px 24px; border: 1px solid var(--border);
+  overflow: hidden;
+}
+.o-chatter-header {
+  padding: 12px 20px; font-size: 12px; font-weight: 700;
+  color: var(--text-600); border-bottom: 1px solid var(--border);
+  background: var(--bg-app); text-transform: uppercase; letter-spacing: .05em;
+}
+.o-chatter-composer {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  background: var(--bg-app);
+}
+.o-chatter-input {
+  flex: 1; border: 1.5px solid var(--border); border-radius: 20px;
+  padding: 7px 14px; font-size: 13px; outline: none;
+  background: var(--bg-card); color: var(--text-900);
+  transition: border-color .15s;
+}
+.o-chatter-input:focus { border-color: var(--primary); }
+.o-chatter-messages { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
+.o-msg { display: flex; gap: 10px; align-items: flex-start; }
+.o-msg-body { flex: 1; background: var(--bg-app); border-radius: 10px; padding: 10px 14px; }
+.o-msg-meta { display: flex; gap: 8px; align-items: baseline; margin-bottom: 4px; }
+.o-msg-meta strong { font-size: 13px; font-weight: 700; color: var(--text-900); }
+.o-msg-meta span { font-size: 11px; color: var(--text-400); }
+.o-msg-text { font-size: 13px; color: var(--text-600); line-height: 1.5; }
+
+/* ── Textarea ── */
+.o-textarea {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 8px 12px; font-size: 13px; color: var(--text-900);
+  outline: none; resize: vertical; background: var(--bg-card);
+  font-family: inherit; transition: border-color .15s;
+}
+.o-textarea:focus { border-color: var(--primary); }
+
+/* ── Form totals block ── */
+.o-form-totals {
+  border-top: 1px solid var(--border); padding: 14px 28px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+}
+.o-total-row { display: flex; gap: 32px; font-size: 13px; color: var(--text-600); }
+.o-total-final { font-size: 16px; font-weight: 800; color: var(--primary); margin-top: 4px; }
+.o-total-row span:last-child { min-width: 120px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ── Links ── */
+.o-link { color: var(--primary); text-decoration: none; }
+.o-link:hover { text-decoration: underline; }

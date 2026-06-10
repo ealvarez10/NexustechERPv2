@@ -1,440 +1,333 @@
 /**
- * Ventas — Lista / Kanban / Form — Odoo Enterprise Style
+ * ventas.js — Módulo Ventas — UI estilo Odoo Enterprise
+ * Vista Lista + Kanban + Formulario completo con chatter
  */
 import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
-import { fmtMxn, fmtDate, paginationHtml, skeletonTable, toast, stateBadge } from '../ui.js'
 import { api } from '../api.js'
-import { openNuevaVenta } from './forms/venta_form.js'
-import { openFormPage, fieldGroupHtml, smartButtonsHtml, chatterHtml } from '../components/form_view.js'
+import { toast, fmtMxn, stateBadge, skeletonTable } from '../ui.js'
 
-const ESTADO_MAP = {
-  sale:   { lbl: 'Confirmada', color: 'indigo',  step: 1 },
-  done:   { lbl: 'Entregada',  color: 'emerald', step: 2 },
-  draft:  { lbl: 'Borrador',   color: 'gray',    step: 0 },
-  cancel: { lbl: 'Cancelada',  color: 'red',     step: -1 },
-  sent:   { lbl: 'Enviada',    color: 'sky',     step: 1 },
-}
-
-const KANBAN_COLS = [
-  { key: 'draft',  label: 'Borrador',    color: '#9CA3AF' },
-  { key: 'sent',   label: 'Enviada',     color: '#0EA5E9' },
-  { key: 'sale',   label: 'Confirmada',  color: '#4F46E5' },
-  { key: 'done',   label: 'Entregada',   color: '#059669' },
-  { key: 'cancel', label: 'Cancelada',   color: '#DC2626' },
-]
-
-let _page = 1
-let _total = 0
-let _currentView = 'list'   // 'list' | 'kanban'
-let _ordenes = []
-let _searchQ = ''
-
-// ─── Entry point ─────────────────────────────────────────────────────────────
+let _view = 'list', _page = 1, _search = '', _filter = null, _records = []
 
 export async function renderVentas() {
   ensureLayout()
-  setBreadcrumb([{ label: 'Inicio', href: 'home' }, { label: 'Ventas' }])
-  _page = 1
-  _currentView = localStorage.getItem('ventas_view') || 'list'
-  await loadVentas()
+  setBreadcrumb([{ label: 'Ventas' }])
+  setPage(`<div class="nx-module-page"><div id="mcp"></div><div id="mcontent">${skeletonTable(5, 6)}</div></div>`)
+  _renderCP()
+  await _load()
 }
 
-// ─── Control Panel ────────────────────────────────────────────────────────────
-
-function controlPanelHtml() {
-  return `
-  <div class="o-control-panel" id="ventas-cp">
-    <div class="o-cp-left">
-      <button class="o-btn-new" onclick="window._nuevaVenta()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
-        Nuevo
-      </button>
-      <div class="o-search-box">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" id="ventas-search" placeholder="Buscar..." value="${_searchQ}" autocomplete="off">
-      </div>
-      <button class="o-btn-filter">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-        Filtros
-      </button>
-      <button class="o-btn-group">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-        Agrupar
-      </button>
-    </div>
-    <div class="o-cp-right">
-      <span class="o-record-count" id="ventas-count">${_total > 0 ? `${_total} registros` : ''}</span>
-      <div class="o-view-switcher">
-        <button class="o-view-btn${_currentView === 'list' ? ' active' : ''}"
-                id="view-btn-list" title="Vista Lista"
-                onclick="window._switchVentaView('list')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        </button>
-        <button class="o-view-btn${_currentView === 'kanban' ? ' active' : ''}"
-                id="view-btn-kanban" title="Vista Kanban"
-                onclick="window._switchVentaView('kanban')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        </button>
-      </div>
-    </div>
-  </div>`
-}
-
-// ─── Lista ────────────────────────────────────────────────────────────────────
-
-function listHtml(ventas) {
-  if (ventas.length === 0) {
-    return `<div class="empty-state"><div class="empty-state-icon">📋</div>
-      <div class="empty-state-title">Sin órdenes de venta</div>
-      <div class="empty-state-desc">Crea tu primera orden de venta haciendo clic en "+ Nuevo"</div></div>`
-  }
-
-  return `
-  <div class="o-list-view">
-    <table>
-      <thead>
-        <tr>
-          <th><input type="checkbox" class="o-list-checkbox" id="chk-all" onchange="window._checkAll(this)"></th>
-          <th>Folio <span class="sort-icon">↕</span></th>
-          <th>Cliente <span class="sort-icon">↕</span></th>
-          <th>Fecha <span class="sort-icon">↕</span></th>
-          <th>Subtotal <span class="sort-icon">↕</span></th>
-          <th>Total <span class="sort-icon">↕</span></th>
-          <th>Factura</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${ventas.map(v => {
-          const e = ESTADO_MAP[v.state] || { lbl: v.state || '—', color: 'gray' }
-          const fecha = v.date_order ? fmtDate(v.date_order) : '—'
-          const inv = v.invoice_status === 'invoiced' ? 'Facturada' :
-                      v.invoice_status === 'to invoice' ? 'Por facturar' : '—'
-          return `
-          <tr onclick="window._verVenta(${v.id})" title="Ver detalle">
-            <td onclick="event.stopPropagation()">
-              <input type="checkbox" class="o-list-checkbox row-chk" data-id="${v.id}"
-                     onchange="window._onRowCheck()">
-            </td>
-            <td class="td-mono">${v.name || `#${v.id}`}</td>
-            <td class="td-primary">${v.partner_name || '—'}</td>
-            <td>${fecha}</td>
-            <td class="td-amount">${fmtMxn(parseFloat(v.amount_untaxed || 0))}</td>
-            <td class="td-amount" style="font-weight:700">${fmtMxn(parseFloat(v.amount_total || 0))}</td>
-            <td><span class="badge badge-${inv === 'Facturada' ? 'emerald' : inv === 'Por facturar' ? 'amber' : 'gray'}" style="font-size:10px">${inv}</span></td>
-            <td>${stateBadge(v.state, e.lbl)}</td>
-          </tr>`
-        }).join('')}
-      </tbody>
-    </table>
-    ${paginationHtml(_page, ventas.length >= 20, (p) => { _page = p; loadVentas() })}
-  </div>`
-}
-
-// ─── Kanban ───────────────────────────────────────────────────────────────────
-
-function kanbanHtml(ventas) {
-  return `
-  <div class="o-kanban-view">
-    ${KANBAN_COLS.map(col => {
-      const cards = ventas.filter(v => v.state === col.key)
-      const total = cards.reduce((s, v) => s + parseFloat(v.amount_total || 0), 0)
-      return `
-      <div class="o-kanban-col">
-        <div class="o-kanban-col-header" style="border-top:3px solid ${col.color}">
-          <span>${col.label}</span>
-          <span class="o-kanban-col-count">${cards.length}</span>
-        </div>
-        <div class="o-kanban-cards">
-          ${cards.length === 0
-            ? `<div style="text-align:center;padding:20px;color:var(--text-300);font-size:12px">Sin registros</div>`
-            : cards.map(v => `
-              <div class="o-kanban-card" onclick="window._verVenta(${v.id})">
-                <div class="o-kanban-card-title">${v.partner_name || '—'}</div>
-                <div style="font-size:11px;color:var(--text-400);margin-bottom:8px">${v.name || `#${v.id}`}</div>
-                <div class="o-kanban-card-meta">
-                  <span>${v.date_order ? fmtDate(v.date_order) : '—'}</span>
-                  <span class="o-kanban-card-amount">${fmtMxn(parseFloat(v.amount_total || 0))}</span>
-                </div>
-              </div>
-            `).join('')}
-        </div>
-        ${cards.length > 0 ? `<div style="padding:10px 16px;font-size:12px;color:var(--text-400);border-top:1px solid var(--border);font-weight:600">Total: ${fmtMxn(total)}</div>` : ''}
-      </div>`
-    }).join('')}
-  </div>`
-}
-
-// ─── Load ─────────────────────────────────────────────────────────────────────
-
-async function loadVentas() {
-  // Skeleton mientras carga
-  setPage(`
-    ${controlPanelHtml()}
-    <div id="ventas-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 20px">
-      ${[1,2,3,4].map(() => `<div class="data-card" style="padding:16px"><div class="skeleton" style="height:40px"></div></div>`).join('')}
-    </div>
-    <div id="ventas-content" style="padding:0 20px 20px">
-      <div class="data-card">${skeletonTable(8, 7)}</div>
-    </div>
-  `)
-
-  try {
-    const [kpisRes, listRes] = await Promise.allSettled([
-      api.ventaKpis(),
-      api.ventas(_page),
-    ])
-
-    // KPIs
-    const kpis = kpisRes.status === 'fulfilled' ? (kpisRes.value?.data || kpisRes.value) : null
-    const kpiEl = document.getElementById('ventas-kpis')
-    if (kpiEl && kpis) {
-      kpiEl.innerHTML = [
-        { label: 'Total Órdenes',   val: kpis.ordenes_confirmadas ?? kpis.total_ordenes ?? 0, tipo: 'num', color: 'indigo'  },
-        { label: 'Facturado Total', val: kpis.total_facturado ?? 0,                            tipo: 'mxn', color: 'emerald' },
-        { label: 'Ticket Promedio', val: kpis.ticket_promedio ?? 0,                            tipo: 'mxn', color: 'violet'  },
-        { label: 'Este Mes',        val: kpis.ordenes_este_mes ?? 0,                           tipo: 'num', color: 'amber'   },
-      ].map(k => `
-        <div class="kpi-card kpi-${k.color}" style="padding:16px">
-          <div class="kpi-label">${k.label}</div>
-          <div class="kpi-value" style="font-size:22px">
-            ${k.tipo === 'mxn' ? fmtMxn(parseFloat(k.val)) : Number(k.val).toLocaleString('es-MX')}
+function _renderCP() {
+  const el = document.getElementById('mcp')
+  if (!el) return
+  el.innerHTML = `
+    <div class="o-control-panel">
+      <div class="o-cp-left">
+        <button class="o-btn-new" onclick="window._newVenta()">+ Nueva Venta</button>
+        <span class="o-cp-sep"></span>
+        <div class="o-dropdown" id="dd-vf">
+          <button class="o-btn-filter" onclick="window._tog('dd-vf')">📂 Filtros ▾</button>
+          <div class="o-dropdown-menu" id="dd-vf-menu">
+            <div class="o-dropdown-item" onclick="window._fv('sale')">Confirmadas</div>
+            <div class="o-dropdown-item" onclick="window._fv('draft')">Borradores</div>
+            <div class="o-dropdown-item" onclick="window._fv('done')">Realizadas</div>
+            <div class="o-dropdown-item" onclick="window._fv('cancel')">Canceladas</div>
+            <div class="o-dropdown-divider"></div>
+            <div class="o-dropdown-item" onclick="window._fv(null)">❌ Sin filtro</div>
           </div>
-        </div>`).join('')
-    }
-
-    // Lista
-    const ventas = listRes.status === 'fulfilled' ? (listRes.value?.data || listRes.value || []) : []
-    _ordenes = Array.isArray(ventas) ? ventas : []
-    _total = listRes.value?.total ?? _ordenes.length
-    if (listRes.status === 'fulfilled' && listRes.value?.pagination?.total) {
-      _total = listRes.value.pagination.total
-    }
-
-    // Update count
-    const countEl = document.getElementById('ventas-count')
-    if (countEl) countEl.textContent = `${_total} registros · Pág. ${_page}`
-
-    // Render content
-    renderContent()
-
-    // Search
-    document.getElementById('ventas-search')?.addEventListener('input', (e) => {
-      _searchQ = e.target.value.toLowerCase()
-      if (_currentView === 'list') {
-        document.querySelectorAll('#ventas-content tbody tr').forEach(row => {
-          row.style.display = row.textContent.toLowerCase().includes(_searchQ) ? '' : 'none'
-        })
-      } else {
-        document.querySelectorAll('#ventas-content .o-kanban-card').forEach(card => {
-          card.style.display = card.textContent.toLowerCase().includes(_searchQ) ? '' : 'none'
-        })
-      }
-    })
-
-  } catch (err) {
-    console.error(err)
-    toast('Error al cargar ventas', err.message, 'error')
-    const contentEl = document.getElementById('ventas-content')
-    if (contentEl) contentEl.innerHTML = `<p style="text-align:center;padding:32px;color:var(--danger)">Error de conexión: ${err.message}</p>`
-  }
-
-  // Bind globals
-  window._nuevaVenta = openNuevaVenta
-  window._switchVentaView = (view) => {
-    _currentView = view
-    localStorage.setItem('ventas_view', view)
-    document.querySelectorAll('.o-view-btn').forEach(b => b.classList.remove('active'))
-    document.getElementById(`view-btn-${view}`)?.classList.add('active')
-    renderContent()
-  }
-  window._checkAll = (chk) => {
-    document.querySelectorAll('.row-chk').forEach(c => { c.checked = chk.checked })
-    window._onRowCheck()
-  }
-  window._onRowCheck = () => {
-    const checked = document.querySelectorAll('.row-chk:checked')
-    const bar = document.getElementById('ventas-actions-bar')
-    if (checked.length > 0 && bar) {
-      bar.innerHTML = `
-        <div class="o-list-actions-bar">
-          <span class="o-actions-count">${checked.length} seleccionado(s)</span>
-          <button class="btn btn-secondary btn-sm">Exportar</button>
-          <button class="btn btn-danger btn-sm">Eliminar</button>
-        </div>`
-    } else if (bar) bar.innerHTML = ''
-  }
-}
-
-function renderContent() {
-  const contentEl = document.getElementById('ventas-content')
-  if (!contentEl) return
-
-  if (_currentView === 'kanban') {
-    contentEl.innerHTML = `<div id="ventas-actions-bar"></div>${kanbanHtml(_ordenes)}`
-  } else {
-    contentEl.innerHTML = `<div id="ventas-actions-bar"></div>${listHtml(_ordenes)}`
-  }
-}
-
-// ─── Form View (detalle de venta) ─────────────────────────────────────────────
-
-window._verVenta = async (id) => {
-  // Mostrar skeleton de form completo
-  setBreadcrumb([
-    { label: 'Inicio', href: 'home' },
-    { label: 'Ventas', href: 'ventas' },
-    { label: 'Cargando...' },
-  ])
-
-  setPage(`
-    <div class="o-form-view">
-      <div class="o-statusbar">
-        <div class="o-statusbar-status">
-          ${['Borrador','Confirmada','Entregada'].map(s => `<div class="o-status-step skeleton" style="width:100px;height:28px;margin:10px 4px"></div>`).join('')}
+        </div>
+        <div class="o-search-box">
+          <span style="color:var(--text-400)">🔍</span>
+          <input type="search" placeholder="Buscar venta…" id="vs" oninput="window._sv(this.value)">
+        </div>
+        <span class="o-record-count" id="vcount"></span>
+      </div>
+      <div class="o-cp-right">
+        <div class="o-view-switcher">
+          <button class="o-view-btn ${_view === 'list' ? 'active' : ''}" onclick="window._vv('list')" title="Lista">☰</button>
+          <button class="o-view-btn ${_view === 'kanban' ? 'active' : ''}" onclick="window._vv('kanban')" title="Kanban">⬜</button>
         </div>
       </div>
-      <div class="o-form-sheet" style="margin:20px 24px;padding:24px">
-        ${[1,2,3,4].map(() => `<div class="skeleton" style="height:36px;margin-bottom:12px;border-radius:6px"></div>`).join('')}
-      </div>
-    </div>`)
+    </div>`
+  _initDD()
+  window._vv = (v) => { _view = v; _renderCP(); _load() }
+  window._sv = _deb((q) => { _search = q; _page = 1; _load() }, 300)
+  window._fv = (s) => { _filter = s; _page = 1; _load(); window._cdd() }
+  window._newVenta = () => toast('Info', 'Usa el backend para crear órdenes', 'info')
+}
 
+function _initDD() {
+  window._tog = (id) => {
+    const m = document.getElementById(id + '-menu'); if (!m) return
+    const o = m.classList.contains('open'); window._cdd(); if (!o) m.classList.add('open')
+  }
+  window._cdd = () => document.querySelectorAll('.o-dropdown-menu.open').forEach(m => m.classList.remove('open'))
+  if (!window._ddInit) {
+    document.addEventListener('click', e => { if (!e.target.closest('.o-dropdown')) window._cdd() })
+    window._ddInit = true
+  }
+}
+
+async function _load() {
+  const c = document.getElementById('mcontent'); if (!c) return
+  c.innerHTML = skeletonTable(5, 6)
+  try {
+    const res = await api.ventas(_page)
+    _records = res?.data || []
+    let rows = _filter ? _records.filter(r => r.state === _filter) : _records
+    if (_search) {
+      const q = _search.toLowerCase()
+      rows = rows.filter(r => (r.name || '').toLowerCase().includes(q) || (r.partner_name || '').toLowerCase().includes(q))
+    }
+    const vc = document.getElementById('vcount'); if (vc) vc.textContent = rows.length + ' registros'
+    c.innerHTML = _view === 'kanban' ? _kanban(rows) : _list(rows)
+    if (_view === 'list') _initCB()
+  } catch (e) {
+    c.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-400)">⚠️ ${e.message}</div>`
+  }
+}
+
+const LABEL_MAP = { sale: 'Confirmada', done: 'Realizada', draft: 'Borrador', cancel: 'Cancelada', sent: 'Enviada' }
+const INV_MAP   = { invoiced: 'Facturada', to_invoice: 'Por Facturar', no: '—' }
+
+function _list(rows) {
+  if (!rows.length) return `<div style="padding:60px;text-align:center"><div style="font-size:48px;margin-bottom:12px">📋</div><p style="color:var(--text-400)">Sin ventas. Crea la primera.</p></div>`
+  return `
+    <div class="o-list-actions-bar" id="lab"><span class="o-actions-count" id="sel-cnt">0 seleccionados</span>
+      <button class="o-action-btn-sm" onclick="alert('Exportar')">Exportar</button>
+    </div>
+    <div class="o-list-view"><table>
+      <thead><tr>
+        <th class="th-check"><input type="checkbox" class="o-list-checkbox" id="ca" onchange="window._ca(this.checked)"></th>
+        <th>Número</th><th>Cliente</th><th>Fecha</th><th>Estado</th><th style="text-align:right">Total</th><th>Facturación</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r => `
+          <tr onclick="window._vVenta(${r.id})" data-id="${r.id}">
+            <td class="td-check" onclick="event.stopPropagation()"><input type="checkbox" class="o-list-checkbox rc" data-id="${r.id}" onchange="window._rc()"></td>
+            <td><strong>${r.name || '-'}</strong></td>
+            <td>${r.partner_name || r.partner_id || '-'}</td>
+            <td>${r.date_order?.slice(0, 10) || '-'}</td>
+            <td>${stateBadge(r.state, LABEL_MAP[r.state] || r.state)}</td>
+            <td style="text-align:right;font-weight:700;color:var(--primary)">${fmtMxn(r.amount_total)}</td>
+            <td>${r.invoice_status ? stateBadge(r.invoice_status, INV_MAP[r.invoice_status] || r.invoice_status) : '-'}</td>
+          </tr>`).join('')}
+      </tbody></table></div>
+    <div style="padding:12px 20px;display:flex;justify-content:space-between;align-items:center;background:var(--bg-card);border-top:1px solid var(--border)">
+      <span style="font-size:13px;color:var(--text-400)">${rows.length} registros</span>
+      <div style="display:flex;gap:8px">
+        <button class="o-action-btn-sm" ${_page <= 1 ? 'disabled' : ''} onclick="window._vp(${_page - 1})">‹ Anterior</button>
+        <span style="padding:5px 10px;font-size:13px">${_page}</span>
+        <button class="o-action-btn-sm" onclick="window._vp(${_page + 1})">Siguiente ›</button>
+      </div></div>`
+}
+
+const KANBAN_COLS = [
+  { key: 'draft',  label: 'Borrador',   color: '#D97706' },
+  { key: 'sent',   label: 'Enviado',    color: '#2563EB' },
+  { key: 'sale',   label: 'Confirmado', color: '#059669' },
+  { key: 'done',   label: 'Realizado',  color: '#166534' },
+  { key: 'cancel', label: 'Cancelado',  color: '#DC2626' },
+]
+
+function _kanban(rows) {
+  const g = {}; KANBAN_COLS.forEach(c => g[c.key] = [])
+  rows.forEach(r => { if (g[r.state]) g[r.state].push(r); else g['draft']?.push(r) })
+  return `<div class="o-kanban-view">${KANBAN_COLS.map(col => `
+    <div class="o-kanban-col">
+      <div class="o-kanban-col-header" style="border-top:3px solid ${col.color}">
+        <span>${col.label}</span><span class="o-kanban-col-count">${g[col.key].length}</span>
+      </div>
+      <div class="o-kanban-cards">
+        ${g[col.key].map(r => `
+          <div class="o-kanban-card" onclick="window._vVenta(${r.id})">
+            <div class="o-kanban-card-title">${r.name || '#' + r.id}</div>
+            <div style="font-size:12px;color:var(--text-400);margin-bottom:8px">${r.partner_name || r.partner_id || ''}</div>
+            <div class="o-kanban-card-meta">
+              <span style="font-size:11px">${r.date_order?.slice(0, 10) || ''}</span>
+              <span class="o-kanban-card-amount">${fmtMxn(r.amount_total)}</span>
+            </div>
+          </div>`).join('') || '<div style="padding:16px;text-align:center;color:var(--text-300);font-size:12px">Vacío</div>'}
+      </div>
+    </div>`).join('')}</div>`
+}
+
+function _initCB() {
+  window._ca = (c) => { document.querySelectorAll('.rc').forEach(cb => cb.checked = c); window._rc() }
+  window._rc = () => {
+    const n = document.querySelectorAll('.rc:checked').length
+    const b = document.getElementById('lab'), s = document.getElementById('sel-cnt')
+    if (b) b.classList.toggle('visible', n > 0)
+    if (s) s.textContent = n + ' seleccionado' + (n !== 1 ? 's' : '')
+    document.querySelectorAll('[data-id]').forEach(tr => {
+      const cb = tr.querySelector('.rc'); if (cb) tr.classList.toggle('selected', cb.checked)
+    })
+  }
+}
+
+window._vp = (p) => { _page = p; _load() }
+
+// ===== FORMULARIO VENTA =====
+window._vVenta = async (id) => {
+  setBreadcrumb([{ label: 'Ventas', href: '#ventas' }, { label: 'Cargando…' }])
+  setPage(`<div style="padding:40px">${skeletonTable(3, 5)}</div>`)
   try {
     const res = await api.venta(id)
-    const v = res?.data ?? res
+    const v = res?.data || res; if (!v) throw new Error('No encontrado')
+    setBreadcrumb([{ label: 'Ventas', href: '#ventas' }, { label: v.name || '#' + id }])
+    const STEPS = ['draft', 'sent', 'sale', 'done']
+    if (v.state === 'cancel') STEPS.push('cancel')
+    const si = STEPS.indexOf(v.state)
 
-    if (!v) { toast('Error', 'No se encontró la venta', 'error'); return }
-
-    const e = ESTADO_MAP[v.state] || { lbl: v.state || '—', color: 'gray', step: 0 }
-    const inv = v.invoice_status === 'invoiced' ? 'Facturada' :
-                v.invoice_status === 'to invoice' ? 'Por facturar' : 'No facturada'
-
-    const steps = [
-      { key: 'draft',  label: 'Borrador',   done: e.step > 0 },
-      { key: 'sale',   label: 'Confirmada', done: e.step > 1 },
-      { key: 'done',   label: 'Entregada',  done: e.step > 2 },
-    ]
-    if (v.state === 'cancel') steps.push({ key: 'cancel', label: 'Cancelada', done: false })
-
-    // Líneas de pedido
-    const lineas = v.order_line || v.lineas || []
-    const lineasHtml = `
-      <table class="o-editable-table">
-        <thead><tr>
-          <th>Producto</th>
-          <th>Descripción</th>
-          <th style="text-align:right">Cant.</th>
-          <th style="text-align:right">P. Unit.</th>
-          <th style="text-align:right">Desc%</th>
-          <th style="text-align:right">Subtotal</th>
-        </tr></thead>
-        <tbody>
-          ${lineas.length > 0
-            ? lineas.map(l => `
-              <tr>
-                <td class="td-primary">${l.product_name || l.nombre || '—'}</td>
-                <td style="color:var(--text-500)">${l.name || l.descripcion || ''}</td>
-                <td style="text-align:right">${l.product_uom_qty ?? l.cantidad ?? 0}</td>
-                <td style="text-align:right">${fmtMxn(parseFloat(l.price_unit || l.precio_unitario || 0))}</td>
-                <td style="text-align:right">${l.discount || l.descuento || 0}%</td>
-                <td style="text-align:right;font-weight:700">${fmtMxn(parseFloat(l.price_subtotal || l.subtotal || 0))}</td>
-              </tr>`).join('')
-            : `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-400)">Sin líneas de pedido</td></tr>`}
-        </tbody>
-      </table>
-      <div style="display:flex;justify-content:flex-end;padding:16px 0;gap:20px;border-top:1px solid var(--border)">
-        <div style="text-align:right">
-          <div style="font-size:12px;color:var(--text-400)">Subtotal</div>
-          <div style="font-size:14px;font-weight:700">${fmtMxn(parseFloat(v.amount_untaxed || 0))}</div>
+    setPage(`
+      <div class="o-form-view" id="fv">
+        <div class="o-statusbar">
+          <div class="o-statusbar-status">
+            ${STEPS.map((s, i) => `
+              <div class="o-status-step ${s === v.state ? 'active' : ''} ${i < si ? 'done' : ''}">
+                ${i < si ? '✔ ' : ''}${{ draft: 'Borrador', sent: 'Enviado', sale: 'Confirmado', done: 'Realizado', cancel: 'Cancelado' }[s] || s}
+              </div>${i < STEPS.length - 1 ? '<span class="o-status-arrow">›</span>' : ''}`).join('')}
+          </div>
+          <div class="o-statusbar-buttons">
+            ${(v.state === 'draft' || v.state === 'sent') ? `<button class="btn btn-primary btn-sm" onclick="window._confV(${id})">📊 Confirmar</button>` : ''}
+            ${v.state === 'sale' ? `<button class="btn btn-secondary btn-sm" onclick="toast('Info','Próximamente','info')">🧾 Crear Factura</button>` : ''}
+            ${v.state !== 'cancel' && v.state !== 'done' ? `<button class="btn btn-sm" style="background:#FEE2E2;color:#DC2626;border:none;padding:6px 14px;border-radius:8px;font-weight:600;cursor:pointer" onclick="window._cancV(${id})">❌ Cancelar</button>` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="window._go('ventas')">← Volver</button>
+          </div>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:12px;color:var(--text-400)">IVA</div>
-          <div style="font-size:14px;font-weight:700">${fmtMxn(parseFloat(v.amount_tax || 0))}</div>
+        <div class="o-smart-buttons">
+          <button class="o-smart-btn"><span class="o-count">0</span><span class="o-label">🧾 Facturas</span></button>
+          <button class="o-smart-btn"><span class="o-count">0</span><span class="o-label">🚚 Entregas</span></button>
+          <button class="o-smart-btn"><span class="o-count">1</span><span class="o-label">📋 Líneas</span></button>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:12px;color:var(--text-400)">Total</div>
-          <div style="font-size:18px;font-weight:800;color:var(--primary)">${fmtMxn(parseFloat(v.amount_total || 0))}</div>
+        <div class="o-form-sheet">
+          <div class="o-form-title-row">
+            <h1 class="o-form-record-title">${v.name || 'Nueva Venta'}</h1>
+            <span class="o-form-subtitle">${v.partner_name || ''}</span>
+          </div>
+          <div class="o-form-group-wrapper">
+            <div class="o-form-group">
+              <div class="o-form-col">
+                <div class="o-field-row"><div class="o-field-label">Cliente</div><div class="o-field-value">${v.partner_name || v.partner_id || '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Fecha</div><div class="o-field-value">${v.date_order?.slice(0, 16)?.replace('T', ' ') || '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Ref. Cliente</div><div class="o-field-value">${v.client_order_ref || '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Validez</div><div class="o-field-value">${v.validity_date || '<span class="o-field-empty">—</span>'}</div></div>
+              </div>
+              <div class="o-form-col">
+                <div class="o-field-row"><div class="o-field-label">Estado</div><div class="o-field-value">${stateBadge(v.state, LABEL_MAP[v.state] || v.state)}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Empresa</div><div class="o-field-value">${v.company_id || v.company_name || '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Facturación</div><div class="o-field-value">${v.invoice_status ? stateBadge(v.invoice_status, INV_MAP[v.invoice_status] || v.invoice_status) : '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Notas</div><div class="o-field-value">${v.note || '<span class="o-field-empty">—</span>'}</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="o-notebook">
+            <div class="o-tabs">
+              <button class="o-tab active" onclick="window._st('vl')">Líneas de Pedido</button>
+              <button class="o-tab" onclick="window._st('vi')">Otra Información</button>
+              <button class="o-tab" onclick="window._st('vx')">Fiscal</button>
+            </div>
+            <div class="o-tab-panel active" id="tab-panel-vl">
+              <table class="o-editable-table"><thead><tr>
+                <th>Producto</th><th>Descripción</th>
+                <th style="text-align:right">Qty</th>
+                <th style="text-align:right">Precio</th>
+                <th style="text-align:right">Desc.</th>
+                <th style="text-align:right">Subtotal</th>
+              </tr></thead>
+              <tbody id="vlineas"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-400)">⏳ Cargando…</td></tr></tbody></table>
+              <div class="o-lines-totals"><table>
+                <tr><td>Subtotal:</td><td style="text-align:right;font-weight:600">${fmtMxn(v.amount_untaxed)}</td></tr>
+                <tr><td>IVA (16%):</td><td style="text-align:right;font-weight:600">${fmtMxn(v.amount_tax)}</td></tr>
+                <tr class="total-row"><td>TOTAL:</td><td style="text-align:right">${fmtMxn(v.amount_total)}</td></tr>
+              </table></div>
+            </div>
+            <div class="o-tab-panel" id="tab-panel-vi">
+              <div class="o-form-group"><div class="o-form-col">
+                <div class="o-field-row"><div class="o-field-label">Vendedor</div><div class="o-field-value">${v.user_id || v.user_name || '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Equipo</div><div class="o-field-value">${v.team_id || v.team_name || '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Política entrega</div><div class="o-field-value">${v.picking_policy || '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Plazo pago</div><div class="o-field-value">${v.payment_term_name || v.payment_term || '<span class="o-field-empty">—</span>'}</div></div>
+              </div></div>
+            </div>
+            <div class="o-tab-panel" id="tab-panel-vx">
+              <div class="o-form-group"><div class="o-form-col">
+                <div class="o-field-row"><div class="o-field-label">UUID CFDI</div><div class="o-field-value"><span class="o-field-empty">Pendiente</span></div></div>
+                <div class="o-field-row"><div class="o-field-label">Folio fiscal</div><div class="o-field-value"><span class="o-field-empty">—</span></div></div>
+              </div></div>
+            </div>
+          </div>
         </div>
-      </div>`
+        <div class="o-chatter">
+          <div class="o-chatter-topbar">
+            <button class="o-chatter-btn">✉️ Enviar mensaje</button>
+            <button class="o-chatter-btn">📋 Nota interna</button>
+            <button class="o-chatter-btn">📎 Adjuntar</button>
+          </div>
+          <div class="o-chatter-thread">
+            <div class="o-message">
+              <div class="o-msg-avatar" style="background:#4F46E5">S</div>
+              <div class="o-msg-content">
+                <div class="o-msg-header">
+                  <span class="o-msg-author">Sistema</span>
+                  <span class="o-msg-date">${new Date().toLocaleDateString('es-MX')}</span>
+                </div>
+                <div class="o-msg-text">Orden ${v.name || ''} registrada. Estado: ${LABEL_MAP[v.state] || v.state}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`)
 
-    const otraInfoHtml = fieldGroupHtml([
-      { label: 'Política entrega', value: v.picking_policy || '—' },
-      { label: 'Plazo de pago', value: v.payment_term_name || v.payment_term || '—' },
-      { label: 'Notas', value: v.note || v.notes || '—' },
-      { label: 'Equipo de ventas', value: v.team_name || '—' },
-    ], 2)
+    // Tabs
+    window._st = (tabId) => {
+      document.querySelectorAll('.o-tab').forEach(t => t.classList.remove('active'))
+      document.querySelectorAll('.o-tab-panel').forEach(p => p.classList.remove('active'))
+      const btn = document.querySelector(`.o-tab[onclick*="'${tabId}'"]`)
+      if (btn) btn.classList.add('active')
+      const panel = document.getElementById('tab-panel-' + tabId)
+      if (panel) panel.classList.add('active')
+    }
 
-    openFormPage({
-      title: v.name || `Venta #${v.id}`,
-      backLabel: 'Ventas',
-      backHref: 'ventas',
-      pageTitle: v.name || `#${v.id}`,
-      statusSteps: steps,
-      currentStatus: v.state,
-      smartButtons: [
-        { icon: '📄', count: v.invoice_count ?? 0, label: 'Facturas', onClick: '' },
-        { icon: '🚚', count: v.delivery_count ?? 0, label: 'Entregas', onClick: '' },
-      ],
-      statusButtons: [
-        {
-          label: '✅ Confirmar',
-          primary: true,
-          visible: v.state === 'draft' || v.state === 'sent',
-          onClick: `window._confirmarVenta(${v.id})`,
-        },
-        {
-          label: '🔏 Timbrar CFDI',
-          primary: false,
-          visible: v.invoice_status === 'to invoice',
-          onClick: `window._go('cfdi')`,
-        },
-        {
-          label: '❌ Cancelar',
-          primary: false,
-          visible: v.state !== 'cancel' && v.state !== 'done',
-          onClick: `window._cancelarVenta(${v.id})`,
-        },
-      ],
-      groups: [
-        {
-          cols: 2,
-          fields: [
-            { label: 'Cliente', value: `<strong>${v.partner_name || v.partner_id || '—'}</strong>` },
-            { label: 'Vendedor', value: v.user_name || v.salesperson || '—' },
-            { label: 'Fecha Orden', value: v.date_order ? fmtDate(v.date_order) : '—' },
-            { label: 'Empresa', value: v.company_name || '—' },
-            { label: 'Referencia', value: v.client_order_ref || '—' },
-            { label: 'Estado Factura', value: `<span class="badge badge-${inv === 'Facturada' ? 'emerald' : inv === 'Por facturar' ? 'amber' : 'gray'}">${inv}</span>` },
-          ],
-        },
-      ],
-      tabs: [
-        { label: 'Líneas de Pedido', content: lineasHtml },
-        { label: 'Otra Información', content: otraInfoHtml },
-      ],
-      messages: [
-        { author: 'Sistema', initials: 'SY', date: v.date_order ? fmtDate(v.date_order) : '—', text: `Orden de venta ${v.name || ''} creada. Estado: ${e.lbl}` },
-      ],
-    })
+    // Cargar líneas
+    try {
+      const lr = await api.get(`/ventas/${id}/lineas`)
+      const ls = lr?.data || []
+      const lb = document.getElementById('vlineas')
+      if (lb) {
+        lb.innerHTML = ls.length
+          ? ls.map(l => `<tr>
+              <td>${l.product_id ? '#' + l.product_id : '<span class="o-field-empty">—</span>'}</td>
+              <td>${l.name || '-'}</td>
+              <td style="text-align:right">${l.product_uom_qty ?? 0}</td>
+              <td style="text-align:right">${fmtMxn(l.price_unit)}</td>
+              <td style="text-align:right">${l.discount ? l.discount + '%' : '0%'}</td>
+              <td style="text-align:right;font-weight:700">${fmtMxn(l.price_subtotal)}</td>
+            </tr>`).join('')
+          : '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-400)">Sin líneas de pedido</td></tr>'
+      }
+    } catch (_) { /* líneas opcionales */ }
 
-    // Bind acciones del form
-    window._confirmarVenta = async (vid) => {
+    // Acciones del formulario
+    window._confV = async (vid) => {
+      if (!confirm('¿Confirmar orden?')) return
       try {
         await api.put(`/ventas/${vid}/confirmar`, {})
-        toast('Venta confirmada', 'Estado actualizado correctamente', 'success')
-        window._verVenta(vid)
-      } catch (err) { toast('Error', err.message, 'error') }
+        toast('OK', 'Venta confirmada', 'success')
+        window._vVenta(vid)
+      } catch (e) { toast('Error', e.message, 'error') }
     }
-    window._cancelarVenta = async (vid) => {
+    window._cancV = async (vid) => {
+      if (!confirm('¿Cancelar orden?')) return
       try {
         await api.put(`/ventas/${vid}/cancelar`, {})
-        toast('Venta cancelada', '', 'info')
-        window._verVenta(vid)
-      } catch (err) { toast('Error', err.message, 'error') }
+        toast('Cancelado', '', 'info')
+        window._go('ventas')
+      } catch (e) { toast('Error', e.message, 'error') }
     }
 
-  } catch (err) {
-    console.error(err)
-    toast('Error al cargar venta', err.message, 'error')
+  } catch (e) {
+    setPage(`<div style="padding:40px;text-align:center"><p style="color:#DC2626">⚠️ ${e.message}</p><button class="o-btn-new" onclick="window._go('ventas')">Volver</button></div>`)
   }
 }
+
+function _deb(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms) } }

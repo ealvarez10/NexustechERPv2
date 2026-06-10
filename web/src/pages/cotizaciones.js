@@ -1,495 +1,417 @@
 /**
- * cotizaciones.js — Módulo de Cotizaciones para NexusTech ERP v2
- * Gestiona cotizaciones (draft/sent), confirmación, cancelación y líneas de venta
+ * cotizaciones.js — Módulo Cotizaciones — UI estilo Odoo Enterprise
+ * Vista Lista + Kanban + Formulario completo con chatter
  */
+import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
 import { api } from '../api.js'
-import {
-  openDetailModal, detailRow, detailSection,
-  openModal, toast, stateBadge, fmtMxn, fmtDate,
-  paginationHtml, skeletonTable
-} from '../ui.js'
-import { setPage, setBreadcrumb } from '../layout.js'
+import { toast, fmtMxn, stateBadge, skeletonTable } from '../ui.js'
 
-// ─── Estado del módulo ─────────────────────────────────────────────────────────
-let _tab = 'draft'   // 'draft' | 'confirmed' | 'nueva'
-let _page = 1
-let _lineasNueva = []
+let _view = 'list', _page = 1, _search = '', _filter = null, _records = []
 
-// ─── Entry point ──────────────────────────────────────────────────────────────
 export async function renderCotizaciones() {
-  setBreadcrumb([{ label: 'Principal' }, { label: 'Cotizaciones' }])
-
-  setPage(`
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">📝 Cotizaciones</h1>
-        <p class="page-subtitle">Gestión de cotizaciones y órdenes de venta</p>
-      </div>
-    </div>
-
-    <!-- KPI Row -->
-    <div id="cot-kpis" class="kpi-row" style="margin-bottom:24px">
-      <div class="kpi-card kpi-blue">
-        <div class="kpi-label">Borradores</div>
-        <div class="kpi-value" id="kpi-borradores">—</div>
-        <div class="kpi-sub">En proceso</div>
-      </div>
-      <div class="kpi-card kpi-violet">
-        <div class="kpi-label">Importe Total</div>
-        <div class="kpi-value" id="kpi-importe">—</div>
-        <div class="kpi-sub">Cotizaciones abiertas</div>
-      </div>
-      <div class="kpi-card kpi-red">
-        <div class="kpi-label">Vencidas</div>
-        <div class="kpi-value" id="kpi-vencidas">—</div>
-        <div class="kpi-sub">Requieren atención</div>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <div class="tabs" style="margin-bottom:20px">
-      <button class="tab-btn active" id="tab-draft"     onclick="window._cotTab('draft')">📋 Cotizaciones</button>
-      <button class="tab-btn"        id="tab-confirmed" onclick="window._cotTab('confirmed')">✅ Confirmadas</button>
-      <button class="tab-btn"        id="tab-nueva"     onclick="window._cotTab('nueva')">➕ Nueva Cotización</button>
-    </div>
-
-    <!-- Content area -->
-    <div id="cot-content">
-      ${skeletonTable(7, 5)}
-    </div>
-  `)
-
-  // Register global helpers
-  window._cotTab    = switchTab
-  window._cotPage   = loadTab
-  window._cotDetail = openCotDetail
-  window._cotConfirm = confirmCot
-  window._cotCancel  = cancelCot
-  window._cotAddLine = addLinea
-  window._cotDelLine = deleteLinea
-
-  loadKpis()
-  switchTab('draft')
+  ensureLayout()
+  setBreadcrumb([{ label: 'Cotizaciones' }])
+  setPage(`<div class="nx-module-page"><div id="mcp"></div><div id="mcontent">${skeletonTable(5, 6)}</div></div>`)
+  _renderCP()
+  await _load()
 }
 
-// ─── KPIs ─────────────────────────────────────────────────────────────────────
-async function loadKpis() {
-  try {
-    const res = await api.cotizacionKpis()
-    const d = res?.data ?? res
-    if (!d) return
-    document.getElementById('kpi-borradores').textContent = d.total_borradores ?? '—'
-    document.getElementById('kpi-importe').textContent = fmtMxn(d.importe_total)
-    document.getElementById('kpi-vencidas').textContent = d.vencidas ?? '0'
-  } catch(e) { /* silencioso */ }
-}
-
-// ─── Tab switcher ─────────────────────────────────────────────────────────────
-function switchTab(tab) {
-  _tab = tab
-  _page = 1
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
-  const el = document.getElementById('tab-' + tab)
-  if (el) el.classList.add('active')
-  loadTab(1)
-}
-
-async function loadTab(page = 1) {
-  _page = page
-  const content = document.getElementById('cot-content')
-  if (!content) return
-
-  if (_tab === 'nueva') {
-    renderFormNueva()
-    return
-  }
-
-  content.innerHTML = skeletonTable(7, 8)
-  try {
-    let res
-    if (_tab === 'draft') {
-      res = await api.cotizaciones(page)
-    } else {
-      // Confirmadas: usamos ventas (sale/done) — reutilizamos endpoint ventas con filtro
-      res = await api.ventas(page)
-    }
-    const d = res?.data ?? []
-    const total = res?.total ?? d.length
-    const pp = res?.por_pagina ?? 20
-    const hasMore = page * pp < total
-
-    const stateLabel = { draft:'Borrador', sent:'Enviada', sale:'Confirmada', done:'Realizada', cancel:'Cancelada' }
-
-    if (!d.length) {
-      content.innerHTML = `<div style="text-align:center;padding:48px;color:var(--text-400)">
-        <div style="font-size:48px;margin-bottom:12px">📋</div>
-        <p>No hay cotizaciones en esta sección</p>
-      </div>`
-      return
-    }
-
-    content.innerHTML = `
-      <div class="table-container">
-        <table class="data-table">
-          <thead><tr>
-            <th>#</th><th>Referencia</th><th>Cliente</th><th>Estado</th>
-            <th>Subtotal</th><th>IVA</th><th>Total</th><th>Fecha</th><th>Validez</th><th></th>
-          </tr></thead>
-          <tbody>
-            ${d.map(o => {
-              const sLabel = stateLabel[o.state] || o.state
-              return `<tr style="cursor:pointer" onclick="window._cotDetail(${o.id})">
-                <td style="font-size:11px;color:var(--text-400)">${o.id}</td>
-                <td style="font-weight:600;color:var(--primary)">${o.name || '—'}</td>
-                <td>${o.partner_name || o.partner_id || '—'}</td>
-                <td>${stateBadge(o.state, sLabel)}</td>
-                <td>${fmtMxn(o.amount_untaxed)}</td>
-                <td>${fmtMxn(o.amount_tax)}</td>
-                <td style="font-weight:600">${fmtMxn(o.amount_total)}</td>
-                <td style="font-size:12px;color:var(--text-400)">${fmtDate(o.date_order)}</td>
-                <td style="font-size:12px;color:var(--text-400)">${fmtDate(o.validity_date)}</td>
-                <td onclick="event.stopPropagation()">
-                  <button class="btn btn-secondary btn-sm" onclick="window._cotDetail(${o.id})">Ver</button>
-                </td>
-              </tr>`
-            }).join('')}
-          </tbody>
-        </table>
-        ${paginationHtml(page, hasMore, window._cotPage)}
+function _renderCP() {
+  const el = document.getElementById('mcp')
+  if (!el) return
+  el.innerHTML = `
+    <div class="o-control-panel">
+      <div class="o-cp-left">
+        <button class="o-btn-new" onclick="window._newCot()">+ Nueva Cotización</button>
+        <span class="o-cp-sep"></span>
+        <div class="o-dropdown" id="dd-cf">
+          <button class="o-btn-filter" onclick="window._tog('dd-cf')">📂 Filtros ▾</button>
+          <div class="o-dropdown-menu" id="dd-cf-menu">
+            <div class="o-dropdown-item" onclick="window._cf('draft')">Borradores</div>
+            <div class="o-dropdown-item" onclick="window._cf('sent')">Enviadas</div>
+            <div class="o-dropdown-item" onclick="window._cf('sale')">Confirmadas</div>
+            <div class="o-dropdown-divider"></div>
+            <div class="o-dropdown-item" onclick="window._cf(null)">❌ Sin filtro</div>
+          </div>
+        </div>
+        <div class="o-search-box">
+          <span style="color:var(--text-400)">🔍</span>
+          <input type="search" placeholder="Buscar cotización…" id="cs" oninput="window._sc(this.value)">
+        </div>
+        <span class="o-record-count" id="ccount"></span>
       </div>
-    `
-  } catch(e) {
-    content.innerHTML = `<div class="empty-state"><p style="color:var(--red)">Error cargando cotizaciones: ${e.message}</p></div>`
-  }
-}
-
-// ─── Detalle de cotización ────────────────────────────────────────────────────
-function openCotDetail(id) {
-  openDetailModal(`Cotización #${id}`, () => api.cotizacion(id), renderDetalle)
-}
-
-function renderDetalle(data) {
-  const o = data?.orden ?? data
-  const lineas = data?.lineas ?? []
-  const stateLabel = { draft:'Borrador', sent:'Enviada', sale:'Confirmada', done:'Realizada', cancel:'Cancelada' }
-  const canEdit = ['draft','sent'].includes(o.state)
-  const canConfirm = canEdit
-  const canCancel = !['cancel','done'].includes(o.state)
-
-  const lineasHtml = lineas.length
-    ? `<div class="table-container" style="margin-top:12px">
-        <table class="data-table" style="font-size:12px">
-          <thead><tr><th>Producto</th><th>Cant.</th><th>Precio U.</th><th>Dto%</th><th>Subtotal</th><th></th></tr></thead>
-          <tbody>
-            ${lineas.map(l => `<tr>
-              <td>${l.name || '—'}</td>
-              <td>${l.product_uom_qty}</td>
-              <td>${fmtMxn(l.price_unit)}</td>
-              <td>${l.discount ? l.discount + '%' : '—'}</td>
-              <td style="font-weight:600">${fmtMxn(l.price_subtotal)}</td>
-              <td>${canEdit ? `<button class="btn btn-secondary btn-sm" style="color:var(--red)" onclick="window._cotDelLine(${o.id},${l.id})">✕</button>` : ''}</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`
-    : `<p style="color:var(--text-400);font-size:13px;padding:8px 0">Sin líneas de venta</p>`
-
-  const addLineForm = canEdit ? `
-    <div style="margin-top:16px;padding:16px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border)">
-      <div style="font-weight:600;margin-bottom:12px;font-size:13px">➕ Agregar línea</div>
-      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px">
-        <input id="linea-name" class="form-control" placeholder="Descripción" style="font-size:13px">
-        <input id="linea-qty"  class="form-control" type="number" placeholder="Cantidad" value="1" min="0.01" step="0.01" style="font-size:13px">
-        <input id="linea-price" class="form-control" type="number" placeholder="Precio" min="0" step="0.01" style="font-size:13px">
-        <input id="linea-dto" class="form-control" type="number" placeholder="Dto %" min="0" max="100" step="0.01" style="font-size:13px">
+      <div class="o-cp-right">
+        <div class="o-view-switcher">
+          <button class="o-view-btn ${_view === 'list' ? 'active' : ''}" onclick="window._cvv('list')" title="Lista">☰</button>
+          <button class="o-view-btn ${_view === 'kanban' ? 'active' : ''}" onclick="window._cvv('kanban')" title="Kanban">⬜</button>
+        </div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="window._cotAddLine(${o.id})">Agregar línea</button>
-    </div>` : ''
-
-  const actionBtns = `
-    <div style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap">
-      ${canConfirm ? `<button class="btn btn-primary" onclick="window._cotConfirm(${o.id})">✅ Confirmar pedido</button>` : ''}
-      ${canCancel  ? `<button class="btn btn-secondary" style="color:var(--red)" onclick="window._cotCancel(${o.id})">🚫 Cancelar</button>` : ''}
     </div>`
+  _initDD()
+  window._cvv = (v) => { _view = v; _renderCP(); _load() }
+  window._sc = _deb((q) => { _search = q; _page = 1; _load() }, 300)
+  window._cf = (s) => { _filter = s; _page = 1; _load(); window._cdd() }
+  window._newCot = () => _abrirFormNueva()
+}
 
+function _initDD() {
+  window._tog = (id) => {
+    const m = document.getElementById(id + '-menu'); if (!m) return
+    const o = m.classList.contains('open'); window._cdd(); if (!o) m.classList.add('open')
+  }
+  window._cdd = () => document.querySelectorAll('.o-dropdown-menu.open').forEach(m => m.classList.remove('open'))
+  if (!window._ddInit) {
+    document.addEventListener('click', e => { if (!e.target.closest('.o-dropdown')) window._cdd() })
+    window._ddInit = true
+  }
+}
+
+async function _load() {
+  const c = document.getElementById('mcontent'); if (!c) return
+  c.innerHTML = skeletonTable(5, 6)
+  try {
+    const res = await api.cotizaciones(_page)
+    _records = res?.data || []
+    let rows = _filter ? _records.filter(r => r.state === _filter) : _records
+    if (_search) {
+      const q = _search.toLowerCase()
+      rows = rows.filter(r => (r.name || '').toLowerCase().includes(q) || (r.partner_name || '').toLowerCase().includes(q))
+    }
+    const cc = document.getElementById('ccount'); if (cc) cc.textContent = rows.length + ' registros'
+    c.innerHTML = _view === 'kanban' ? _kanban(rows) : _list(rows)
+    if (_view === 'list') _initCB()
+  } catch (e) {
+    c.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-400)">⚠️ ${e.message}</div>`
+  }
+}
+
+const LABEL_MAP = { draft: 'Borrador', sent: 'Enviada', sale: 'Confirmada', cancel: 'Cancelada' }
+
+function _list(rows) {
+  if (!rows.length) return `<div style="padding:60px;text-align:center"><div style="font-size:48px;margin-bottom:12px">📝</div><p style="color:var(--text-400)">Sin cotizaciones. Crea la primera.</p></div>`
   return `
-    ${detailSection('Información General', `
-      ${detailRow('Referencia', o.name)}
-      ${detailRow('Estado', stateBadge(o.state, stateLabel[o.state] || o.state))}
-      ${detailRow('Cliente', o.partner_name || '—')}
-      ${detailRow('Referencia cliente', o.client_order_ref || '—')}
-      ${detailRow('Fecha', fmtDate(o.date_order))}
-      ${detailRow('Validez', fmtDate(o.validity_date))}
-      ${detailRow('Estado factura', o.invoice_status || '—')}
-    `)}
-    ${detailSection('Importes', `
-      ${detailRow('Subtotal', fmtMxn(o.amount_untaxed))}
-      ${detailRow('IVA', fmtMxn(o.amount_tax))}
-      ${detailRow('Total', `<strong style="font-size:16px;color:var(--primary)">${fmtMxn(o.amount_total)}</strong>`)}
-    `)}
-    ${detailSection('Líneas de venta', lineasHtml + addLineForm)}
-    ${o.note ? detailSection('Notas', `<p style="font-size:13px;line-height:1.6">${o.note}</p>`) : ''}
-    ${actionBtns}
-  `
+    <div class="o-list-actions-bar" id="clab"><span class="o-actions-count" id="csel-cnt">0 seleccionados</span>
+      <button class="o-action-btn-sm" onclick="alert('Exportar')">Exportar</button>
+    </div>
+    <div class="o-list-view"><table>
+      <thead><tr>
+        <th class="th-check"><input type="checkbox" class="o-list-checkbox" id="cca" onchange="window._cca(this.checked)"></th>
+        <th>Número</th><th>Cliente</th><th>Fecha</th><th>Validez</th><th>Estado</th><th style="text-align:right">Total</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r => `
+          <tr onclick="window._vCot(${r.id})" data-id="${r.id}">
+            <td class="td-check" onclick="event.stopPropagation()"><input type="checkbox" class="o-list-checkbox crc" data-id="${r.id}" onchange="window._crc()"></td>
+            <td><strong>${r.name || '-'}</strong></td>
+            <td>${r.partner_name || r.partner_id || '-'}</td>
+            <td>${r.date_order?.slice(0, 10) || '-'}</td>
+            <td>${r.validity_date?.slice(0, 10) || '<span style="color:var(--text-300)">—</span>'}</td>
+            <td>${stateBadge(r.state, LABEL_MAP[r.state] || r.state)}</td>
+            <td style="text-align:right;font-weight:700;color:var(--primary)">${fmtMxn(r.amount_total)}</td>
+          </tr>`).join('')}
+      </tbody></table></div>
+    <div style="padding:12px 20px;display:flex;justify-content:space-between;align-items:center;background:var(--bg-card);border-top:1px solid var(--border)">
+      <span style="font-size:13px;color:var(--text-400)">${rows.length} registros</span>
+      <div style="display:flex;gap:8px">
+        <button class="o-action-btn-sm" ${_page <= 1 ? 'disabled' : ''} onclick="window._cp(${_page - 1})">‹ Anterior</button>
+        <span style="padding:5px 10px;font-size:13px">${_page}</span>
+        <button class="o-action-btn-sm" onclick="window._cp(${_page + 1})">Siguiente ›</button>
+      </div></div>`
 }
 
-// ─── Acciones sobre cotizaciones ──────────────────────────────────────────────
-async function confirmCot(id) {
-  if (!confirm('¿Confirmar esta cotización? Pasará a pedido de venta.')) return
-  try {
-    await api.confirmarCotizacion(id)
-    toast('Cotización confirmada', 'El pedido fue confirmado correctamente', 'success')
-    window.__closeModal()
-    loadKpis()
-    loadTab(_page)
-  } catch(e) {
-    toast('Error', e.message, 'error')
-  }
+const KANBAN_COLS = [
+  { key: 'draft', label: 'Borrador', color: '#9CA3AF' },
+  { key: 'sent',  label: 'Enviada',  color: '#2563EB' },
+  { key: 'sale',  label: 'Confirmada', color: '#059669' },
+]
+
+function _kanban(rows) {
+  const g = {}; KANBAN_COLS.forEach(c => g[c.key] = [])
+  rows.forEach(r => { if (g[r.state]) g[r.state].push(r); else if (g['draft']) g['draft'].push(r) })
+  return `<div class="o-kanban-view">${KANBAN_COLS.map(col => `
+    <div class="o-kanban-col">
+      <div class="o-kanban-col-header" style="border-top:3px solid ${col.color}">
+        <span>${col.label}</span><span class="o-kanban-col-count">${g[col.key].length}</span>
+      </div>
+      <div class="o-kanban-cards">
+        ${g[col.key].map(r => `
+          <div class="o-kanban-card" onclick="window._vCot(${r.id})">
+            <div class="o-kanban-card-title">${r.name || '#' + r.id}</div>
+            <div style="font-size:12px;color:var(--text-400);margin-bottom:8px">${r.partner_name || ''}</div>
+            <div class="o-kanban-card-meta">
+              <span style="font-size:11px">${r.validity_date?.slice(0, 10) ? '⏰ ' + r.validity_date.slice(0, 10) : r.date_order?.slice(0, 10) || ''}</span>
+              <span class="o-kanban-card-amount">${fmtMxn(r.amount_total)}</span>
+            </div>
+          </div>`).join('') || '<div style="padding:16px;text-align:center;color:var(--text-300);font-size:12px">Vacío</div>'}
+      </div>
+    </div>`).join('')}</div>`
 }
 
-async function cancelCot(id) {
-  if (!confirm('¿Cancelar esta cotización?')) return
-  try {
-    await api.cancelarCotizacion(id)
-    toast('Cotización cancelada', '', 'info')
-    window.__closeModal()
-    loadKpis()
-    loadTab(_page)
-  } catch(e) {
-    toast('Error', e.message, 'error')
-  }
-}
-
-async function addLinea(orderId) {
-  const name  = document.getElementById('linea-name')?.value?.trim()
-  const qty   = parseFloat(document.getElementById('linea-qty')?.value || '1')
-  const price = parseFloat(document.getElementById('linea-price')?.value || '0')
-  const dto   = parseFloat(document.getElementById('linea-dto')?.value || '0') || null
-
-  if (!name)  return toast('Campo requerido', 'Escribe una descripción de producto', 'warning')
-  if (!price) return toast('Campo requerido', 'Ingresa el precio unitario', 'warning')
-
-  try {
-    await api.agregarLinea(orderId, {
-      name,
-      product_uom_qty: qty,
-      price_unit: price,
-      discount: dto
+function _initCB() {
+  window._cca = (c) => { document.querySelectorAll('.crc').forEach(cb => cb.checked = c); window._crc() }
+  window._crc = () => {
+    const n = document.querySelectorAll('.crc:checked').length
+    const b = document.getElementById('clab'), s = document.getElementById('csel-cnt')
+    if (b) b.classList.toggle('visible', n > 0)
+    if (s) s.textContent = n + ' seleccionado' + (n !== 1 ? 's' : '')
+    document.querySelectorAll('[data-id]').forEach(tr => {
+      const cb = tr.querySelector('.crc'); if (cb) tr.classList.toggle('selected', cb.checked)
     })
-    toast('Línea agregada', '', 'success')
-    openCotDetail(orderId) // refrescar detalle
-  } catch(e) {
-    toast('Error al agregar línea', e.message, 'error')
   }
 }
 
-async function deleteLinea(orderId, lineaId) {
-  if (!confirm('¿Eliminar esta línea?')) return
-  try {
-    await api.eliminarLinea(orderId, lineaId)
-    toast('Línea eliminada', '', 'success')
-    openCotDetail(orderId)
-  } catch(e) {
-    toast('Error', e.message, 'error')
-  }
-}
+window._cp = (p) => { _page = p; _load() }
 
-// ─── Formulario nueva cotización ──────────────────────────────────────────────
-function renderFormNueva() {
-  _lineasNueva = []
-  const content = document.getElementById('cot-content')
-  if (!content) return
-
-  content.innerHTML = `
-    <div style="max-width:800px;margin:0 auto">
-      <div class="card" style="padding:28px">
-        <h2 style="font-size:18px;font-weight:700;margin-bottom:24px;color:var(--text)">Nueva Cotización</h2>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-          <div class="form-group">
-            <label class="form-label">Cliente (nombre exacto) *</label>
-            <input id="nv-partner" class="form-control" placeholder="Nombre del cliente" autocomplete="off">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Referencia del cliente</label>
-            <input id="nv-ref" class="form-control" placeholder="Ej: OC-2024-001">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Fecha de validez</label>
-            <input id="nv-validez" class="form-control" type="date">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Notas internas</label>
-            <input id="nv-nota" class="form-control" placeholder="Observaciones opcionales">
-          </div>
+// ===== FORMULARIO NUEVA COTIZACIÓN (inline) =====
+function _abrirFormNueva() {
+  setBreadcrumb([{ label: 'Cotizaciones', href: '#cotizaciones' }, { label: 'Nueva cotización' }])
+  setPage(`
+    <div class="o-form-view">
+      <div class="o-statusbar">
+        <div class="o-statusbar-status">
+          <div class="o-status-step active">Borrador</div>
+          <span class="o-status-arrow">›</span>
+          <div class="o-status-step">Enviada</div>
         </div>
-
-        <!-- Sección de líneas -->
-        <div style="margin-top:24px">
-          <div style="font-weight:700;font-size:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-            <span>📦 Líneas de venta</span>
-            <button class="btn btn-secondary btn-sm" onclick="window._nvAddRow()">+ Agregar producto</button>
-          </div>
-          <div id="nv-lineas-list">
-            <p style="color:var(--text-400);font-size:13px;padding:16px 0;text-align:center">
-              Sin líneas. Agrega productos para calcular el total.
-            </p>
-          </div>
-        </div>
-
-        <!-- Totales -->
-        <div style="margin-top:20px;padding:16px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border)">
-          <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px">
-            <span style="color:var(--text-400)">Subtotal</span>
-            <strong id="nv-subtotal">$0.00</strong>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px">
-            <span style="color:var(--text-400)">IVA (16%)</span>
-            <strong id="nv-iva">$0.00</strong>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:10px 0 6px;border-top:2px solid var(--border);margin-top:4px">
-            <span style="font-weight:700">Total</span>
-            <strong id="nv-total" style="font-size:18px;color:var(--primary)">$0.00</strong>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:12px;margin-top:24px">
-          <button class="btn btn-primary" onclick="window._nvGuardar()">💾 Guardar cotización</button>
-          <button class="btn btn-secondary" onclick="window._cotTab('draft')">Cancelar</button>
+        <div class="o-statusbar-buttons">
+          <button class="btn btn-secondary btn-sm" onclick="window._go('cotizaciones')">← Volver</button>
         </div>
       </div>
-    </div>
-  `
-  window._nvAddRow  = addNuevaRow
-  window._nvDelRow  = delNuevaRow
-  window._nvGuardar = guardarNueva
-  window._nvRecalc  = recalcTotales
-}
+      <div class="o-form-sheet">
+        <div class="o-form-title-row">
+          <h1 class="o-form-record-title">Nueva Cotización</h1>
+        </div>
+        <div class="o-form-group-wrapper">
+          <div class="o-form-group">
+            <div class="o-form-col">
+              <div class="o-field-row">
+                <div class="o-field-label">Cliente *</div>
+                <div class="o-field-value"><input id="nc-partner" class="form-control" placeholder="Nombre del cliente" autocomplete="off"></div>
+              </div>
+              <div class="o-field-row">
+                <div class="o-field-label">Referencia</div>
+                <div class="o-field-value"><input id="nc-ref" class="form-control" placeholder="Ref. del cliente"></div>
+              </div>
+            </div>
+            <div class="o-form-col">
+              <div class="o-field-row">
+                <div class="o-field-label">Validez</div>
+                <div class="o-field-value"><input id="nc-validez" class="form-control" type="date"></div>
+              </div>
+              <div class="o-field-row">
+                <div class="o-field-label">Notas</div>
+                <div class="o-field-value"><input id="nc-nota" class="form-control" placeholder="Observaciones opcionales"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;padding:16px 0">
+          <button class="btn btn-primary" onclick="window._guardarNuevaCot()">💾 Guardar cotización</button>
+          <button class="btn btn-secondary" onclick="window._go('cotizaciones')">Cancelar</button>
+        </div>
+      </div>
+    </div>`)
 
-function addNuevaRow() {
-  const idx = _lineasNueva.length
-  _lineasNueva.push({ name: '', qty: 1, price: 0, discount: 0 })
-  renderNuevaLineas()
-}
+  window._guardarNuevaCot = async () => {
+    const partnerNombre = document.getElementById('nc-partner')?.value?.trim()
+    const ref           = document.getElementById('nc-ref')?.value?.trim() || null
+    const validez       = document.getElementById('nc-validez')?.value || null
+    const nota          = document.getElementById('nc-nota')?.value?.trim() || null
 
-function delNuevaRow(idx) {
-  _lineasNueva.splice(idx, 1)
-  renderNuevaLineas()
-}
+    if (!partnerNombre) return toast('Campo requerido', 'Ingresa el nombre del cliente', 'warning')
 
-function renderNuevaLineas() {
-  const container = document.getElementById('nv-lineas-list')
-  if (!container) return
-  if (!_lineasNueva.length) {
-    container.innerHTML = `<p style="color:var(--text-400);font-size:13px;padding:16px 0;text-align:center">Sin líneas.</p>`
-    recalcTotales()
-    return
-  }
-  container.innerHTML = `
-    <div class="table-container">
-      <table class="data-table" style="font-size:13px">
-        <thead><tr>
-          <th style="width:40%">Descripción *</th>
-          <th>Cant.</th>
-          <th>Precio U.</th>
-          <th>Dto %</th>
-          <th>Subtotal</th>
-          <th></th>
-        </tr></thead>
-        <tbody>
-          ${_lineasNueva.map((l, i) => {
-            const dto = parseFloat(l.discount) || 0
-            const sub = (parseFloat(l.qty)||0) * (parseFloat(l.price)||0) * (1 - dto/100)
-            return `<tr>
-              <td><input class="form-control" style="font-size:12px" value="${l.name}" oninput="_lineasNueva[${i}].name=this.value" placeholder="Descripción del producto"></td>
-              <td><input class="form-control" style="font-size:12px;width:70px" type="number" min="0.01" step="0.01" value="${l.qty}" oninput="_lineasNueva[${i}].qty=this.value;window._nvRecalc()"></td>
-              <td><input class="form-control" style="font-size:12px;width:90px" type="number" min="0" step="0.01" value="${l.price}" oninput="_lineasNueva[${i}].price=this.value;window._nvRecalc()"></td>
-              <td><input class="form-control" style="font-size:12px;width:65px" type="number" min="0" max="100" step="0.01" value="${l.discount}" oninput="_lineasNueva[${i}].discount=this.value;window._nvRecalc()"></td>
-              <td style="font-weight:600">${fmtMxn(sub)}</td>
-              <td><button class="btn btn-secondary btn-sm" style="color:var(--red)" onclick="window._nvDelRow(${i})">✕</button></td>
-            </tr>`
-          }).join('')}
-        </tbody>
-      </table>
-    </div>`
-  recalcTotales()
-}
-
-function recalcTotales() {
-  let subtotal = 0
-  _lineasNueva.forEach(l => {
-    const dto = parseFloat(l.discount) || 0
-    subtotal += (parseFloat(l.qty)||0) * (parseFloat(l.price)||0) * (1 - dto/100)
-  })
-  const iva = subtotal * 0.16
-  const total = subtotal + iva
-  const fmt2 = n => n.toLocaleString('es-MX', { minimumFractionDigits:2, maximumFractionDigits:2 })
-  const s = document.getElementById('nv-subtotal')
-  const iv = document.getElementById('nv-iva')
-  const t = document.getElementById('nv-total')
-  if (s) s.textContent = '$' + fmt2(subtotal)
-  if (iv) iv.textContent = '$' + fmt2(iva)
-  if (t) t.textContent = '$' + fmt2(total)
-}
-
-async function guardarNueva() {
-  const partnerNombre = document.getElementById('nv-partner')?.value?.trim()
-  const ref          = document.getElementById('nv-ref')?.value?.trim() || null
-  const validez      = document.getElementById('nv-validez')?.value || null
-  const nota         = document.getElementById('nv-nota')?.value?.trim() || null
-
-  if (!partnerNombre) return toast('Campo requerido', 'Ingresa el nombre del cliente', 'warning')
-
-  // Buscar partner_id por nombre
-  let partnerId = 1
-  try {
-    // Usamos la API existente de partners para buscar por nombre
-    const res = await api.get(`/partners?pagina=1&q=${encodeURIComponent(partnerNombre)}&por_pagina=5`)
-    const lista = res?.data ?? []
-    const match = lista.find(p => p.name?.toLowerCase() === partnerNombre.toLowerCase())
-    if (match) {
-      partnerId = match.id
-    } else if (lista.length > 0) {
-      partnerId = lista[0].id
-    } else {
-      return toast('Cliente no encontrado', `No se encontró "${partnerNombre}"`, 'warning')
+    let partnerId = 1
+    try {
+      const res = await api.get(`/partners?pagina=1&q=${encodeURIComponent(partnerNombre)}&por_pagina=5`)
+      const lista = res?.data ?? []
+      const match = lista.find(p => p.name?.toLowerCase() === partnerNombre.toLowerCase())
+      if (match) { partnerId = match.id }
+      else if (lista.length > 0) { partnerId = lista[0].id }
+      else return toast('Cliente no encontrado', `No se encontró "${partnerNombre}"`, 'warning')
+    } catch (e) {
+      return toast('Error', 'No se pudo buscar el cliente: ' + e.message, 'error')
     }
-  } catch(e) {
-    return toast('Error', 'No se pudo buscar el cliente: ' + e.message, 'error')
-  }
 
-  const body = {
-    partner_id:          partnerId,
-    partner_invoice_id:  partnerId,
-    partner_shipping_id: partnerId,
-    note:                nota,
-    client_order_ref:    ref,
-    validity_date:       validez || null,
+    try {
+      const res = await api.crearCotizacion({
+        partner_id: partnerId, partner_invoice_id: partnerId, partner_shipping_id: partnerId,
+        note: nota, client_order_ref: ref, validity_date: validez || null,
+      })
+      const newId = res?.data?.id ?? res?.id
+      toast('Cotización creada', `ID ${newId}`, 'success')
+      if (newId) setTimeout(() => window._vCot(newId), 400)
+      else window._go('cotizaciones')
+    } catch (e) { toast('Error al crear cotización', e.message, 'error') }
   }
+}
 
+// ===== FORMULARIO COTIZACIÓN =====
+window._vCot = async (id) => {
+  setBreadcrumb([{ label: 'Cotizaciones', href: '#cotizaciones' }, { label: 'Cargando…' }])
+  setPage(`<div style="padding:40px">${skeletonTable(3, 5)}</div>`)
   try {
-    const res = await api.crearCotizacion(body)
-    const newId = res?.data?.id ?? res?.id
-    toast('Cotización creada', `ID ${newId} — Referencia generada`, 'success')
+    const res = await api.cotizacion(id)
+    const c = res?.data || res; if (!c) throw new Error('No encontrada')
+    setBreadcrumb([{ label: 'Cotizaciones', href: '#cotizaciones' }, { label: c.name || '#' + id }])
 
-    // Agregar líneas si las hay
-    if (newId && _lineasNueva.length) {
-      for (const l of _lineasNueva) {
-        if (!l.name) continue
-        await api.agregarLinea(newId, {
-          name: l.name,
-          product_uom_qty: parseFloat(l.qty) || 1,
-          price_unit: parseFloat(l.price) || 0,
-          discount: parseFloat(l.discount) || null,
-        }).catch(() => {})
+    const STEPS = ['draft', 'sent']
+    const si = STEPS.indexOf(c.state)
+    const STEP_LABELS = { draft: 'Borrador', sent: 'Enviada' }
+
+    setPage(`
+      <div class="o-form-view" id="cfv">
+        <div class="o-statusbar">
+          <div class="o-statusbar-status">
+            ${STEPS.map((s, i) => `
+              <div class="o-status-step ${s === c.state ? 'active' : ''} ${i < si ? 'done' : ''}">
+                ${i < si ? '✔ ' : ''}${STEP_LABELS[s] || s}
+              </div>${i < STEPS.length - 1 ? '<span class="o-status-arrow">›</span>' : ''}`).join('')}
+            ${c.state === 'sale' ? '<span class="o-status-arrow">›</span><div class="o-status-step done">✔ Confirmada</div>' : ''}
+            ${c.state === 'cancel' ? '<span class="o-status-arrow">›</span><div class="o-status-step active" style="color:#DC2626">Cancelada</div>' : ''}
+          </div>
+          <div class="o-statusbar-buttons">
+            ${(c.state === 'draft' || c.state === 'sent') ? `
+              <button class="btn btn-secondary btn-sm" onclick="window._emailCot(${id})">✉️ Enviar por Email</button>
+              <button class="btn btn-primary btn-sm" onclick="window._confirmarCot(${id})">✅ Confirmar Pedido</button>
+            ` : ''}
+            ${c.state === 'sale' ? `<button class="btn btn-secondary btn-sm" onclick="window._vVenta(${id})">📋 Ver Orden</button>` : ''}
+            ${c.state !== 'cancel' && c.state !== 'sale' ? `<button class="btn btn-sm" style="background:#FEE2E2;color:#DC2626;border:none;padding:6px 14px;border-radius:8px;font-weight:600;cursor:pointer" onclick="window._cancelarCot(${id})">❌ Cancelar</button>` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="window._go('cotizaciones')">← Volver</button>
+          </div>
+        </div>
+        <div class="o-smart-buttons">
+          <button class="o-smart-btn" ${c.state === 'sale' ? `onclick="window._vVenta(${id})"` : ''}>
+            <span class="o-count">${c.state === 'sale' ? '1' : '0'}</span>
+            <span class="o-label">📋 Órdenes</span>
+          </button>
+          <button class="o-smart-btn"><span class="o-count">0</span><span class="o-label">✉️ Emails</span></button>
+        </div>
+        <div class="o-form-sheet">
+          <div class="o-form-title-row">
+            <h1 class="o-form-record-title">${c.name || 'Nueva Cotización'}</h1>
+            <span class="o-form-subtitle">${c.partner_name || ''}</span>
+          </div>
+          <div class="o-form-group-wrapper">
+            <div class="o-form-group">
+              <div class="o-form-col">
+                <div class="o-field-row"><div class="o-field-label">Cliente</div><div class="o-field-value"><strong>${c.partner_name || c.partner_id || '<span class="o-field-empty">—</span>'}</strong></div></div>
+                <div class="o-field-row"><div class="o-field-label">Fecha</div><div class="o-field-value">${c.date_order?.slice(0, 10) || '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Validez</div><div class="o-field-value">${c.validity_date?.slice(0, 10) || '<span class="o-field-empty">—</span>'}</div></div>
+              </div>
+              <div class="o-form-col">
+                <div class="o-field-row"><div class="o-field-label">Estado</div><div class="o-field-value">${stateBadge(c.state, LABEL_MAP[c.state] || c.state)}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Referencia</div><div class="o-field-value">${c.client_order_ref || '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Vendedor</div><div class="o-field-value">${c.user_id || c.user_name || '<span class="o-field-empty">—</span>'}</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="o-notebook">
+            <div class="o-tabs">
+              <button class="o-tab active" onclick="window._ct('cl')">Líneas</button>
+              <button class="o-tab" onclick="window._ct('cc')">Condiciones</button>
+            </div>
+            <div class="o-tab-panel active" id="tab-panel-cl">
+              <table class="o-editable-table"><thead><tr>
+                <th>Producto</th><th>Descripción</th>
+                <th style="text-align:right">Qty</th>
+                <th style="text-align:right">Precio</th>
+                <th style="text-align:right">Desc.</th>
+                <th style="text-align:right">Subtotal</th>
+              </tr></thead>
+              <tbody id="clineas"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-400)">⏳ Cargando…</td></tr></tbody></table>
+              <div class="o-lines-totals"><table>
+                <tr><td>Subtotal:</td><td style="text-align:right;font-weight:600">${fmtMxn(c.amount_untaxed)}</td></tr>
+                <tr><td>IVA (16%):</td><td style="text-align:right;font-weight:600">${fmtMxn(c.amount_tax)}</td></tr>
+                <tr class="total-row"><td>TOTAL:</td><td style="text-align:right">${fmtMxn(c.amount_total)}</td></tr>
+              </table></div>
+            </div>
+            <div class="o-tab-panel" id="tab-panel-cc">
+              <div class="o-form-group"><div class="o-form-col">
+                <div class="o-field-row"><div class="o-field-label">Notas</div><div class="o-field-value">${c.note || '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Plazo de pago</div><div class="o-field-value">${c.payment_term_name || c.payment_term || '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Política entrega</div><div class="o-field-value">${c.picking_policy || '<span class="o-field-empty">—</span>'}</div></div>
+              </div></div>
+            </div>
+          </div>
+        </div>
+        <div class="o-chatter">
+          <div class="o-chatter-topbar">
+            <button class="o-chatter-btn">✉️ Enviar mensaje</button>
+            <button class="o-chatter-btn">📋 Nota interna</button>
+            <button class="o-chatter-btn">📎 Adjuntar</button>
+          </div>
+          <div class="o-chatter-thread">
+            <div class="o-message">
+              <div class="o-msg-avatar" style="background:#D97706">C</div>
+              <div class="o-msg-content">
+                <div class="o-msg-header">
+                  <span class="o-msg-author">Sistema</span>
+                  <span class="o-msg-date">${new Date().toLocaleDateString('es-MX')}</span>
+                </div>
+                <div class="o-msg-text">Cotización ${c.name || ''} — Estado: ${LABEL_MAP[c.state] || c.state}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`)
+
+    // Tabs
+    window._ct = (tabId) => {
+      document.querySelectorAll('.o-tab').forEach(t => t.classList.remove('active'))
+      document.querySelectorAll('.o-tab-panel').forEach(p => p.classList.remove('active'))
+      const btn = document.querySelector(`.o-tab[onclick*="'${tabId}'"]`)
+      if (btn) btn.classList.add('active')
+      const panel = document.getElementById('tab-panel-' + tabId)
+      if (panel) panel.classList.add('active')
+    }
+
+    // Cargar líneas
+    try {
+      const lr = await api.get(`/cotizaciones/${id}/lineas`)
+      const ls = lr?.data || []
+      const lb = document.getElementById('clineas')
+      if (lb) {
+        lb.innerHTML = ls.length
+          ? ls.map(l => `<tr>
+              <td>${l.product_id ? '#' + l.product_id : '<span class="o-field-empty">—</span>'}</td>
+              <td>${l.name || '-'}</td>
+              <td style="text-align:right">${l.product_uom_qty ?? 0}</td>
+              <td style="text-align:right">${fmtMxn(l.price_unit)}</td>
+              <td style="text-align:right">${l.discount ? l.discount + '%' : '0%'}</td>
+              <td style="text-align:right;font-weight:700">${fmtMxn(l.price_subtotal)}</td>
+            </tr>`).join('')
+          : '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-400)">Sin líneas de cotización</td></tr>'
       }
+    } catch (_) { /* líneas opcionales */ }
+
+    // Acciones del formulario
+    window._emailCot = async (cid) => {
+      try {
+        await api.put(`/cotizaciones/${cid}/enviar`, {})
+        toast('OK', 'Cotización enviada por email', 'success')
+        window._vCot(cid)
+      } catch (e) { toast('Error', e.message, 'error') }
+    }
+    window._confirmarCot = async (cid) => {
+      if (!confirm('¿Confirmar cotización como pedido de venta?')) return
+      try {
+        await api.confirmarCotizacion(cid)
+        toast('OK', 'Cotización confirmada como venta', 'success')
+        setTimeout(() => window._go('ventas'), 600)
+      } catch (e) { toast('Error', e.message, 'error') }
+    }
+    window._cancelarCot = async (cid) => {
+      if (!confirm('¿Cancelar cotización?')) return
+      try {
+        await api.cancelarCotizacion(cid)
+        toast('Cancelado', '', 'info')
+        window._go('cotizaciones')
+      } catch (e) { toast('Error', e.message, 'error') }
     }
 
-    _lineasNueva = []
-    loadKpis()
-    switchTab('draft')
-    setTimeout(() => newId && openCotDetail(newId), 600)
-  } catch(e) {
-    toast('Error al crear cotización', e.message, 'error')
+  } catch (e) {
+    setPage(`<div style="padding:40px;text-align:center"><p style="color:#DC2626">⚠️ ${e.message}</p><button class="o-btn-new" onclick="window._go('cotizaciones')">Volver</button></div>`)
   }
 }
+
+function _deb(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms) } }
