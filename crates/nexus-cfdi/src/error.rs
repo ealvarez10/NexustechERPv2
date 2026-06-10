@@ -42,4 +42,13 @@ pub enum CfdiError {
 
     #[error("Catálogo SAT inválido: {0}")]
     CatalogoInvalido(String),
+
+    #[error("Error al generar PDF: {0}")]
+    Pdf(String),
+
+    #[error("Error de nómina: {0}")]
+    Nomina(String),
+
+    #[error("Error de complemento: {0}")]
+    Complemento(String),
 }
