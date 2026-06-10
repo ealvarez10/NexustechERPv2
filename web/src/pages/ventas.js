@@ -59,10 +59,10 @@ async function loadVentas() {
     const kpiRow = document.getElementById('kpi-row')
     if (kpiRow && kpis) {
       kpiRow.innerHTML = [
-        { label: 'Total Órdenes',     val: kpis.total_ordenes    || 0, tipo:'num', color:'indigo'  },
-        { label: 'Ventas del Mes',    val: kpis.importe_mes      || 0, tipo:'mxn', color:'emerald' },
-        { label: 'Ticket Promedio',   val: kpis.ticket_promedio  || 0, tipo:'mxn', color:'violet'  },
-        { label: 'Clientes Activos',  val: kpis.clientes_activos || 0, tipo:'num', color:'amber'   },
+        { label: 'Total Órdenes',    val: kpis.ordenes_confirmadas ?? kpis.total_ordenes ?? 0,   tipo:'num', color:'indigo'  },
+        { label: 'Ventas del Mes',   val: kpis.total_facturado    ?? kpis.importe_mes    ?? 0,   tipo:'mxn', color:'emerald' },
+        { label: 'Ticket Promedio',  val: kpis.ticket_promedio    ?? 0,                          tipo:'mxn', color:'violet'  },
+        { label: 'Clientes Activos', val: kpis.clientes_activos   ?? kpis.ordenes_este_mes ?? 0, tipo:'num', color:'amber'   },
       ].map(k => `
       <div class="data-card" style="padding:16px">
         <div style="font-size:11px;color:var(--text-400);font-weight:600;margin-bottom:6px">${k.label}</div>

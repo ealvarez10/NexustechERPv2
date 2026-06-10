@@ -62,18 +62,25 @@ async function loadProductos() {
           </tr></thead>
           <tbody>
             ${productos.map(p => {
-              const nombre = p.name || p.nombre || `Producto #${p.id}`
-              const tipo = p.type === 'consu' ? 'Consumible' : p.type === 'service' ? 'Servicio' : 'Almacenable'
-              const tipoColor = p.type === 'service' ? 'violet' : p.type === 'consu' ? 'sky' : 'indigo'
+              // name viene como JSONB {es_MX: '...', en_US: '...'}
+              const nombre = (p.name && typeof p.name === 'object')
+                ? (p.name.es_MX || p.name.en_US || Object.values(p.name)[0] || `Producto #${p.id}`)
+                : (p.name || p.nombre || `Producto #${p.id}`)
+              // Rust renombra 'type' (reservado) a 'type_'
+              const tp = p.type_ || p.type || ''
+              const tipo = tp === 'consu' ? 'Consumible' : tp === 'service' ? 'Servicio' : tp === 'product' ? 'Almacenable' : 'Consumible'
+              const tipoColor = tp === 'service' ? 'violet' : tp === 'consu' ? 'sky' : 'indigo'
               const precio = fmtMxn(parseFloat(p.list_price || p.precio || 0))
               const activo = p.active !== false
+              const categRaw = p.categ_name || p.categoria || ''
+              const categ = categRaw === 'Goods' ? 'Mercancía' : categRaw === 'Services' ? 'Servicios' : categRaw || '—'
               return `
-              <tr data-tipo="${p.type || ''}">
+              <tr data-tipo="${tp}">
                 <td class="td-mono">${p.default_code || '—'}</td>
                 <td class="td-primary">${nombre}</td>
                 <td><span class="badge badge-${tipoColor}">${tipo}</span></td>
                 <td class="td-amount" style="font-weight:700">${precio}</td>
-                <td style="color:var(--text-400);font-size:12px">${p.categ_name || p.categoria || '—'}</td>
+                <td style="color:var(--text-400);font-size:12px">${categ}</td>
                 <td><span class="badge badge-${activo ? 'emerald' : 'gray'}">${activo ? 'Activo' : 'Inactivo'}</span></td>
               </tr>`
             }).join('')}

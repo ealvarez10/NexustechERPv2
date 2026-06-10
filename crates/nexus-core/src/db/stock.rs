@@ -13,55 +13,67 @@ use crate::error::CoreError;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct KpisInventario {
     pub total_productos_con_stock: i64,
-    pub total_sin_stock: i64,
-    pub valor_inventario: Decimal,
-    pub alertas_stock_bajo: i64,
+    pub total_sin_stock:           i64,
+    pub valor_inventario:          Decimal,
+    pub alertas_stock_bajo:        i64,
 }
 
 /// Stock por producto (vista resumida)
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct StockProducto {
-    pub product_id: i32,
-    pub product_name: Option<String>,
+    pub product_id:          i32,
+    /// Nombre extraído del JSONB (es_MX → en_US → id)
+    pub product_name:        Option<String>,
     pub cantidad_disponible: Decimal,
-    pub cantidad_reservada: Decimal,
-    pub unidad: Option<String>,
-    pub ubicacion: Option<String>,
+    pub cantidad_reservada:  Decimal,
+    pub ubicacion:           Option<String>,
 }
 
-// ─── Consultas ────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/// Lista stock disponible para una empresa (paginado)
+/// Extrae el nombre español de un JSONB multilang, o inglés como fallback.
+/// Se usa directamente en SQL con COALESCE.
+const NOMBRE_EXPR: &str = r#"
+    COALESCE(
+        pt.name->>'es_MX',
+        pt.name->>'en_US',
+        pt.name::text
+    )
+"#;
+
+// stock_quant.company_id puede ser NULL — filtramos por location interna
+const WHERE_STOCK: &str = r#"
+    sl.usage = 'internal'
+    AND sq.quantity > 0
+"#;
+
+// ─── Consultas ───────────────────────────────────────────────────────────────
+
+/// Lista stock disponible (paginado)
 pub async fn listar_stock(
     pool: &PgPool,
-    company_id: i32,
+    _company_id: i32,
     pagina: i64,
     por_pagina: i64,
 ) -> Result<Vec<StockProducto>, CoreError> {
-    let offset = (pagina - 1) * por_pagina;
+    let offset = (pagina - 1).max(0) * por_pagina;
 
-    let rows = sqlx::query_as::<_, StockProducto>(
-        r#"
-        SELECT
+    let rows = sqlx::query_as::<_, StockProducto>(&format!(
+        r#"SELECT
             sq.product_id,
-            pt.name AS product_name,
-            COALESCE(SUM(sq.quantity), 0)          AS cantidad_disponible,
-            COALESCE(SUM(sq.reserved_quantity), 0) AS cantidad_reservada,
-            uu.name                                AS unidad,
-            sl.complete_name                       AS ubicacion
-        FROM stock_quant sq
-        JOIN product_product pp ON pp.id = sq.product_id
-        JOIN product_template pt ON pt.id = pp.product_tmpl_id
-        LEFT JOIN uom_uom uu ON uu.id = pt.uom_id
-        LEFT JOIN stock_location sl ON sl.id = sq.location_id
-        WHERE sq.company_id = $1
-          AND sl.usage = 'internal'
-        GROUP BY sq.product_id, pt.name, uu.name, sl.complete_name
-        ORDER BY pt.name ASC
-        LIMIT $2 OFFSET $3
-        "#,
-    )
-    .bind(company_id)
+            {NOMBRE_EXPR}                                AS product_name,
+            COALESCE(SUM(sq.quantity), 0)               AS cantidad_disponible,
+            COALESCE(SUM(sq.reserved_quantity), 0)      AS cantidad_reservada,
+            sl.complete_name                             AS ubicacion
+           FROM stock_quant sq
+           JOIN product_product pp  ON pp.id = sq.product_id
+           JOIN product_template pt ON pt.id = pp.product_tmpl_id
+           JOIN stock_location   sl ON sl.id = sq.location_id
+           WHERE {WHERE_STOCK}
+           GROUP BY sq.product_id, pt.name, sl.complete_name
+           ORDER BY product_name ASC
+           LIMIT $1 OFFSET $2"#
+    ))
     .bind(por_pagina)
     .bind(offset)
     .fetch_all(pool)
@@ -70,161 +82,110 @@ pub async fn listar_stock(
     Ok(rows)
 }
 
-/// Total de registros de stock para paginación
-pub async fn contar_stock(pool: &PgPool, company_id: i32) -> Result<i64, CoreError> {
-    let row: (i64,) = sqlx::query_as::<_, (i64,)>(
-        r#"
-        SELECT COUNT(DISTINCT sq.product_id)
-        FROM stock_quant sq
-        JOIN stock_location sl ON sl.id = sq.location_id
-        WHERE sq.company_id = $1
-          AND sl.usage = 'internal'
-        "#,
+/// Total de líneas de stock para paginación
+pub async fn contar_stock(pool: &PgPool, _company_id: i32) -> Result<i64, CoreError> {
+    let row: (i64,) = sqlx::query_as(
+        r#"SELECT COUNT(DISTINCT sq.product_id)
+           FROM stock_quant sq
+           JOIN stock_location sl ON sl.id = sq.location_id
+           WHERE sl.usage = 'internal' AND sq.quantity > 0"#,
     )
-    .bind(company_id)
     .fetch_one(pool)
     .await?;
-
     Ok(row.0)
 }
 
-/// Obtiene KPIs del inventario para una empresa
-pub async fn kpis(pool: &PgPool, company_id: i32) -> Result<KpisInventario, CoreError> {
-    // Productos con stock positivo
-    let con_stock: (i64,) = sqlx::query_as::<_, (i64,)>(
-        r#"
-        SELECT COUNT(DISTINCT sq.product_id)
-        FROM stock_quant sq
-        JOIN stock_location sl ON sl.id = sq.location_id
-        WHERE sq.company_id = $1
-          AND sl.usage = 'internal'
-          AND sq.quantity > 0
-        "#,
-    )
-    .bind(company_id)
-    .fetch_one(pool)
-    .await?;
-
-    // Productos sin stock (quantity <= 0)
-    let sin_stock: (i64,) = sqlx::query_as::<_, (i64,)>(
-        r#"
-        SELECT COUNT(DISTINCT sq.product_id)
-        FROM stock_quant sq
-        JOIN stock_location sl ON sl.id = sq.location_id
-        WHERE sq.company_id = $1
-          AND sl.usage = 'internal'
-          AND sq.quantity <= 0
-        "#,
-    )
-    .bind(company_id)
-    .fetch_one(pool)
-    .await?;
-
-    // Valor del inventario (qty * standard_price)
-    let valor: (Option<Decimal>,) = sqlx::query_as::<_, (Option<Decimal>,)>(
-        r#"
-        SELECT SUM(sq.quantity * pp_cost.standard_price)
-        FROM stock_quant sq
-        JOIN stock_location sl ON sl.id = sq.location_id
-        JOIN product_product pp ON pp.id = sq.product_id
-        JOIN product_product pp_cost ON pp_cost.id = sq.product_id
-        WHERE sq.company_id = $1
-          AND sl.usage = 'internal'
-          AND sq.quantity > 0
-        "#,
-    )
-    .bind(company_id)
-    .fetch_one(pool)
-    .await?;
-
-    // Alertas: productos con quantity < 5 (umbral conservador sin tabla reorderpoint)
-    let alertas: (i64,) = sqlx::query_as::<_, (i64,)>(
-        r#"
-        SELECT COUNT(DISTINCT sq.product_id)
-        FROM stock_quant sq
-        JOIN stock_location sl ON sl.id = sq.location_id
-        WHERE sq.company_id = $1
-          AND sl.usage = 'internal'
-          AND sq.quantity > 0
-          AND sq.quantity < 5
-        "#,
-    )
-    .bind(company_id)
-    .fetch_one(pool)
-    .await?;
-
-    Ok(KpisInventario {
-        total_productos_con_stock: con_stock.0,
-        total_sin_stock: sin_stock.0,
-        valor_inventario: valor.0.unwrap_or(Decimal::ZERO),
-        alertas_stock_bajo: alertas.0,
-    })
-}
-
-/// Busca stock de un producto específico (todas las ubicaciones)
+/// Stock de un producto específico (por variante product_product.id)
 pub async fn stock_por_producto(
     pool: &PgPool,
     product_id: i32,
 ) -> Result<Vec<StockProducto>, CoreError> {
-    let rows = sqlx::query_as::<_, StockProducto>(
-        r#"
-        SELECT
+    let rows = sqlx::query_as::<_, StockProducto>(&format!(
+        r#"SELECT
             sq.product_id,
-            pt.name AS product_name,
-            COALESCE(sq.quantity, 0)          AS cantidad_disponible,
-            COALESCE(sq.reserved_quantity, 0) AS cantidad_reservada,
-            uu.name                           AS unidad,
-            sl.complete_name                  AS ubicacion
-        FROM stock_quant sq
-        JOIN product_product pp ON pp.id = sq.product_id
-        JOIN product_template pt ON pt.id = pp.product_tmpl_id
-        LEFT JOIN uom_uom uu ON uu.id = pt.uom_id
-        LEFT JOIN stock_location sl ON sl.id = sq.location_id
-        WHERE sq.product_id = $1
-          AND sl.usage = 'internal'
-        ORDER BY sl.complete_name ASC
-        "#,
-    )
+            {NOMBRE_EXPR}                                AS product_name,
+            COALESCE(SUM(sq.quantity), 0)               AS cantidad_disponible,
+            COALESCE(SUM(sq.reserved_quantity), 0)      AS cantidad_reservada,
+            sl.complete_name                             AS ubicacion
+           FROM stock_quant sq
+           JOIN product_product pp  ON pp.id = sq.product_id
+           JOIN product_template pt ON pt.id = pp.product_tmpl_id
+           JOIN stock_location   sl ON sl.id = sq.location_id
+           WHERE sq.product_id = $1
+           GROUP BY sq.product_id, pt.name, sl.complete_name"#
+    ))
     .bind(product_id)
     .fetch_all(pool)
     .await?;
-
     Ok(rows)
 }
 
-/// Productos con stock bajo (quantity entre 0 y 5)
+/// Productos con stock bajo (cantidad disponible < umbral)
 pub async fn productos_stock_bajo(
     pool: &PgPool,
-    company_id: i32,
-    limite: i32,
+    _company_id: i32,
+    umbral: i32,
 ) -> Result<Vec<StockProducto>, CoreError> {
-    let rows = sqlx::query_as::<_, StockProducto>(
-        r#"
-        SELECT
+    let rows = sqlx::query_as::<_, StockProducto>(&format!(
+        r#"SELECT
             sq.product_id,
-            pt.name AS product_name,
-            COALESCE(SUM(sq.quantity), 0)          AS cantidad_disponible,
-            COALESCE(SUM(sq.reserved_quantity), 0) AS cantidad_reservada,
-            uu.name                                AS unidad,
-            sl.complete_name                       AS ubicacion
-        FROM stock_quant sq
-        JOIN product_product pp ON pp.id = sq.product_id
-        JOIN product_template pt ON pt.id = pp.product_tmpl_id
-        LEFT JOIN uom_uom uu ON uu.id = pt.uom_id
-        LEFT JOIN stock_location sl ON sl.id = sq.location_id
-        WHERE sq.company_id = $1
-          AND sl.usage = 'internal'
-        GROUP BY sq.product_id, pt.name, uu.name, sl.complete_name
-        HAVING COALESCE(SUM(sq.quantity), 0) > 0
-           AND COALESCE(SUM(sq.quantity), 0) < 5
-        ORDER BY cantidad_disponible ASC
-        LIMIT $2
-        "#,
-    )
-    .bind(company_id)
-    .bind(limite)
+            {NOMBRE_EXPR}                                AS product_name,
+            COALESCE(SUM(sq.quantity), 0)               AS cantidad_disponible,
+            COALESCE(SUM(sq.reserved_quantity), 0)      AS cantidad_reservada,
+            sl.complete_name                             AS ubicacion
+           FROM stock_quant sq
+           JOIN product_product pp  ON pp.id = sq.product_id
+           JOIN product_template pt ON pt.id = pp.product_tmpl_id
+           JOIN stock_location   sl ON sl.id = sq.location_id
+           WHERE {WHERE_STOCK}
+           GROUP BY sq.product_id, pt.name, sl.complete_name
+           HAVING SUM(sq.quantity) < $1
+           ORDER BY cantidad_disponible ASC
+           LIMIT 50"#
+    ))
+    .bind(umbral)
     .fetch_all(pool)
     .await?;
-
     Ok(rows)
+}
+
+/// KPIs de inventario
+pub async fn kpis(pool: &PgPool, _company_id: i32) -> Result<KpisInventario, CoreError> {
+    #[derive(sqlx::FromRow)]
+    struct Row {
+        con_stock:       i64,
+        sin_stock:       i64,
+        valor:           Option<Decimal>,
+        stock_bajo:      i64,
+    }
+
+    let row = sqlx::query_as::<_, Row>(
+        r#"WITH stock_agg AS (
+            SELECT
+                sq.product_id,
+                SUM(sq.quantity)           AS qty,
+                MAX(pt.list_price::numeric) AS precio
+            FROM stock_quant sq
+            JOIN product_product pp  ON pp.id = sq.product_id
+            JOIN product_template pt ON pt.id = pp.product_tmpl_id
+            JOIN stock_location   sl ON sl.id = sq.location_id
+            WHERE sl.usage = 'internal'
+            GROUP BY sq.product_id
+           )
+           SELECT
+               COUNT(*) FILTER (WHERE qty > 0)             AS con_stock,
+               COUNT(*) FILTER (WHERE qty <= 0)             AS sin_stock,
+               SUM(qty::numeric * precio::numeric)          AS valor,
+               COUNT(*) FILTER (WHERE qty > 0 AND qty < 10) AS stock_bajo
+           FROM stock_agg"#,
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(KpisInventario {
+        total_productos_con_stock: row.con_stock,
+        total_sin_stock:           row.sin_stock,
+        valor_inventario:          row.valor.unwrap_or(Decimal::ZERO),
+        alertas_stock_bajo:        row.stock_bajo,
+    })
 }

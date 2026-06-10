@@ -14,13 +14,13 @@ pub struct SaleOrder {
     pub name:               Option<String>,
     pub state:              Option<String>,
     pub invoice_status:     Option<String>,
-    pub date_order:         Option<chrono::DateTime<chrono::Utc>>,
+    /// date_order como texto — evita conflicto TIMESTAMP vs TIMESTAMPTZ
+    pub date_order:         Option<String>,
     pub amount_untaxed:     Option<Decimal>,
     pub amount_tax:         Option<Decimal>,
     pub amount_total:       Option<Decimal>,
     pub currency_rate:      Option<Decimal>,
     pub picking_policy:     Option<String>,
-    /// Nombre del partner (JOIN)
     pub partner_name:       Option<String>,
 }
 
@@ -43,7 +43,7 @@ pub struct SaleOrderLine {
 const SELECT_COLS: &str = r#"
     so.id, so.company_id, so.partner_id,
     so.name, so.state, so.invoice_status,
-    so.date_order,
+    so.date_order::text AS date_order,
     so.amount_untaxed, so.amount_tax, so.amount_total,
     so.currency_rate,
     so.picking_policy,

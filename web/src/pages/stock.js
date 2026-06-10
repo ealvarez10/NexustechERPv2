@@ -102,15 +102,14 @@ async function loadStock() {
             ${items.map(s => {
               const qty = parseFloat(s.cantidad_disponible || 0)
               const reservado = parseFloat(s.cantidad_reservada || 0)
-              const color = qty <= 0 ? 'red' : qty < 5 ? 'amber' : 'emerald'
-              const estado = qty <= 0 ? '❌ Sin stock' : qty < 5 ? '⚠️ Stock bajo' : '✅ Normal'
+              const color = qty <= 0 ? 'red' : qty < 10 ? 'amber' : 'emerald'
+              const estado = qty <= 0 ? '❌ Sin stock' : qty < 10 ? '⚠️ Stock bajo' : '✅ Normal'
               return `
-              <tr data-alerta="${qty < 5 ? 'bajo' : 'ok'}">
+              <tr data-alerta="${qty < 10 ? 'bajo' : 'ok'}">
                 <td class="td-primary">${s.product_name || `Producto #${s.product_id}`}</td>
                 <td><span class="badge badge-${color}">${fmt(qty, 0)}</span></td>
                 <td style="color:var(--text-400)">${fmt(reservado, 0)}</td>
-                <td style="color:var(--text-400)">${s.unidad || 'Unid.'}</td>
-                <td class="td-mono" style="font-size:11px">${s.ubicacion || '—'}</td>
+                <td class="td-mono" style="font-size:11px" colspan="2">${s.ubicacion || '—'}</td>
                 <td><span class="badge badge-${color}">${estado}</span></td>
               </tr>`
             }).join('')}
