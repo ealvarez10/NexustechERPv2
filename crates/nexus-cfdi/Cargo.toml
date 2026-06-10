@@ -3,10 +3,29 @@ name = "nexus-cfdi"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+description = "CFDI 4.0 en Rust — Primer crate completo de facturación electrónica SAT México"
+license = "MIT"
+keywords = ["cfdi", "sat", "mexico", "facturacion", "rfc"]
+categories = ["finance", "api-bindings"]
 
 [dependencies]
-serde = { workspace = true }
-serde_json = { workspace = true }
-anyhow = { workspace = true }
-thiserror = { workspace = true }
-tracing = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+anyhow      = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+reqwest     = { workspace = true }
+# Criptografía para sello digital CSD
+ring        = { version = "0.17" }
+base64      = { version = "0.22" }
+# XML
+quick-xml   = { version = "0.36", features = ["serialize"] }
+# Tipos numéricos exactos (montos)
+rust_decimal = { version = "1", features = ["serde"] }
+# Fechas
+chrono      = { version = "0.4", features = ["serde"] }
+# Async trait para PACs
+async-trait = "0.1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
