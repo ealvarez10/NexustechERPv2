@@ -2,9 +2,11 @@
 //!
 //! GET /api/v1/compras       — Lista órdenes de compra (paginado)
 //! GET /api/v1/compras/kpis  — KPIs de compras
+//! GET /api/v1/compras/{id}  — Detalle de orden de compra
+//! GET /api/v1/compras/{id}/lineas — Líneas de la orden
 
 use axum::{
-    extract::{Query, State, Extension},
+    extract::{Path, Query, State, Extension},
     response::IntoResponse,
 };
 use nexus_core::db::compras as db;
@@ -36,6 +38,33 @@ pub async fn kpis(
     Extension(claims): Extension<JwtClaims>,
 ) -> impl IntoResponse {
     match db::kpis(&state.db, claims.0.company_id).await {
+        Ok(data) => api::ok(data).into_response(),
+        Err(e) => from_core_error(e).into_response(),
+    }
+}
+
+/// GET /api/v1/compras/{id} — Detalle de orden de compra
+pub async fn obtener(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<JwtClaims>,
+    Path(id): Path<i32>,
+) -> impl IntoResponse {
+    match db::obtener_por_id(&state.db, id).await {
+        Ok(orden) => {
+            let lineas = db::obtener_lineas(&state.db, id).await.unwrap_or_default();
+            api::ok(serde_json::json!({ "orden": orden, "lineas": lineas })).into_response()
+        }
+        Err(e) => from_core_error(e).into_response(),
+    }
+}
+
+/// GET /api/v1/compras/{id}/lineas — Líneas de la orden de compra
+pub async fn lineas(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<JwtClaims>,
+    Path(id): Path<i32>,
+) -> impl IntoResponse {
+    match db::obtener_lineas(&state.db, id).await {
         Ok(data) => api::ok(data).into_response(),
         Err(e) => from_core_error(e).into_response(),
     }

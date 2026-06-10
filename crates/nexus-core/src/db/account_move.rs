@@ -155,3 +155,106 @@ pub async fn listar_por_cobrar(pool: &PgPool, company_id: i32, pagina: i64, por_
         .await?;
     Ok(rows)
 }
+
+// ─── Account Move Line ────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, serde::Serialize, sqlx::FromRow)]
+pub struct AccountMoveLine {
+    pub id: i32,
+    pub move_id: i32,
+    pub product_id: Option<i32>,
+    pub name: Option<String>,
+    pub quantity: Option<Decimal>,
+    pub price_unit: Option<Decimal>,
+    pub price_subtotal: Option<Decimal>,
+    pub price_total: Option<Decimal>,
+    pub discount: Option<Decimal>,
+}
+
+/// Obtiene líneas de producto de una factura
+pub async fn obtener_lineas(pool: &PgPool, move_id: i32) -> Result<Vec<AccountMoveLine>, CoreError> {
+    let lineas = sqlx::query_as::<_, AccountMoveLine>(
+        r#"SELECT id, move_id, product_id, name, quantity,
+                  price_unit, price_subtotal, price_total, discount
+           FROM account_move_line
+           WHERE move_id = $1
+             AND display_type IN ('product', 'consu')
+           ORDER BY id ASC"#,
+    )
+    .bind(move_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(lineas)
+}
+
+#[derive(Debug, Clone, serde::Serialize, sqlx::FromRow)]
+pub struct FacturaCambioResult {
+    pub id: i32,
+}
+
+/// Confirmar factura (draft → posted)
+pub async fn confirmar(pool: &PgPool, id: i32) -> Result<Option<FacturaCambioResult>, CoreError> {
+    let row = sqlx::query_as::<_, FacturaCambioResult>(
+        "UPDATE account_move SET state='posted' WHERE id=$1 AND state='draft' RETURNING id"
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(row)
+}
+
+/// Registrar pago en factura (posted → paid)
+pub async fn registrar_pago(pool: &PgPool, id: i32) -> Result<Option<FacturaCambioResult>, CoreError> {
+    let row = sqlx::query_as::<_, FacturaCambioResult>(
+        "UPDATE account_move SET payment_state='paid', amount_residual=0, amount_residual_signed=0 WHERE id=$1 AND state='posted' RETURNING id"
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(row)
+}
+
+/// Cancelar factura
+pub async fn cancelar(pool: &PgPool, id: i32) -> Result<Option<FacturaCambioResult>, CoreError> {
+    let row = sqlx::query_as::<_, FacturaCambioResult>(
+        "UPDATE account_move SET state='cancel' WHERE id=$1 AND state NOT IN ('cancel') AND payment_state NOT IN ('paid','reversed') RETURNING id"
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(row)
+}
+
+#[derive(Debug, Clone, serde::Serialize, sqlx::FromRow)]
+pub struct FacturaCrearResult {
+    pub id: i32,
+    pub name: Option<String>,
+}
+
+/// Crear nueva factura de cliente
+pub async fn crear(
+    pool: &PgPool,
+    company_id: i32,
+    partner_id: i32,
+    journal_id: i32,
+    currency_id: i32,
+) -> Result<FacturaCrearResult, CoreError> {
+    let row = sqlx::query_as::<_, FacturaCrearResult>(
+        r#"INSERT INTO account_move
+            (journal_id, company_id, partner_id, move_type, state, date,
+             currency_id, amount_untaxed, amount_tax, amount_total, amount_residual,
+             amount_total_signed, amount_residual_signed, invoice_currency_rate,
+             always_tax_exigible, checked, auto_post)
+           VALUES ($1, $2, $3, 'out_invoice', 'draft', CURRENT_DATE,
+                   $4, 0, 0, 0, 0, 0, 0, 1,
+                   false, false, 'no')
+           RETURNING id, name"#,
+    )
+    .bind(journal_id)
+    .bind(company_id)
+    .bind(partner_id)
+    .bind(currency_id)
+    .fetch_one(pool)
+    .await?;
+    Ok(row)
+}

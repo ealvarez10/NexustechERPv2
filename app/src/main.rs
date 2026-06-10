@@ -122,32 +122,44 @@ async fn main() -> anyhow::Result<()> {
         .route("/proveedores",          get(handlers::partners::proveedores))
         .route("/productos",            get(handlers::products::listar))
         .route("/productos/{id}",       get(handlers::products::obtener))
-        .route("/ventas",               get(handlers::ventas::listar))
+        .route("/ventas",               get(handlers::ventas::listar).post(handlers::ventas::crear))
         .route("/ventas/kpis",          get(handlers::ventas::kpis))
         .route("/ventas/{id}",          get(handlers::ventas::obtener))
+        .route("/ventas/{id}/lineas",   get(handlers::ventas::lineas))
+        .route("/ventas/{id}/confirmar", put(handlers::ventas::confirmar))
+        .route("/ventas/{id}/cancelar",  put(handlers::ventas::cancelar))
+        // ── Facturas ─────────────────────────────────────────────────────────
         .route("/facturas",             get(handlers::facturas::listar))
         .route("/facturas/kpis",        get(handlers::facturas::kpis))
         .route("/facturas/por-cobrar",  get(handlers::facturas::por_cobrar))
         .route("/facturas/{id}",        get(handlers::facturas::obtener))
+        .route("/facturas/{id}/lineas",    get(handlers::facturas::lineas))
+        .route("/facturas/{id}/confirmar", put(handlers::facturas::confirmar))
+        .route("/facturas/{id}/pago",      post(handlers::facturas::registrar_pago))
+        .route("/facturas/{id}/cancelar",  put(handlers::facturas::cancelar))
+        // ── Dashboard ────────────────────────────────────────────────────────
         .route("/dashboard",            get(handlers::dashboard::kpis))
+        // ── Stock ────────────────────────────────────────────────────────────
         .route("/stock",                get(handlers::stock::listar))
         .route("/stock/kpis",           get(handlers::stock::kpis))
         .route("/stock/bajo",           get(handlers::stock::bajo))
         .route("/stock/producto/{id}",  get(handlers::stock::por_producto))
-        // ── CFDI ──────────────────────────────────────────────────────────
+        // ── CFDI ─────────────────────────────────────────────────────────────
         .route("/cfdi/timbrar",         post(handlers::cfdi::timbrar))
         .route("/cfdi/cancelar",        post(handlers::cfdi::cancelar))
         .route("/cfdi/{uuid}/pdf",      get(handlers::cfdi::pdf_por_uuid))
         .route("/cfdi/timbrados",       get(handlers::cfdi_timbrados::listar_timbrados))
         .route("/cfdi/timbrados/{uuid}", get(handlers::cfdi_timbrados::obtener_timbrado))
         .route("/cfdi/kpis",            get(handlers::cfdi_timbrados::kpis_cfdi))
-        // ── Nómina ────────────────────────────────────────────────────────
         .route("/nomina",               get(handlers::nomina::listar))
         .route("/nomina/kpis",          get(handlers::nomina::kpis))
-        // ── Compras ───────────────────────────────────────────────────────
+        .route("/nomina/{id}",          get(handlers::nomina::obtener))
+        // ── Compras ──────────────────────────────────────────────────────────
         .route("/compras",              get(handlers::compras::listar))
         .route("/compras/kpis",         get(handlers::compras::kpis))
-        // ── Cotizaciones / Sale ────────────────────────────────────────────────
+        .route("/compras/{id}",         get(handlers::compras::obtener))
+        .route("/compras/{id}/lineas",  get(handlers::compras::lineas))
+        // ── Cotizaciones / Sale ───────────────────────────────────────────────
         .route("/cotizaciones",          get(handlers::sale::listar_cotizaciones).post(handlers::sale::crear_cotizacion))
         .route("/cotizaciones/kpis",     get(handlers::sale::kpis_cotizaciones))
         .route("/cotizaciones/{id}",     get(handlers::sale::obtener_cotizacion).put(handlers::sale::actualizar_cotizacion))

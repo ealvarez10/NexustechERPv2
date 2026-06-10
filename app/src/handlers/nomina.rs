@@ -1,10 +1,11 @@
 //! Handlers de nómina — empleados y KPIs
 //!
-//! GET /api/v1/nomina       — Lista empleados (paginado)
-//! GET /api/v1/nomina/kpis  — KPIs de nómina
+//! GET /api/v1/nomina         — Lista empleados (paginado)
+//! GET /api/v1/nomina/kpis    — KPIs de nómina
+//! GET /api/v1/nomina/{id}    — Detalle del empleado
 
 use axum::{
-    extract::{Query, State, Extension},
+    extract::{Path, Query, State, Extension},
     response::IntoResponse,
 };
 use nexus_core::db::nomina as db;
@@ -36,6 +37,18 @@ pub async fn kpis(
     Extension(claims): Extension<JwtClaims>,
 ) -> impl IntoResponse {
     match db::kpis(&state.db, claims.0.company_id).await {
+        Ok(data) => api::ok(data).into_response(),
+        Err(e) => from_core_error(e).into_response(),
+    }
+}
+
+/// GET /api/v1/nomina/{id} — Detalle del empleado
+pub async fn obtener(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<JwtClaims>,
+    Path(id): Path<i32>,
+) -> impl IntoResponse {
+    match db::obtener_por_id(&state.db, id).await {
         Ok(data) => api::ok(data).into_response(),
         Err(e) => from_core_error(e).into_response(),
     }
