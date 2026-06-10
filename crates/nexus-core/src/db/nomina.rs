@@ -34,7 +34,7 @@ pub async fn listar_empleados(
 ) -> Result<Vec<Empleado>, CoreError> {
     let offset = (pagina - 1).max(0) * por_pagina;
     let rows = sqlx::query_as::<_, Empleado>(
-        r#"SELECT id, name, job_title, department_id, active, company_id
+        r#"SELECT id, name, NULL AS job_title, NULL::int AS department_id, active, company_id
            FROM hr_employee
            WHERE company_id = $1
            ORDER BY name ASC
@@ -83,7 +83,7 @@ pub async fn kpis(pool: &PgPool, company_id: i32) -> Result<KpisNomina, CoreErro
 /// Obtiene un empleado por ID
 pub async fn obtener_por_id(pool: &PgPool, id: i32) -> Result<Empleado, CoreError> {
     let empleado = sqlx::query_as::<_, Empleado>(
-        r#"SELECT id, name, job_title, department_id, active, company_id
+        r#"SELECT id, name, NULL AS job_title, NULL::int AS department_id, active, company_id
            FROM hr_employee
            WHERE id = $1"#,
     )

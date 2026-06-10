@@ -64,13 +64,13 @@ pub async fn listar_stock(
             {NOMBRE_EXPR}                                AS product_name,
             COALESCE(SUM(sq.quantity), 0)               AS cantidad_disponible,
             COALESCE(SUM(sq.reserved_quantity), 0)      AS cantidad_reservada,
-            sl.complete_name                             AS ubicacion
+            sl.name                             AS ubicacion
            FROM stock_quant sq
            JOIN product_product pp  ON pp.id = sq.product_id
            JOIN product_template pt ON pt.id = pp.product_tmpl_id
            JOIN stock_location   sl ON sl.id = sq.location_id
            WHERE {WHERE_STOCK}
-           GROUP BY sq.product_id, pt.name, sl.complete_name
+           GROUP BY sq.product_id, pt.name, sl.name
            ORDER BY product_name ASC
            LIMIT $1 OFFSET $2"#
     ))
@@ -106,13 +106,13 @@ pub async fn stock_por_producto(
             {NOMBRE_EXPR}                                AS product_name,
             COALESCE(SUM(sq.quantity), 0)               AS cantidad_disponible,
             COALESCE(SUM(sq.reserved_quantity), 0)      AS cantidad_reservada,
-            sl.complete_name                             AS ubicacion
+            sl.name                             AS ubicacion
            FROM stock_quant sq
            JOIN product_product pp  ON pp.id = sq.product_id
            JOIN product_template pt ON pt.id = pp.product_tmpl_id
            JOIN stock_location   sl ON sl.id = sq.location_id
            WHERE sq.product_id = $1
-           GROUP BY sq.product_id, pt.name, sl.complete_name"#
+           GROUP BY sq.product_id, pt.name, sl.name"#
     ))
     .bind(product_id)
     .fetch_all(pool)
@@ -132,13 +132,13 @@ pub async fn productos_stock_bajo(
             {NOMBRE_EXPR}                                AS product_name,
             COALESCE(SUM(sq.quantity), 0)               AS cantidad_disponible,
             COALESCE(SUM(sq.reserved_quantity), 0)      AS cantidad_reservada,
-            sl.complete_name                             AS ubicacion
+            sl.name                             AS ubicacion
            FROM stock_quant sq
            JOIN product_product pp  ON pp.id = sq.product_id
            JOIN product_template pt ON pt.id = pp.product_tmpl_id
            JOIN stock_location   sl ON sl.id = sq.location_id
            WHERE {WHERE_STOCK}
-           GROUP BY sq.product_id, pt.name, sl.complete_name
+           GROUP BY sq.product_id, pt.name, sl.name
            HAVING SUM(sq.quantity) < $1
            ORDER BY cantidad_disponible ASC
            LIMIT 50"#
