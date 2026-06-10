@@ -9,3 +9,4 @@ pub mod sale_order;
 pub mod account_move;
 pub mod user;
 pub mod company;
+pub mod stock;

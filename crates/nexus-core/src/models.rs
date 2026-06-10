@@ -450,8 +450,8 @@ pub struct CrmLead {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ResUsers {
     pub id: i32,
-    pub company_id: Option<i32>,
-    pub partner_id: Option<i32>,
+    pub company_id: i32,
+    pub partner_id: i32,
     pub create_uid: Option<i32>,
     pub write_uid: Option<i32>,
     pub login: String,
@@ -460,9 +460,9 @@ pub struct ResUsers {
     pub share: Option<bool>,
     pub create_date: Option<NaiveDateTime>,
     pub write_date: Option<NaiveDateTime>,
-    pub groups_id: Option<serde_json::Value>,
     pub action_id: Option<i32>,
     pub totp_secret: Option<String>,
+    pub notification_type: Option<String>,
 }
 
 // ═══════════════════════════════════════════════════════════════

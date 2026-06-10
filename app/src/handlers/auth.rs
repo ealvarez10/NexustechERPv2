@@ -48,7 +48,10 @@ pub async fn login(
     // Autenticar contra la DB
     let datos = db_user::autenticar(&state.db, &body.login, &body.password)
         .await
-        .map_err(|_| api::unauthorized("Credenciales incorrectas"))?;
+        .map_err(|e| {
+            tracing::warn!("Fallo de autenticación para '{}': {:?}", body.login, e);
+            api::unauthorized("Credenciales incorrectas")
+        })?;
 
     // Generar tokens
     let par = generar_tokens(

@@ -76,30 +76,40 @@ async fn main() -> anyhow::Result<()> {
     let state = AppState::nueva(db, config.clone(), redis_conn);
 
     // ── Router ─────────────────────────────────────────────────────────────
-    let api_v1 = Router::new()
-        // Auth (sin middleware JWT)
+    // Rutas de autenticación — sin middleware JWT
+    let auth_routes = Router::new()
         .route("/auth/login",   post(handlers::auth::login))
         .route("/auth/refresh", post(handlers::auth::refresh))
         .route("/auth/logout",  post(handlers::auth::logout))
-        // Recursos protegidos con JWT
-        .route("/partners",    get(handlers::partners::listar))
-        .route("/partners/:id", get(handlers::partners::obtener))
-        .route("/clientes",    get(handlers::partners::clientes))
-        .route("/proveedores", get(handlers::partners::proveedores))
-        .route("/productos",   get(handlers::products::listar))
-        .route("/productos/:id", get(handlers::products::obtener))
-        .route("/ventas",      get(handlers::ventas::listar))
-        .route("/ventas/kpis", get(handlers::ventas::kpis))
-        .route("/ventas/:id",  get(handlers::ventas::obtener))
-        .route("/facturas",         get(handlers::facturas::listar))
-        .route("/facturas/kpis",    get(handlers::facturas::kpis))
-        .route("/facturas/por-cobrar", get(handlers::facturas::por_cobrar))
-        .route("/facturas/:id",     get(handlers::facturas::obtener))
+        .with_state(state.clone());
+
+    // Rutas protegidas — requieren Bearer token JWT
+    let rutas_protegidas = Router::new()
+        .route("/partners",             get(handlers::partners::listar))
+        .route("/partners/{id}",        get(handlers::partners::obtener))
+        .route("/clientes",             get(handlers::partners::clientes))
+        .route("/proveedores",          get(handlers::partners::proveedores))
+        .route("/productos",            get(handlers::products::listar))
+        .route("/productos/{id}",       get(handlers::products::obtener))
+        .route("/ventas",               get(handlers::ventas::listar))
+        .route("/ventas/kpis",          get(handlers::ventas::kpis))
+        .route("/ventas/{id}",          get(handlers::ventas::obtener))
+        .route("/facturas",             get(handlers::facturas::listar))
+        .route("/facturas/kpis",        get(handlers::facturas::kpis))
+        .route("/facturas/por-cobrar",  get(handlers::facturas::por_cobrar))
+        .route("/facturas/{id}",        get(handlers::facturas::obtener))
+        .route("/dashboard",            get(handlers::dashboard::kpis))
+        .route("/stock",                get(handlers::stock::listar))
+        .route("/stock/kpis",           get(handlers::stock::kpis))
+        .route("/stock/bajo",           get(handlers::stock::bajo))
+        .route("/stock/producto/{id}",  get(handlers::stock::por_producto))
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::auth_middleware,
         ))
         .with_state(state.clone());
+
+    let api_v1 = auth_routes.merge(rutas_protegidas);
 
     let app = Router::new()
         .route("/health", get(handlers::health::health))

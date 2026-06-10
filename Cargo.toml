@@ -61,6 +61,10 @@ meilisearch-sdk = "0.27"
 # Email
 lettre = { version = "0.11", features = ["tokio1", "tokio1-rustls-tls"] }
 
+# PDF (representación impresa CFDI)
+printpdf = "0.7"
+image = { version = "0.25", features = ["png", "jpeg"] }
+
 # Logging
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
@@ -76,3 +80,6 @@ dotenvy = "0.15"
 jsonwebtoken = "9"
 argon2 = "0.5"
 async-trait = "0.1"
+
+# Crypto extra
+pbkdf2 = { version = "0.12", features = ["hmac"] }

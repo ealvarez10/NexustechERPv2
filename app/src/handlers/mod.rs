@@ -6,3 +6,5 @@ pub mod products;
 pub mod ventas;
 pub mod facturas;
 pub mod health;
+pub mod stock;
+pub mod dashboard;
