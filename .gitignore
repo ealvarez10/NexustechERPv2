@@ -1,0 +1,8 @@
+/target
+**/*.rs.bk
+.env
+.env.local
+*.pem
+*.key
+*.cer
+Cargo.lock
