@@ -129,7 +129,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/ventas/{id}/confirmar", put(handlers::ventas::confirmar))
         .route("/ventas/{id}/cancelar",  put(handlers::ventas::cancelar))
         // ── Facturas ─────────────────────────────────────────────────────────
-        .route("/facturas",             get(handlers::facturas::listar))
+        .route("/facturas",             get(handlers::facturas::listar).post(handlers::facturas::crear))
         .route("/facturas/kpis",        get(handlers::facturas::kpis))
         .route("/facturas/por-cobrar",  get(handlers::facturas::por_cobrar))
         .route("/facturas/{id}",        get(handlers::facturas::obtener))
