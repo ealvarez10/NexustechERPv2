@@ -1,1 +1,4 @@
-//! nexus-inventory — NexusTech ERP v2
+//! nexus-inventory — Movimientos y ajustes de inventario
+pub mod db;
+pub mod error;
+pub use error::InventoryError;
