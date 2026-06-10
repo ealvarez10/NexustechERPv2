@@ -79,3 +79,17 @@ pub async fn kpis(pool: &PgPool, company_id: i32) -> Result<KpisNomina, CoreErro
         inactivos: row.2,
     })
 }
+
+/// Obtiene un empleado por ID
+pub async fn obtener_por_id(pool: &PgPool, id: i32) -> Result<Empleado, CoreError> {
+    let empleado = sqlx::query_as::<_, Empleado>(
+        r#"SELECT id, name, job_title, department_id, active, company_id
+           FROM hr_employee
+           WHERE id = $1"#,
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?
+    .ok_or_else(|| CoreError::not_found("Empleado", id))?;
+    Ok(empleado)
+}

@@ -5,6 +5,21 @@ use serde::Serialize;
 use rust_decimal::Decimal;
 use crate::error::CoreError;
 
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct PurchaseOrderLine {
+    pub id: i32,
+    pub order_id: i32,
+    pub product_id: Option<i32>,
+    pub name: String,
+    pub product_qty: Decimal,
+    pub price_unit: Decimal,
+    pub discount: Option<Decimal>,
+    pub price_subtotal: Option<Decimal>,
+    pub price_total: Option<Decimal>,
+    pub qty_received: Option<Decimal>,
+    pub qty_invoiced: Option<Decimal>,
+}
+
 // ─── Structs ─────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -112,4 +127,31 @@ pub async fn kpis(pool: &PgPool, company_id: i32) -> Result<KpisCompras, CoreErr
         monto_total: row.5.unwrap_or(Decimal::ZERO),
         monto_este_mes: row.6.unwrap_or(Decimal::ZERO),
     })
+}
+
+/// Obtiene una orden de compra por ID
+pub async fn obtener_por_id(pool: &PgPool, id: i32) -> Result<PurchaseOrder, CoreError> {
+    let q = format!("SELECT {SELECT_COLS} {FROM_JOIN} WHERE po.id = $1");
+    let orden = sqlx::query_as::<_, PurchaseOrder>(&q)
+        .bind(id)
+        .fetch_optional(pool)
+        .await?
+        .ok_or_else(|| CoreError::not_found("Orden de compra", id))?;
+    Ok(orden)
+}
+
+/// Obtiene las líneas de una orden de compra
+pub async fn obtener_lineas(pool: &PgPool, order_id: i32) -> Result<Vec<PurchaseOrderLine>, CoreError> {
+    let lineas = sqlx::query_as::<_, PurchaseOrderLine>(
+        r#"SELECT id, order_id, product_id, name, product_qty, price_unit,
+                  discount, price_subtotal, price_total, qty_received, qty_invoiced
+           FROM purchase_order_line
+           WHERE order_id = $1
+             AND (display_type IS NULL OR display_type = '')
+           ORDER BY sequence ASC NULLS LAST, id ASC"#,
+    )
+    .bind(order_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(lineas)
 }

@@ -192,3 +192,63 @@ pub async fn obtener_lineas(pool: &PgPool, order_id: i32) -> Result<Vec<SaleOrde
     .await?;
     Ok(lineas)
 }
+
+#[derive(Debug, Clone, serde::Serialize, sqlx::FromRow)]
+pub struct ConfirmarResult {
+    pub id: i32,
+    pub state: Option<String>,
+}
+
+/// Confirmar orden de venta (draft/sent → sale)
+pub async fn confirmar(pool: &PgPool, id: i32) -> Result<Option<ConfirmarResult>, CoreError> {
+    let row = sqlx::query_as::<_, ConfirmarResult>(
+        "UPDATE sale_order SET state='sale', date_order=NOW() WHERE id=$1 AND state IN ('draft','sent') RETURNING id, state"
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(row)
+}
+
+/// Cancelar orden de venta
+pub async fn cancelar(pool: &PgPool, id: i32) -> Result<Option<i32>, CoreError> {
+    let row: Option<(i32,)> = sqlx::query_as(
+        "UPDATE sale_order SET state='cancel' WHERE id=$1 AND state NOT IN ('done','cancel') RETURNING id"
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(row.map(|r| r.0))
+}
+
+#[derive(Debug, Clone, serde::Serialize, sqlx::FromRow)]
+pub struct CrearResult {
+    pub id: i32,
+    pub name: String,
+}
+
+/// Crear nueva orden de venta
+pub async fn crear(
+    pool: &PgPool,
+    company_id: i32,
+    partner_id: i32,
+    nota: &str,
+) -> Result<CrearResult, CoreError> {
+    let row = sqlx::query_as::<_, CrearResult>(
+        r#"INSERT INTO sale_order
+            (name, company_id, partner_id, partner_invoice_id, partner_shipping_id,
+             state, date_order, note, amount_untaxed, amount_tax, amount_total)
+           VALUES (
+             'SO/' || nextval('sale_order_id_seq')::text,
+             $1, $2, $2, $2,
+             'draft', NOW(), $3, 0, 0, 0
+           )
+           RETURNING id, name"#,
+    )
+    .bind(company_id)
+    .bind(partner_id)
+    .bind(nota)
+    .fetch_one(pool)
+    .await?;
+    Ok(row)
+}

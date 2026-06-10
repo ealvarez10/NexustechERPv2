@@ -1,4 +1,4 @@
-(function(){const e=document.createElement("link").relList;if(e&&e.supports&&e.supports("modulepreload"))return;for(const o of document.querySelectorAll('link[rel="modulepreload"]'))i(o);new MutationObserver(o=>{for(const l of o)if(l.type==="childList")for(const s of l.addedNodes)s.tagName==="LINK"&&s.rel==="modulepreload"&&i(s)}).observe(document,{childList:!0,subtree:!0});function a(o){const l={};return o.integrity&&(l.integrity=o.integrity),o.referrerPolicy&&(l.referrerPolicy=o.referrerPolicy),o.crossOrigin==="use-credentials"?l.credentials="include":o.crossOrigin==="anonymous"?l.credentials="omit":l.credentials="same-origin",l}function i(o){if(o.ep)return;o.ep=!0;const l=a(o);fetch(o.href,l)}})();const st={isLoggedIn:()=>!!localStorage.getItem("nx_token"),getUser:()=>{try{return JSON.parse(localStorage.getItem("nx_user")||"{}")}catch{return{}}},setSession(t,e){localStorage.setItem("nx_token",t),localStorage.setItem("nx_user",JSON.stringify(e))},clear(){localStorage.removeItem("nx_token"),localStorage.removeItem("nx_user")}},rt={};function E(t,e){rt[t]=e}function nt(t){window.location.hash=t}function $e(){window.addEventListener("hashchange",Qt),Qt()}function Qt(){const t=window.location.hash.replace("#","")||"home";if(!st.isLoggedIn()&&t!=="login"){nt("login");return}if(st.isLoggedIn()&&t==="login"){nt("home");return}const e=rt[t];e?e():rt[404]&&rt[404]()}const ke="/api/v1";function Ee(){return localStorage.getItem("nx_token")}class Ce extends Error{constructor(e,a){super(a),this.status=e}}async function m(t,e,a){const i=Ee(),o=await fetch(ke+e,{method:t,headers:{"Content-Type":"application/json",...i?{Authorization:`Bearer ${i}`}:{}},...a!==void 0?{body:JSON.stringify(a)}:{}});if(o.status===401)return localStorage.removeItem("nx_token"),localStorage.removeItem("nx_user"),window.location.hash="login",null;if(!o.ok)throw new Ce(o.status,await o.text());return(o.headers.get("content-type")||"").includes("application/json")?o.json():o.text()}const p={get:t=>m("GET",t),post:(t,e)=>m("POST",t,e),put:(t,e)=>m("PUT",t,e),del:t=>m("DELETE",t),login:(t,e)=>m("POST","/auth/login",{login:t,password:e}),logout:()=>m("POST","/auth/logout",{}),dashboard:()=>m("GET","/dashboard"),ventaKpis:()=>m("GET","/ventas/kpis"),factKpis:()=>m("GET","/facturas/kpis"),stockKpis:()=>m("GET","/stock/kpis"),ventas:(t=1)=>m("GET",`/ventas?pagina=${t}`),venta:t=>m("GET",`/ventas/${t}`),facturas:(t=1)=>m("GET",`/facturas?pagina=${t}`),factura:t=>m("GET",`/facturas/${t}`),porCobrar:()=>m("GET","/facturas/por-cobrar"),productos:(t=1,e="")=>m("GET",`/productos?pagina=${t}&q=${encodeURIComponent(e)}`),producto:t=>m("GET",`/productos/${t}`),partners:(t=1)=>m("GET",`/partners?pagina=${t}`),partner:t=>m("GET",`/partners/${t}`),clientes:(t=1)=>m("GET",`/clientes?pagina=${t}`),proveedores:(t=1)=>m("GET",`/proveedores?pagina=${t}`),stock:(t=1)=>m("GET",`/stock?pagina=${t}`),stockKpis:()=>m("GET","/stock/kpis"),stockBajo:()=>m("GET","/stock/bajo"),stockProducto:t=>m("GET",`/stock/producto/${t}`),cfdiTimbrados:(t=1)=>m("GET",`/cfdi/timbrados?pagina=${t}`),cfdiTimbrado:t=>m("GET",`/cfdi/timbrados/${t}`),cfdiKpis:()=>m("GET","/cfdi/kpis"),timbrar:t=>m("POST","/cfdi/timbrar",t),cancelarCfdi:t=>m("POST","/cfdi/cancelar",t),nomina:(t=1)=>m("GET",`/nomina?pagina=${t}`),empleado:t=>m("GET",`/nomina/${t}`),nominaKpis:()=>m("GET","/nomina/kpis"),compras:(t=1)=>m("GET",`/compras?pagina=${t}`),compra:t=>m("GET",`/compras/${t}`),comprasKpis:()=>m("GET","/compras/kpis"),cotizaciones:(t=1)=>m("GET",`/cotizaciones?pagina=${t}`),cotizacionKpis:()=>m("GET","/cotizaciones/kpis"),cotizacion:t=>m("GET",`/cotizaciones/${t}`),crearCotizacion:t=>m("POST","/cotizaciones",t),confirmarCotizacion:t=>m("PUT",`/cotizaciones/${t}/confirmar`),cancelarCotizacion:t=>m("PUT",`/cotizaciones/${t}/cancelar`),actualizarCotizacion:(t,e)=>m("PUT",`/cotizaciones/${t}`,e),agregarLinea:(t,e)=>m("POST",`/cotizaciones/${t}/lineas`,e),eliminarLinea:(t,e)=>m("DELETE",`/cotizaciones/${t}/lineas/${e}`),searchSync:()=>m("POST","/search/sync",{}),searchStatus:()=>m("GET","/search/status"),health:()=>m("GET","/health"),putVenta:(t,e)=>m("PUT",`/ventas/${t}`,e),putPartner:(t,e)=>m("PUT",`/partners/${t}`,e),putProducto:(t,e)=>m("PUT",`/productos/${t}`,e),putCompra:(t,e)=>m("PUT",`/compras/${t}`,e),putEmpleado:(t,e)=>m("PUT",`/nomina/${t}`,e),ajusteStock:(t,e)=>m("PUT",`/stock/${t}/ajuste`,e)};function Se(){const t=document.getElementById("__shell");t&&t.remove(),document.getElementById("app").innerHTML=`
+(function(){const e=document.createElement("link").relList;if(e&&e.supports&&e.supports("modulepreload"))return;for(const o of document.querySelectorAll('link[rel="modulepreload"]'))i(o);new MutationObserver(o=>{for(const d of o)if(d.type==="childList")for(const s of d.addedNodes)s.tagName==="LINK"&&s.rel==="modulepreload"&&i(s)}).observe(document,{childList:!0,subtree:!0});function a(o){const d={};return o.integrity&&(d.integrity=o.integrity),o.referrerPolicy&&(d.referrerPolicy=o.referrerPolicy),o.crossOrigin==="use-credentials"?d.credentials="include":o.crossOrigin==="anonymous"?d.credentials="omit":d.credentials="same-origin",d}function i(o){if(o.ep)return;o.ep=!0;const d=a(o);fetch(o.href,d)}})();const st={isLoggedIn:()=>!!localStorage.getItem("nx_token"),getUser:()=>{try{return JSON.parse(localStorage.getItem("nx_user")||"{}")}catch{return{}}},setSession(t,e){localStorage.setItem("nx_token",t),localStorage.setItem("nx_user",JSON.stringify(e))},clear(){localStorage.removeItem("nx_token"),localStorage.removeItem("nx_user")}},pt={};function E(t,e){pt[t]=e}function nt(t){window.location.hash=t}function Ee(){window.addEventListener("hashchange",Jt),Jt()}function Jt(){const t=window.location.hash.replace("#","")||"home";if(!st.isLoggedIn()&&t!=="login"){nt("login");return}if(st.isLoggedIn()&&t==="login"){nt("home");return}const e=pt[t];e?e():pt[404]&&pt[404]()}const Ce="/api/v1";function Se(){return localStorage.getItem("nx_token")}class Ie extends Error{constructor(e,a){super(a),this.status=e}}async function m(t,e,a){const i=Se(),o=await fetch(Ce+e,{method:t,headers:{"Content-Type":"application/json",...i?{Authorization:`Bearer ${i}`}:{}},...a!==void 0?{body:JSON.stringify(a)}:{}});if(o.status===401)return localStorage.removeItem("nx_token"),localStorage.removeItem("nx_user"),window.location.hash="login",null;if(!o.ok)throw new Ie(o.status,await o.text());return(o.headers.get("content-type")||"").includes("application/json")?o.json():o.text()}const u={get:t=>m("GET",t),post:(t,e)=>m("POST",t,e),put:(t,e)=>m("PUT",t,e),del:t=>m("DELETE",t),login:(t,e)=>m("POST","/auth/login",{login:t,password:e}),logout:()=>m("POST","/auth/logout",{}),dashboard:()=>m("GET","/dashboard"),ventaKpis:()=>m("GET","/ventas/kpis"),factKpis:()=>m("GET","/facturas/kpis"),stockKpis:()=>m("GET","/stock/kpis"),ventas:(t=1)=>m("GET",`/ventas?pagina=${t}`),venta:t=>m("GET",`/ventas/${t}`),facturas:(t=1)=>m("GET",`/facturas?pagina=${t}`),factura:t=>m("GET",`/facturas/${t}`),porCobrar:()=>m("GET","/facturas/por-cobrar"),productos:(t=1,e="")=>m("GET",`/productos?pagina=${t}&q=${encodeURIComponent(e)}`),producto:t=>m("GET",`/productos/${t}`),partners:(t=1)=>m("GET",`/partners?pagina=${t}`),partner:t=>m("GET",`/partners/${t}`),clientes:(t=1)=>m("GET",`/clientes?pagina=${t}`),proveedores:(t=1)=>m("GET",`/proveedores?pagina=${t}`),stock:(t=1)=>m("GET",`/stock?pagina=${t}`),stockKpis:()=>m("GET","/stock/kpis"),stockBajo:()=>m("GET","/stock/bajo"),stockProducto:t=>m("GET",`/stock/producto/${t}`),cfdiTimbrados:(t=1)=>m("GET",`/cfdi/timbrados?pagina=${t}`),cfdiTimbrado:t=>m("GET",`/cfdi/timbrados/${t}`),cfdiKpis:()=>m("GET","/cfdi/kpis"),timbrar:t=>m("POST","/cfdi/timbrar",t),cancelarCfdi:t=>m("POST","/cfdi/cancelar",t),nomina:(t=1)=>m("GET",`/nomina?pagina=${t}`),empleado:t=>m("GET",`/nomina/${t}`),nominaKpis:()=>m("GET","/nomina/kpis"),compras:(t=1)=>m("GET",`/compras?pagina=${t}`),compra:t=>m("GET",`/compras/${t}`),comprasKpis:()=>m("GET","/compras/kpis"),cotizaciones:(t=1)=>m("GET",`/cotizaciones?pagina=${t}`),cotizacionKpis:()=>m("GET","/cotizaciones/kpis"),cotizacion:t=>m("GET",`/cotizaciones/${t}`),crearCotizacion:t=>m("POST","/cotizaciones",t),confirmarCotizacion:t=>m("PUT",`/cotizaciones/${t}/confirmar`),cancelarCotizacion:t=>m("PUT",`/cotizaciones/${t}/cancelar`),actualizarCotizacion:(t,e)=>m("PUT",`/cotizaciones/${t}`,e),agregarLinea:(t,e)=>m("POST",`/cotizaciones/${t}/lineas`,e),eliminarLinea:(t,e)=>m("DELETE",`/cotizaciones/${t}/lineas/${e}`),searchSync:()=>m("POST","/search/sync",{}),searchStatus:()=>m("GET","/search/status"),health:()=>m("GET","/health"),putVenta:(t,e)=>m("PUT",`/ventas/${t}`,e),putPartner:(t,e)=>m("PUT",`/partners/${t}`,e),putProducto:(t,e)=>m("PUT",`/productos/${t}`,e),putCompra:(t,e)=>m("PUT",`/compras/${t}`,e),putEmpleado:(t,e)=>m("PUT",`/nomina/${t}`,e),ajusteStock:(t,e)=>m("PUT",`/stock/${t}/ajuste`,e)};function Te(){const t=document.getElementById("__shell");t&&t.remove(),document.getElementById("app").innerHTML=`
   <div class="login-bg">
     <!-- Panel izquierdo: branding -->
     <div class="login-left">
@@ -76,14 +76,14 @@
         </div>
       </div>
     </div>
-  </div>`;const e=document.getElementById("lbtn"),a=document.getElementById("lu"),i=document.getElementById("lp"),o=document.getElementById("lerr");async function l(){if(e.disabled)return;const s=a.value.trim(),c=i.value;if(!s||!c){o.textContent="Ingresa usuario y contraseña",o.classList.add("show");return}e.disabled=!0,e.textContent="Verificando...",o.classList.remove("show");try{const d=await p.login(s,c),n=(d==null?void 0:d.data)||d,r=(n==null?void 0:n.access_token)||(n==null?void 0:n.token);if(r){st.setSession(r,{nombre:n.email||s,email:n.email||s,user_id:n.user_id,company_id:n.company_id}),document.getElementById("app").innerHTML="",nt("dashboard");return}o.textContent="Error inesperado del servidor. Intenta de nuevo.",o.classList.add("show")}catch(d){o.textContent=(d==null?void 0:d.status)===401?"Credenciales incorrectas. Verifica tu usuario y contraseña.":`Error de conexión: ${(d==null?void 0:d.message)||"No se pudo contactar el servidor"}`,o.classList.add("show")}e.disabled=!1,e.textContent="Acceder al sistema"}e.addEventListener("click",l),i.addEventListener("keydown",s=>s.key==="Enter"&&l()),a.addEventListener("keydown",s=>s.key==="Enter"&&i.focus()),setTimeout(()=>a.focus(),100)}function Be(t,e=0){return t==null||t===""?"—":Number(t).toLocaleString("es-MX",{minimumFractionDigits:e,maximumFractionDigits:e})}function f(t){return t==null?"—":(t=parseFloat(t)||0,Math.abs(t)>=1e6?`$${(t/1e6).toFixed(2)}M`:Math.abs(t)>=1e3?`$${(t/1e3).toFixed(1)}k`:`$${Be(t,2)}`)}function F(t){return t==null?"—":Number(t).toLocaleString("es-MX")}function B(t){return t?new Date(t).toLocaleDateString("es-MX",{day:"2-digit",month:"short",year:"numeric"}):"—"}function b(t,e="",a="info"){const i={success:"✅",error:"❌",info:"ℹ️",warning:"⚠️"};let o=document.getElementById("__toasts");o||(o=document.createElement("div"),o.id="__toasts",o.className="toast-container",document.body.appendChild(o));const l=document.createElement("div");l.className=`toast ${a}`,l.innerHTML=`
+  </div>`;const e=document.getElementById("lbtn"),a=document.getElementById("lu"),i=document.getElementById("lp"),o=document.getElementById("lerr");async function d(){if(e.disabled)return;const s=a.value.trim(),c=i.value;if(!s||!c){o.textContent="Ingresa usuario y contraseña",o.classList.add("show");return}e.disabled=!0,e.textContent="Verificando...",o.classList.remove("show");try{const l=await u.login(s,c),n=(l==null?void 0:l.data)||l,r=(n==null?void 0:n.access_token)||(n==null?void 0:n.token);if(r){st.setSession(r,{nombre:n.email||s,email:n.email||s,user_id:n.user_id,company_id:n.company_id}),document.getElementById("app").innerHTML="",nt("dashboard");return}o.textContent="Error inesperado del servidor. Intenta de nuevo.",o.classList.add("show")}catch(l){o.textContent=(l==null?void 0:l.status)===401?"Credenciales incorrectas. Verifica tu usuario y contraseña.":`Error de conexión: ${(l==null?void 0:l.message)||"No se pudo contactar el servidor"}`,o.classList.add("show")}e.disabled=!1,e.textContent="Acceder al sistema"}e.addEventListener("click",d),i.addEventListener("keydown",s=>s.key==="Enter"&&d()),a.addEventListener("keydown",s=>s.key==="Enter"&&i.focus()),setTimeout(()=>a.focus(),100)}function Be(t,e=0){return t==null||t===""?"—":Number(t).toLocaleString("es-MX",{minimumFractionDigits:e,maximumFractionDigits:e})}function f(t){return t==null?"—":(t=parseFloat(t)||0,Math.abs(t)>=1e6?`$${(t/1e6).toFixed(2)}M`:Math.abs(t)>=1e3?`$${(t/1e3).toFixed(1)}k`:`$${Be(t,2)}`)}function L(t){return t==null?"—":Number(t).toLocaleString("es-MX")}function I(t){return t?new Date(t).toLocaleDateString("es-MX",{day:"2-digit",month:"short",year:"numeric"}):"—"}function b(t,e="",a="info"){const i={success:"✅",error:"❌",info:"ℹ️",warning:"⚠️"};let o=document.getElementById("__toasts");o||(o=document.createElement("div"),o.id="__toasts",o.className="toast-container",document.body.appendChild(o));const d=document.createElement("div");d.className=`toast ${a}`,d.innerHTML=`
     <span class="toast-icon">${i[a]||"ℹ️"}</span>
-    <div><div class="toast-title">${t}</div>${e?`<div class="toast-msg">${e}</div>`:""}</div>`,o.appendChild(l),requestAnimationFrame(()=>l.classList.add("show")),setTimeout(()=>{l.classList.remove("show"),setTimeout(()=>l.remove(),400)},3800)}function Jt(t,e,a=900,i="",o=""){if(!t)return;const l=performance.now(),s=String(e).includes(".");function c(d){const n=Math.min((d-l)/a,1),r=1-Math.pow(1-n,3),v=e*r;t.textContent=i+(s?v.toLocaleString("es-MX",{minimumFractionDigits:2,maximumFractionDigits:2}):Math.round(v).toLocaleString("es-MX"))+o,n<1&&requestAnimationFrame(c)}requestAnimationFrame(c)}function Ie(t){if(!(t!=null&&t.length))return"";const e=Math.max(...t,1);return`<div class="sparkline">${t.map((a,i)=>`<div class="spark-bar${i===t.length-1?" active":""}" style="height:${Math.max(4,Math.round(a/e*100))}%"></div>`).join("")}</div>`}function Te(t=5,e=6){return`<tbody>${Array.from({length:e},()=>`<tr>${Array.from({length:t},()=>`<td><div class="skeleton" style="height:14px;width:${60+Math.random()*30}%"></div></td>`).join("")}</tr>`).join("")}</tbody>`}function x(t=5,e=4){return`<table class="data-table"><thead><tr>${Array.from({length:e},()=>`<th><div class="skeleton" style="height:12px;width:${40+Math.random()*40}%"></div></th>`).join("")}</tr></thead>${Te(e,t)}</table>`}function Fe(t=5){return Array.from({length:t},()=>`
+    <div><div class="toast-title">${t}</div>${e?`<div class="toast-msg">${e}</div>`:""}</div>`,o.appendChild(d),requestAnimationFrame(()=>d.classList.add("show")),setTimeout(()=>{d.classList.remove("show"),setTimeout(()=>d.remove(),400)},3800)}function Wt(t,e,a=900,i="",o=""){if(!t)return;const d=performance.now(),s=String(e).includes(".");function c(l){const n=Math.min((l-d)/a,1),r=1-Math.pow(1-n,3),v=e*r;t.textContent=i+(s?v.toLocaleString("es-MX",{minimumFractionDigits:2,maximumFractionDigits:2}):Math.round(v).toLocaleString("es-MX"))+o,n<1&&requestAnimationFrame(c)}requestAnimationFrame(c)}function Le(t){if(!(t!=null&&t.length))return"";const e=Math.max(...t,1);return`<div class="sparkline">${t.map((a,i)=>`<div class="spark-bar${i===t.length-1?" active":""}" style="height:${Math.max(4,Math.round(a/e*100))}%"></div>`).join("")}</div>`}function Fe(t=5,e=6){return`<tbody>${Array.from({length:e},()=>`<tr>${Array.from({length:t},()=>`<td><div class="skeleton" style="height:14px;width:${60+Math.random()*30}%"></div></td>`).join("")}</tr>`).join("")}</tbody>`}function x(t=5,e=4){return`<table class="data-table"><thead><tr>${Array.from({length:e},()=>`<th><div class="skeleton" style="height:12px;width:${40+Math.random()*40}%"></div></th>`).join("")}</tr></thead>${Fe(e,t)}</table>`}function Pe(t=5){return Array.from({length:t},()=>`
   <div class="kpi-card kpi-gray">
     <div class="kpi-label"><div class="skeleton" style="height:13px;width:60%"></div></div>
     <div class="kpi-value"><div class="skeleton" style="height:28px;width:70%"></div></div>
     <div><div class="skeleton" style="height:11px;width:40%;margin-top:6px"></div></div>
-  </div>`).join("")}const Le={sale:"emerald",done:"indigo",draft:"gray",sent:"sky",cancel:"red",posted:"emerald",in_payment:"violet",paid:"emerald",partial:"amber"};function q(t,e){return`<span class="badge badge-${Le[t]||"gray"} badge-dot">${e}</span>`}function K(t,e,a){return window.__pagNav=a,`
+  </div>`).join("")}const Ae={sale:"emerald",done:"indigo",draft:"gray",sent:"sky",cancel:"red",posted:"emerald",in_payment:"violet",paid:"emerald",partial:"amber"};function q(t,e){return`<span class="badge badge-${Ae[t]||"gray"} badge-dot">${e}</span>`}function Q(t,e,a){return window.__pagNav=a,`
   <div class="data-table-footer">
     <span style="color:var(--text-400)">Página ${t}</span>
     <div class="pagination">
@@ -91,28 +91,28 @@
       <span class="pag-btn active">${t}</span>
       <button class="pag-btn" ${e?"":"disabled"} onclick="window.__pagNav(${t+1})">Siguiente &#8594;</button>
     </div>
-  </div>`}let O=null;function X(t,e,a={}){let i=document.getElementById("__modal-overlay");i||(i=document.createElement("div"),i.id="__modal-overlay",i.innerHTML=`
+  </div>`}let O=null;function J(t,e,a={}){let i=document.getElementById("__modal-overlay");i||(i=document.createElement("div"),i.id="__modal-overlay",i.innerHTML=`
       <div id="__modal-drawer">
         <div id="__modal-header">
           <span id="__modal-title"></span>
           <button id="__modal-close" onclick="window.__closeModal()">✕</button>
         </div>
         <div id="__modal-body"></div>
-      </div>`,document.body.appendChild(i),i.addEventListener("click",o=>{o.target===i&&window.__closeModal()})),document.getElementById("__modal-title").textContent=t,document.getElementById("__modal-body").innerHTML=e,i.classList.add("open"),document.body.style.overflow="hidden",O&&document.removeEventListener("keydown",O),O=o=>{o.key==="Escape"&&window.__closeModal()},document.addEventListener("keydown",O),a.onMounted&&setTimeout(a.onMounted,10)}function Pe(){const t=document.getElementById("__modal-overlay");t&&t.classList.remove("open"),document.body.style.overflow="",O&&(document.removeEventListener("keydown",O),O=null)}window.__closeModal=Pe;async function Ae(t,e,a){X(t,`
+      </div>`,document.body.appendChild(i),i.addEventListener("click",o=>{o.target===i&&window.__closeModal()})),document.getElementById("__modal-title").textContent=t,document.getElementById("__modal-body").innerHTML=e,i.classList.add("open"),document.body.style.overflow="hidden",O&&document.removeEventListener("keydown",O),O=o=>{o.key==="Escape"&&window.__closeModal()},document.addEventListener("keydown",O),a.onMounted&&setTimeout(a.onMounted,10)}function Me(){const t=document.getElementById("__modal-overlay");t&&t.classList.remove("open"),document.body.style.overflow="",O&&(document.removeEventListener("keydown",O),O=null)}window.__closeModal=Me;async function ze(t,e,a){J(t,`
     <div style="display:flex;flex-direction:column;gap:12px;padding:8px 0">
       ${[1,2,3,4,5].map(()=>'<div class="skeleton" style="height:52px;border-radius:10px"></div>').join("")}
-    </div>`);try{const i=await e(),o=(i==null?void 0:i.data)??i;document.getElementById("__modal-body").innerHTML=a(o)}catch(i){document.getElementById("__modal-body").innerHTML=`<p style="color:var(--red);padding:24px">Error: ${i.message}</p>`}}function T(t,e,a={}){const i=e??"—",o=a.color?`color:${a.color}`:"";return`
+    </div>`);try{const i=await e(),o=(i==null?void 0:i.data)??i;document.getElementById("__modal-body").innerHTML=a(o)}catch(i){document.getElementById("__modal-body").innerHTML=`<p style="color:var(--red);padding:24px">Error: ${i.message}</p>`}}function B(t,e,a={}){const i=e??"—",o=a.color?`color:${a.color}`:"";return`
   <div style="display:flex;justify-content:space-between;align-items:flex-start;
     padding:10px 0;border-bottom:1px solid var(--border)">
     <span style="font-size:12px;color:var(--text-400);font-weight:600;min-width:140px">${t}</span>
     <span style="font-size:13px;font-weight:500;text-align:right;${o}">${i}</span>
-  </div>`}function $t(t,e){return`
+  </div>`}function Ct(t,e){return`
   <div style="margin-bottom:20px">
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
       color:var(--text-400);margin-bottom:8px;padding-bottom:6px;
       border-bottom:2px solid var(--primary)">${t}</div>
     ${e}
-  </div>`}const Wt=[{id:"home",icon:"⊞",label:"Inicio",section:"Principal"},{id:"dashboard",icon:"📊",label:"Dashboard",section:"Principal"},{id:"ventas",icon:"💰",label:"Ventas",section:"Principal"},{id:"cotizaciones",icon:"📝",label:"Cotizaciones",section:"Principal"},{id:"facturas",icon:"🧾",label:"Facturación",section:"Principal"},{id:"productos",icon:"📦",label:"Productos",section:"Principal"},{id:"partners",icon:"👥",label:"Clientes",section:"Principal"},{id:"stock",icon:"🏭",label:"Inventario",section:"Principal"},{id:"cfdi",icon:"🔏",label:"CFDI 4.0",section:"Fiscal",badge:"NUEVO"},{id:"nomina",icon:"👔",label:"Nómina IMSS",section:"Fiscal"},{id:"compras",icon:"🛒",label:"Compras",section:"Operaciones"},{id:"search",icon:"🔍",label:"NexusSearch",section:"Sistema"},{id:"reportes",icon:"📈",label:"Reportes",section:"Sistema"}];function C(){if(document.getElementById("__shell"))return;const t=st.getUser(),e=(t.nombre||t.name||"AD").substring(0,2).toUpperCase(),a=[...new Set(Wt.map(i=>i.section))];if(document.getElementById("app").innerHTML=`
+  </div>`}const Yt=[{id:"home",icon:"⊞",label:"Inicio",section:"Principal"},{id:"dashboard",icon:"📊",label:"Dashboard",section:"Principal"},{id:"ventas",icon:"💰",label:"Ventas",section:"Principal"},{id:"cotizaciones",icon:"📝",label:"Cotizaciones",section:"Principal"},{id:"facturas",icon:"🧾",label:"Facturación",section:"Principal"},{id:"productos",icon:"📦",label:"Productos",section:"Principal"},{id:"partners",icon:"👥",label:"Clientes",section:"Principal"},{id:"stock",icon:"🏭",label:"Inventario",section:"Principal"},{id:"cfdi",icon:"🔏",label:"CFDI 4.0",section:"Fiscal",badge:"NUEVO"},{id:"nomina",icon:"👔",label:"Nómina IMSS",section:"Fiscal"},{id:"compras",icon:"🛒",label:"Compras",section:"Operaciones"},{id:"search",icon:"🔍",label:"NexusSearch",section:"Sistema"},{id:"reportes",icon:"📈",label:"Reportes",section:"Sistema"}];function C(){if(document.getElementById("__shell"))return;const t=st.getUser(),e=(t.nombre||t.name||"AD").substring(0,2).toUpperCase(),a=[...new Set(Yt.map(i=>i.section))];if(document.getElementById("app").innerHTML=`
   <div class="app-shell" id="__shell">
     <!-- SIDEBAR -->
     <nav class="sidebar" id="__sidebar">
@@ -128,7 +128,7 @@
         ${a.map(i=>`
         <div class="nav-section">
           <div class="nav-section-title">${i}</div>
-          ${Wt.filter(o=>o.section===i).map(o=>`
+          ${Yt.filter(o=>o.section===i).map(o=>`
           <a class="nav-link" id="nl-${o.id}" href="#${o.id}" onclick="event.preventDefault();window._go('${o.id}')">
             <span style="font-size:16px">${o.icon}</span>
             <span>${o.label}</span>
@@ -181,11 +181,11 @@
       <!-- CONTENT -->
       <main class="page" id="__page"></main>
     </div>
-  </div>`,window._go=i=>{nt(i)},window._logout=()=>{st.clear();const i=document.getElementById("__shell");i&&i.remove(),nt("login"),b("Sesión cerrada","Hasta pronto","info")},window._toggleSidebar=()=>{const i=document.getElementById("__sidebar"),o=document.getElementById("sidebar-toggle");if(!i)return;const l=i.classList.toggle("collapsed");localStorage.setItem("nx_sidebar_collapsed",l?"1":"0"),o&&(o.textContent=l?"▶":"◀")},localStorage.getItem("nx_sidebar_collapsed")==="1"){const i=document.getElementById("__sidebar"),o=document.getElementById("sidebar-toggle");i&&i.classList.add("collapsed"),o&&(o.textContent="▶")}window.addEventListener("hashchange",Yt),Yt()}function w(t){const e=document.getElementById("__page");e&&(e.innerHTML=t,e.scrollTop=0)}function $(t){const e=document.getElementById("__breadcrumb");e&&(e.innerHTML=t.map((a,i)=>`
+  </div>`,window._go=i=>{nt(i)},window._logout=()=>{st.clear();const i=document.getElementById("__shell");i&&i.remove(),nt("login"),b("Sesión cerrada","Hasta pronto","info")},window._toggleSidebar=()=>{const i=document.getElementById("__sidebar"),o=document.getElementById("sidebar-toggle");if(!i)return;const d=i.classList.toggle("collapsed");localStorage.setItem("nx_sidebar_collapsed",d?"1":"0"),o&&(o.textContent=d?"▶":"◀")},localStorage.getItem("nx_sidebar_collapsed")==="1"){const i=document.getElementById("__sidebar"),o=document.getElementById("sidebar-toggle");i&&i.classList.add("collapsed"),o&&(o.textContent="▶")}window.addEventListener("hashchange",Zt),Zt()}function w(t){const e=document.getElementById("__page");e&&(e.innerHTML=t,e.scrollTop=0)}function $(t){const e=document.getElementById("__breadcrumb");e&&(e.innerHTML=t.map((a,i)=>`
     <span class="breadcrumb-item"${i<t.length-1&&a.href?` onclick="window._go('${a.href}')"`:""}>
       ${a.label}
       ${i<t.length-1?'<span class="breadcrumb-sep">/</span>':""}
-    </span>`).join(""))}function Yt(){const t=window.location.hash.replace("#","")||"home";document.querySelectorAll(".nav-link").forEach(e=>{e.classList.toggle("active",e.id===`nl-${t}`)})}const Zt=[{id:"ventas",icon:"📊",grad:"#4F46E5,#7C3AED",nombre:"Ventas",desc:"Órdenes y Cotizaciones",kpi:"/ventas/kpis",field:"total_ordenes"},{id:"facturas",icon:"🧾",grad:"#059669,#0EA5E9",nombre:"Facturación",desc:"Facturas y Pagos",kpi:"/facturas/kpis",field:"total_facturas"},{id:"partners",icon:"👥",grad:"#7C3AED,#EC4899",nombre:"Clientes",desc:"Contactos y Partners",kpi:"/partners",field:null},{id:"stock",icon:"🏭",grad:"#D97706,#EA580C",nombre:"Inventario",desc:"Control de Stock",kpi:"/stock/kpis",field:"total_productos_con_stock"},{id:"compras",icon:"🛒",grad:"#2563EB,#4F46E5",nombre:"Compras",desc:"Órdenes de Compra",kpi:"/compras/kpis",field:"total_ordenes"},{id:"productos",icon:"📦",grad:"#0D9488,#059669",nombre:"Productos",desc:"Catálogo de Artículos",kpi:"/productos",field:null},{id:"cfdi",icon:"🔐",grad:"#E11D48,#DC2626",nombre:"CFDI 4.0",desc:"Timbrado Fiscal Digital",kpi:"/cfdi/historial",field:null},{id:"nomina",icon:"👔",grad:"#0EA5E9,#2563EB",nombre:"Nómina IMSS",desc:"Nóminas y Seguridad Social",kpi:"/nomina/kpis",field:"total_empleados"},{id:"reportes",icon:"📈",grad:"#475569,#1E293B",nombre:"Reportes",desc:"Análisis y BI",kpi:null,field:null},{id:"cotizaciones",icon:"📝",grad:"#8B5CF6,#4F46E5",nombre:"Cotizaciones",desc:"Borradores y Propuestas",kpi:"/cotizaciones/kpis",field:"total_borradores"},{id:"dashboard",icon:"📊",grad:"#0F172A,#1E293B",nombre:"Dashboard",desc:"Vista general del sistema",kpi:null,field:null}];async function Me(){C(),$([{label:"Inicio"}]),w(`
+    </span>`).join(""))}function Zt(){const t=window.location.hash.replace("#","")||"home";document.querySelectorAll(".nav-link").forEach(e=>{e.classList.toggle("active",e.id===`nl-${t}`)})}const te=[{id:"ventas",icon:"📊",grad:"#4F46E5,#7C3AED",nombre:"Ventas",desc:"Órdenes y Cotizaciones",kpi:"/ventas/kpis",field:"total_ordenes"},{id:"facturas",icon:"🧾",grad:"#059669,#0EA5E9",nombre:"Facturación",desc:"Facturas y Pagos",kpi:"/facturas/kpis",field:"total_facturas"},{id:"partners",icon:"👥",grad:"#7C3AED,#EC4899",nombre:"Clientes",desc:"Contactos y Partners",kpi:"/partners",field:null},{id:"stock",icon:"🏭",grad:"#D97706,#EA580C",nombre:"Inventario",desc:"Control de Stock",kpi:"/stock/kpis",field:"total_productos_con_stock"},{id:"compras",icon:"🛒",grad:"#2563EB,#4F46E5",nombre:"Compras",desc:"Órdenes de Compra",kpi:"/compras/kpis",field:"total_ordenes"},{id:"productos",icon:"📦",grad:"#0D9488,#059669",nombre:"Productos",desc:"Catálogo de Artículos",kpi:"/productos",field:null},{id:"cfdi",icon:"🔐",grad:"#E11D48,#DC2626",nombre:"CFDI 4.0",desc:"Timbrado Fiscal Digital",kpi:"/cfdi/historial",field:null},{id:"nomina",icon:"👔",grad:"#0EA5E9,#2563EB",nombre:"Nómina IMSS",desc:"Nóminas y Seguridad Social",kpi:"/nomina/kpis",field:"total_empleados"},{id:"reportes",icon:"📈",grad:"#475569,#1E293B",nombre:"Reportes",desc:"Análisis y BI",kpi:null,field:null},{id:"cotizaciones",icon:"📝",grad:"#8B5CF6,#4F46E5",nombre:"Cotizaciones",desc:"Borradores y Propuestas",kpi:"/cotizaciones/kpis",field:"total_borradores"},{id:"dashboard",icon:"📊",grad:"#0F172A,#1E293B",nombre:"Dashboard",desc:"Vista general del sistema",kpi:null,field:null}];async function De(){C(),$([{label:"Inicio"}]),w(`
     <div class="nx-home">
       <div class="nx-home-header">
         <h1 class="nx-home-title">Aplicaciones</h1>
@@ -194,7 +194,7 @@
         </div>
       </div>
       <div class="nx-app-grid" id="home-app-grid">
-        ${Zt.map((t,e)=>`
+        ${te.map((t,e)=>`
           <div class="nx-app-card" data-id="${t.id}" onclick="window._go('${t.id}')" style="animation-delay:${e*50}ms">
             <div class="nx-app-icon" style="background:linear-gradient(135deg,${t.grad})">${t.icon}</div>
             <div class="nx-app-badge" id="app-badge-${t.id}">…</div>
@@ -204,7 +204,7 @@
         `).join("")}
       </div>
     </div>
-  `),await Promise.allSettled(Zt.filter(t=>t.kpi).map(async t=>{try{const e=await p.get(t.kpi),a=(e==null?void 0:e.data)??e,i=t.field&&a?a[t.field]??"—":Array.isArray(a)?a.length:"—",o=document.getElementById("app-badge-"+t.id);o&&(o.textContent=Number(i)>999?(i/1e3).toFixed(1)+"k":i)}catch{const e=document.getElementById("app-badge-"+t.id);e&&(e.textContent="—")}})),window._filterApps=t=>{const e=t.toLowerCase().trim();document.querySelectorAll(".nx-app-card").forEach(a=>{var l,s;const i=((l=a.querySelector(".nx-app-name"))==null?void 0:l.textContent.toLowerCase())||"",o=((s=a.querySelector(".nx-app-desc"))==null?void 0:s.textContent.toLowerCase())||"";a.classList.toggle("hidden",!!e&&!i.includes(e)&&!o.includes(e))})}}const ze={sale:"indigo",done:"emerald",draft:"gray",cancel:"red",sent:"sky",posted:"emerald"},De={sale:"Confirmada",done:"Entregada",draft:"Borrador",cancel:"Cancelada",sent:"Enviada"};function J(t,e=10){return Array.from({length:e},()=>Math.max(5,Math.round(t*(.6+Math.random()*.8))))}async function ne(){var t,e,a,i,o,l,s,c,d;C(),$([{label:"Dashboard"}]),w(`
+  `),await Promise.allSettled(te.filter(t=>t.kpi).map(async t=>{try{const e=await u.get(t.kpi),a=(e==null?void 0:e.data)??e,i=t.field&&a?a[t.field]??"—":Array.isArray(a)?a.length:"—",o=document.getElementById("app-badge-"+t.id);o&&(o.textContent=Number(i)>999?(i/1e3).toFixed(1)+"k":i)}catch{const e=document.getElementById("app-badge-"+t.id);e&&(e.textContent="—")}})),window._filterApps=t=>{const e=t.toLowerCase().trim();document.querySelectorAll(".nx-app-card").forEach(a=>{var d,s;const i=((d=a.querySelector(".nx-app-name"))==null?void 0:d.textContent.toLowerCase())||"",o=((s=a.querySelector(".nx-app-desc"))==null?void 0:s.textContent.toLowerCase())||"";a.classList.toggle("hidden",!!e&&!i.includes(e)&&!o.includes(e))})}}const je={sale:"indigo",done:"emerald",draft:"gray",cancel:"red",sent:"sky",posted:"emerald"},Ne={sale:"Confirmada",done:"Entregada",draft:"Borrador",cancel:"Cancelada",sent:"Enviada"};function Y(t,e=10){return Array.from({length:e},()=>Math.max(5,Math.round(t*(.6+Math.random()*.8))))}async function de(){var t,e,a,i,o,d,s,c,l;C(),$([{label:"Dashboard"}]),w(`
   <div class="page-header anim-1">
     <div>
       <h1 class="page-title">Dashboard</h1>
@@ -217,7 +217,7 @@
   </div>
 
   <!-- KPI Cards skeleton -->
-  <div class="kpi-grid anim-2" id="kpi-grid">${Fe(5)}</div>
+  <div class="kpi-grid anim-2" id="kpi-grid">${Pe(5)}</div>
 
   <!-- Main grid -->
   <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:16px" class="anim-3">
@@ -266,7 +266,7 @@
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-400);margin-bottom:16px">🟢 Estado del Sistema</div>
       <div id="system-status">${x(4,2)}</div>
     </div>
-  </div>`);try{const[n,r,v]=await Promise.allSettled([p.dashboard(),p.ventas(1),p.stockBajo()]),u=n.status==="fulfilled"?(t=n.value)==null?void 0:t.data:null,g=[{key:"ventas_mes",label:"Ventas del Mes",tipo:"mxn",icon:"💰",color:"indigo",valor:parseFloat(((e=u==null?void 0:u.ventas)==null?void 0:e.importe_mes)||0),trend:null,spark:J(100)},{key:"facturas",label:"Facturas Emitidas",tipo:"num",icon:"🧾",color:"emerald",valor:parseInt(((a=u==null?void 0:u.facturacion)==null?void 0:a.total_facturas)||0),trend:null,spark:J(50)},{key:"cobrar",label:"Por Cobrar",tipo:"mxn",icon:"📋",color:"amber",valor:parseFloat(((i=u==null?void 0:u.facturacion)==null?void 0:i.por_cobrar)||0),trend:null,spark:J(80)},{key:"stock_total",label:"Productos en Stock",tipo:"num",icon:"📦",color:"sky",valor:parseInt(((o=u==null?void 0:u.inventario)==null?void 0:o.total_productos_con_stock)||0),trend:null,spark:J(80)},{key:"stock_bajo",label:"Alertas Stock Bajo",tipo:"num",icon:"⚠️",color:"rose",valor:parseInt(((l=u==null?void 0:u.inventario)==null?void 0:l.alertas_stock_bajo)||0),trend:null,spark:J(20)}],y=document.getElementById("kpi-grid");y&&(y.innerHTML=g.map(h=>`
+  </div>`);try{const[n,r,v]=await Promise.allSettled([u.dashboard(),u.ventas(1),u.stockBajo()]),p=n.status==="fulfilled"?(t=n.value)==null?void 0:t.data:null,g=[{key:"ventas_mes",label:"Ventas del Mes",tipo:"mxn",icon:"💰",color:"indigo",valor:parseFloat(((e=p==null?void 0:p.ventas)==null?void 0:e.importe_mes)||0),trend:null,spark:Y(100)},{key:"facturas",label:"Facturas Emitidas",tipo:"num",icon:"🧾",color:"emerald",valor:parseInt(((a=p==null?void 0:p.facturacion)==null?void 0:a.total_facturas)||0),trend:null,spark:Y(50)},{key:"cobrar",label:"Por Cobrar",tipo:"mxn",icon:"📋",color:"amber",valor:parseFloat(((i=p==null?void 0:p.facturacion)==null?void 0:i.por_cobrar)||0),trend:null,spark:Y(80)},{key:"stock_total",label:"Productos en Stock",tipo:"num",icon:"📦",color:"sky",valor:parseInt(((o=p==null?void 0:p.inventario)==null?void 0:o.total_productos_con_stock)||0),trend:null,spark:Y(80)},{key:"stock_bajo",label:"Alertas Stock Bajo",tipo:"num",icon:"⚠️",color:"rose",valor:parseInt(((d=p==null?void 0:p.inventario)==null?void 0:d.alertas_stock_bajo)||0),trend:null,spark:Y(20)}],y=document.getElementById("kpi-grid");y&&(y.innerHTML=g.map(h=>`
       <div class="kpi-card kpi-${h.color}">
         <div class="kpi-label">
           <span>${h.label}</span>
@@ -274,41 +274,41 @@
         </div>
         <div class="kpi-value" id="kv-${h.key}">—</div>
         <div class="kpi-trend neutral">→ En tiempo real</div>
-        ${Ie(h.spark)}
-      </div>`).join(""),g.forEach(h=>{const _=document.getElementById("kv-"+h.key);_&&(h.tipo==="mxn"?Jt(_,h.valor,1100,"$"):Jt(_,h.valor,1100))}));const I=document.getElementById("tabla-ventas");if(I){const h=r.status==="fulfilled"?(((s=r.value)==null?void 0:s.data)||[]).slice(0,6):[];h.length===0?I.innerHTML='<p style="text-align:center;color:var(--text-400);padding:24px">Sin ventas registradas</p>':I.innerHTML=`
+        ${Le(h.spark)}
+      </div>`).join(""),g.forEach(h=>{const _=document.getElementById("kv-"+h.key);_&&(h.tipo==="mxn"?Wt(_,h.valor,1100,"$"):Wt(_,h.valor,1100))}));const T=document.getElementById("tabla-ventas");if(T){const h=r.status==="fulfilled"?(((s=r.value)==null?void 0:s.data)||[]).slice(0,6):[];h.length===0?T.innerHTML='<p style="text-align:center;color:var(--text-400);padding:24px">Sin ventas registradas</p>':T.innerHTML=`
         <table class="data-table">
           <thead><tr>
             <th>Folio</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th>
           </tr></thead>
           <tbody>
-            ${h.map(_=>{const S=_.state||"draft",Q=De[S]||S,M=ze[S]||"gray",dt=_.date_order?new Date(_.date_order).toLocaleDateString("es-MX",{day:"2-digit",month:"short"}):"—";return`
+            ${h.map(_=>{const S=_.state||"draft",W=Ne[S]||S,M=je[S]||"gray",rt=_.date_order?new Date(_.date_order).toLocaleDateString("es-MX",{day:"2-digit",month:"short"}):"—";return`
               <tr>
                 <td class="td-mono">${_.name||_.id}</td>
                 <td class="td-primary">${_.partner_name||_.partner_id||"—"}</td>
-                <td>${dt}</td>
+                <td>${rt}</td>
                 <td class="td-amount">${f(parseFloat(_.amount_total||0))}</td>
-                <td><span class="badge badge-${M} badge-dot">${Q}</span></td>
+                <td><span class="badge badge-${M} badge-dot">${W}</span></td>
               </tr>`}).join("")}
           </tbody>
-        </table>`}const L=document.getElementById("tabla-stock");if(L){const h=v.status==="fulfilled"?(((c=v.value)==null?void 0:c.data)||[]).slice(0,5):[];h.length===0?L.innerHTML='<p style="text-align:center;color:var(--text-400);padding:24px">✅ Stock en niveles normales</p>':L.innerHTML=`
+        </table>`}const F=document.getElementById("tabla-stock");if(F){const h=v.status==="fulfilled"?(((c=v.value)==null?void 0:c.data)||[]).slice(0,5):[];h.length===0?F.innerHTML='<p style="text-align:center;color:var(--text-400);padding:24px">✅ Stock en niveles normales</p>':F.innerHTML=`
         <table class="data-table">
           <thead><tr><th>Producto</th><th>Disponible</th></tr></thead>
           <tbody>
-            ${h.map(_=>{const S=parseFloat(_.cantidad_disponible||0),Q=S<=0?"red":S<5?"amber":"sky";return`
+            ${h.map(_=>{const S=parseFloat(_.cantidad_disponible||0),W=S<=0?"red":S<5?"amber":"sky";return`
               <tr>
                 <td class="td-primary" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_.product_name||_.product_id}</td>
-                <td><span class="badge badge-${Q}">${S}</span></td>
+                <td><span class="badge badge-${W}">${S}</span></td>
               </tr>`}).join("")}
           </tbody>
-        </table>`}const k=document.getElementById("resumen-fiscal");if(k){const h=u==null?void 0:u.facturacion,_=[{label:"Facturas emitidas (total)",val:F((h==null?void 0:h.total_facturas)||0),color:"indigo"},{label:"Por cobrar",val:f(parseFloat((h==null?void 0:h.por_cobrar)||0)),color:"amber"},{label:"Monto total facturado",val:f(parseFloat((h==null?void 0:h.monto_total)||0)),color:"emerald"},{label:"Facturas vencidas",val:F((h==null?void 0:h.facturas_vencidas)||0),color:"red"}];k.innerHTML=_.map(S=>`
+        </table>`}const k=document.getElementById("resumen-fiscal");if(k){const h=p==null?void 0:p.facturacion,_=[{label:"Facturas emitidas (total)",val:L((h==null?void 0:h.total_facturas)||0),color:"indigo"},{label:"Por cobrar",val:f(parseFloat((h==null?void 0:h.por_cobrar)||0)),color:"amber"},{label:"Monto total facturado",val:f(parseFloat((h==null?void 0:h.monto_total)||0)),color:"emerald"},{label:"Facturas vencidas",val:L((h==null?void 0:h.facturas_vencidas)||0),color:"red"}];k.innerHTML=_.map(S=>`
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;padding-bottom:11px;border-bottom:1px solid var(--border)">
         <span style="font-size:12.5px;color:var(--text-500)">${S.label}</span>
         <span class="badge badge-${S.color}">${S.val}</span>
-      </div>`).join("")}const A=document.getElementById("system-status");if(A){let h=!1;try{await p.health(),h=!0}catch{}A.innerHTML=[{label:"API Backend",val:h?"✅ En línea":"❌ Offline",color:h?"emerald":"red"},{label:"Base de datos",val:u?"✅ Operativa":"⚠️ Sin datos",color:u?"emerald":"amber"},{label:"Versión ERP",val:"v2.0.0",color:"indigo"},{label:"Uptime",val:"99.98%",color:"emerald"}].map(_=>`
+      </div>`).join("")}const A=document.getElementById("system-status");if(A){let h=!1;try{await u.health(),h=!0}catch{}A.innerHTML=[{label:"API Backend",val:h?"✅ En línea":"❌ Offline",color:h?"emerald":"red"},{label:"Base de datos",val:p?"✅ Operativa":"⚠️ Sin datos",color:p?"emerald":"amber"},{label:"Versión ERP",val:"v2.0.0",color:"indigo"},{label:"Uptime",val:"99.98%",color:"emerald"}].map(_=>`
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <span style="font-size:12.5px;color:var(--text-500)">${_.label}</span>
         <span class="badge badge-${_.color}">${_.val}</span>
-      </div>`).join("")}}catch(n){console.error("Dashboard load error:",n),b("Error al cargar","No se pudo conectar con el servidor","error")}(d=document.getElementById("btn-refresh"))==null||d.addEventListener("click",()=>ne())}let Y="list",z=1,It="",Tt=null,kt=[];async function je(){C(),$([{label:"Ventas"}]),w(`<div class="nx-module-page"><div id="mcp"></div><div id="mcontent">${x(5,6)}</div></div>`),le(),await Z()}function le(){const t=document.getElementById("mcp");t&&(t.innerHTML=`
+      </div>`).join("")}}catch(n){console.error("Dashboard load error:",n),b("Error al cargar","No se pudo conectar con el servidor","error")}(l=document.getElementById("btn-refresh"))==null||l.addEventListener("click",()=>de())}const Re="modulepreload",qe=function(t){return"/"+t},ee={},dt=function(e,a,i){let o=Promise.resolve();if(a&&a.length>0){document.getElementsByTagName("link");const s=document.querySelector("meta[property=csp-nonce]"),c=(s==null?void 0:s.nonce)||(s==null?void 0:s.getAttribute("nonce"));o=Promise.allSettled(a.map(l=>{if(l=qe(l),l in ee)return;ee[l]=!0;const n=l.endsWith(".css"),r=n?'[rel="stylesheet"]':"";if(document.querySelector(`link[href="${l}"]${r}`))return;const v=document.createElement("link");if(v.rel=n?"stylesheet":Re,n||(v.as="script"),v.crossOrigin="",v.href=l,c&&v.setAttribute("nonce",c),document.head.appendChild(v),n)return new Promise((p,g)=>{v.addEventListener("load",p),v.addEventListener("error",()=>g(new Error(`Unable to preload CSS for ${l}`)))})}))}function d(s){const c=new Event("vite:preloadError",{cancelable:!0});if(c.payload=s,window.dispatchEvent(c),!c.defaultPrevented)throw s}return o.then(s=>{for(const c of s||[])c.status==="rejected"&&d(c.reason);return e().catch(d)})};let tt="list",z=1,Ft="",Pt=null,St=[];async function Ve(){C(),$([{label:"Ventas"}]),w(`<div class="nx-module-page"><div id="mcp"></div><div id="mcontent">${x(5,6)}</div></div>`),ce(),await G()}function ce(){const t=document.getElementById("mcp");t&&(t.innerHTML=`
     <div class="o-control-panel">
       <div class="o-cp-left">
         <button class="o-btn-new" onclick="window._newVenta()">+ Nueva Venta</button>
@@ -332,11 +332,11 @@
       </div>
       <div class="o-cp-right">
         <div class="o-view-switcher">
-          <button class="o-view-btn ${Y==="list"?"active":""}" onclick="window._vv('list')" title="Lista">☰</button>
-          <button class="o-view-btn ${Y==="kanban"?"active":""}" onclick="window._vv('kanban')" title="Kanban">⬜</button>
+          <button class="o-view-btn ${tt==="list"?"active":""}" onclick="window._vv('list')" title="Lista">☰</button>
+          <button class="o-view-btn ${tt==="kanban"?"active":""}" onclick="window._vv('kanban')" title="Kanban">⬜</button>
         </div>
       </div>
-    </div>`,Ne(),window._vv=e=>{Y=e,le(),Z()},window._sv=Oe(e=>{It=e,z=1,Z()},300),window._fv=e=>{Tt=e,z=1,Z(),window._cdd()},window._newVenta=()=>b("Info","Usa el backend para crear órdenes","info"))}function Ne(){window._tog=t=>{const e=document.getElementById(t+"-menu");if(!e)return;const a=e.classList.contains("open");window._cdd(),a||e.classList.add("open")},window._cdd=()=>document.querySelectorAll(".o-dropdown-menu.open").forEach(t=>t.classList.remove("open")),window._ddInit||(document.addEventListener("click",t=>{t.target.closest(".o-dropdown")||window._cdd()}),window._ddInit=!0)}async function Z(){const t=document.getElementById("mcontent");if(t){t.innerHTML=x(5,6);try{const e=await p.ventas(z);kt=(e==null?void 0:e.data)||[];let a=Tt?kt.filter(o=>o.state===Tt):kt;if(It){const o=It.toLowerCase();a=a.filter(l=>(l.name||"").toLowerCase().includes(o)||(l.partner_name||"").toLowerCase().includes(o))}const i=document.getElementById("vcount");i&&(i.textContent=a.length+" registros"),t.innerHTML=Y==="kanban"?qe(a):Re(a),Y==="list"&&Ve()}catch(e){t.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-400)">⚠️ ${e.message}</div>`}}}const Ft={sale:"Confirmada",done:"Realizada",draft:"Borrador",cancel:"Cancelada",sent:"Enviada"},de={invoiced:"Facturada",to_invoice:"Por Facturar",no:"—"};function Re(t){return t.length?`
+    </div>`,Oe(),window._vv=e=>{tt=e,ce(),G()},window._sv=Ke(e=>{Ft=e,z=1,G()},300),window._fv=e=>{Pt=e,z=1,G(),window._cdd()},window._newVenta=()=>{dt(()=>import("./create_forms-6H4RCJr_.js"),[]).then(e=>e.nuevaVenta(()=>G()))})}function Oe(){window._tog=t=>{const e=document.getElementById(t+"-menu");if(!e)return;const a=e.classList.contains("open");window._cdd(),a||e.classList.add("open")},window._cdd=()=>document.querySelectorAll(".o-dropdown-menu.open").forEach(t=>t.classList.remove("open")),window._ddInit||(document.addEventListener("click",t=>{t.target.closest(".o-dropdown")||window._cdd()}),window._ddInit=!0)}async function G(){const t=document.getElementById("mcontent");if(t){t.innerHTML=x(5,6);try{const e=await u.ventas(z);St=(e==null?void 0:e.data)||[];let a=Pt?St.filter(o=>o.state===Pt):St;if(Ft){const o=Ft.toLowerCase();a=a.filter(d=>(d.name||"").toLowerCase().includes(o)||(d.partner_name||"").toLowerCase().includes(o))}const i=document.getElementById("vcount");i&&(i.textContent=a.length+" registros"),t.innerHTML=tt==="kanban"?Ue(a):He(a),tt==="list"&&Ge()}catch(e){t.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-400)">⚠️ ${e.message}</div>`}}}const At={sale:"Confirmada",done:"Realizada",draft:"Borrador",cancel:"Cancelada",sent:"Enviada"},re={invoiced:"Facturada",to_invoice:"Por Facturar",no:"—"};function He(t){return t.length?`
     <div class="o-list-actions-bar" id="lab"><span class="o-actions-count" id="sel-cnt">0 seleccionados</span>
       <button class="o-action-btn-sm" onclick="alert('Exportar')">Exportar</button>
     </div>
@@ -352,9 +352,9 @@
             <td><strong>${e.name||"-"}</strong></td>
             <td>${e.partner_name||e.partner_id||"-"}</td>
             <td>${((a=e.date_order)==null?void 0:a.slice(0,10))||"-"}</td>
-            <td>${q(e.state,Ft[e.state]||e.state)}</td>
+            <td>${q(e.state,At[e.state]||e.state)}</td>
             <td style="text-align:right;font-weight:700;color:var(--primary)">${f(e.amount_total)}</td>
-            <td>${e.invoice_status?q(e.invoice_status,de[e.invoice_status]||e.invoice_status):"-"}</td>
+            <td>${e.invoice_status?q(e.invoice_status,re[e.invoice_status]||e.invoice_status):"-"}</td>
           </tr>`}).join("")}
       </tbody></table></div>
     <div style="padding:12px 20px;display:flex;justify-content:space-between;align-items:center;background:var(--bg-card);border-top:1px solid var(--border)">
@@ -363,7 +363,7 @@
         <button class="o-action-btn-sm" ${z<=1?"disabled":""} onclick="window._vp(${z-1})">‹ Anterior</button>
         <span style="padding:5px 10px;font-size:13px">${z}</span>
         <button class="o-action-btn-sm" onclick="window._vp(${z+1})">Siguiente ›</button>
-      </div></div>`:'<div style="padding:60px;text-align:center"><div style="font-size:48px;margin-bottom:12px">📋</div><p style="color:var(--text-400)">Sin ventas. Crea la primera.</p></div>'}const te=[{key:"draft",label:"Borrador",color:"#D97706"},{key:"sent",label:"Enviado",color:"#2563EB"},{key:"sale",label:"Confirmado",color:"#059669"},{key:"done",label:"Realizado",color:"#166534"},{key:"cancel",label:"Cancelado",color:"#DC2626"}];function qe(t){const e={};return te.forEach(a=>e[a.key]=[]),t.forEach(a=>{var i;e[a.state]?e[a.state].push(a):(i=e.draft)==null||i.push(a)}),`<div class="o-kanban-view">${te.map(a=>`
+      </div></div>`:'<div style="padding:60px;text-align:center"><div style="font-size:48px;margin-bottom:12px">📋</div><p style="color:var(--text-400)">Sin ventas. Crea la primera.</p></div>'}const ae=[{key:"draft",label:"Borrador",color:"#D97706"},{key:"sent",label:"Enviado",color:"#2563EB"},{key:"sale",label:"Confirmado",color:"#059669"},{key:"done",label:"Realizado",color:"#166534"},{key:"cancel",label:"Cancelado",color:"#DC2626"}];function Ue(t){const e={};return ae.forEach(a=>e[a.key]=[]),t.forEach(a=>{var i;e[a.state]?e[a.state].push(a):(i=e.draft)==null||i.push(a)}),`<div class="o-kanban-view">${ae.map(a=>`
     <div class="o-kanban-col">
       <div class="o-kanban-col-header" style="border-top:3px solid ${a.color}">
         <span>${a.label}</span><span class="o-kanban-col-count">${e[a.key].length}</span>
@@ -379,14 +379,14 @@
             </div>
           </div>`}).join("")||'<div style="padding:16px;text-align:center;color:var(--text-300);font-size:12px">Vacío</div>'}
       </div>
-    </div>`).join("")}</div>`}function Ve(){window._ca=t=>{document.querySelectorAll(".rc").forEach(e=>e.checked=t),window._rc()},window._rc=()=>{const t=document.querySelectorAll(".rc:checked").length,e=document.getElementById("lab"),a=document.getElementById("sel-cnt");e&&e.classList.toggle("visible",t>0),a&&(a.textContent=t+" seleccionado"+(t!==1?"s":"")),document.querySelectorAll("[data-id]").forEach(i=>{const o=i.querySelector(".rc");o&&i.classList.toggle("selected",o.checked)})}}window._vp=t=>{z=t,Z()};window._vVenta=async t=>{var e,a;$([{label:"Ventas",href:"#ventas"},{label:"Cargando…"}]),w(`<div style="padding:40px">${x(3,5)}</div>`);try{const i=await p.venta(t),o=(i==null?void 0:i.data)||i;if(!o)throw new Error("No encontrado");$([{label:"Ventas",href:"#ventas"},{label:o.name||"#"+t}]);const l=["draft","sent","sale","done"];o.state==="cancel"&&l.push("cancel");const s=l.indexOf(o.state);w(`
+    </div>`).join("")}</div>`}function Ge(){window._ca=t=>{document.querySelectorAll(".rc").forEach(e=>e.checked=t),window._rc()},window._rc=()=>{const t=document.querySelectorAll(".rc:checked").length,e=document.getElementById("lab"),a=document.getElementById("sel-cnt");e&&e.classList.toggle("visible",t>0),a&&(a.textContent=t+" seleccionado"+(t!==1?"s":"")),document.querySelectorAll("[data-id]").forEach(i=>{const o=i.querySelector(".rc");o&&i.classList.toggle("selected",o.checked)})}}window._vp=t=>{z=t,G()};window._vVenta=async t=>{var e,a;$([{label:"Ventas",href:"#ventas"},{label:"Cargando…"}]),w(`<div style="padding:40px">${x(3,5)}</div>`);try{const i=await u.venta(t),o=(i==null?void 0:i.data)||i;if(!o)throw new Error("No encontrado");$([{label:"Ventas",href:"#ventas"},{label:o.name||"#"+t}]);const d=["draft","sent","sale","done"];o.state==="cancel"&&d.push("cancel");const s=d.indexOf(o.state);w(`
       <div class="o-form-view" id="fv">
         <div class="o-statusbar">
           <div class="o-statusbar-status">
-            ${l.map((c,d)=>`
-              <div class="o-status-step ${c===o.state?"active":""} ${d<s?"done":""}">
-                ${d<s?"✔ ":""}${{draft:"Borrador",sent:"Enviado",sale:"Confirmado",done:"Realizado",cancel:"Cancelado"}[c]||c}
-              </div>${d<l.length-1?'<span class="o-status-arrow">›</span>':""}`).join("")}
+            ${d.map((c,l)=>`
+              <div class="o-status-step ${c===o.state?"active":""} ${l<s?"done":""}">
+                ${l<s?"✔ ":""}${{draft:"Borrador",sent:"Enviado",sale:"Confirmado",done:"Realizado",cancel:"Cancelado"}[c]||c}
+              </div>${l<d.length-1?'<span class="o-status-arrow">›</span>':""}`).join("")}
           </div>
           <div class="o-statusbar-buttons">
             ${o.state==="draft"||o.state==="sent"?`<button class="btn btn-primary btn-sm" onclick="window._confV(${t})">📊 Confirmar</button>`:""}
@@ -414,9 +414,9 @@
                 <div class="o-field-row"><div class="o-field-label">Validez</div><div class="o-field-value">${o.validity_date||'<span class="o-field-empty">—</span>'}</div></div>
               </div>
               <div class="o-form-col">
-                <div class="o-field-row"><div class="o-field-label">Estado</div><div class="o-field-value">${q(o.state,Ft[o.state]||o.state)}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Estado</div><div class="o-field-value">${q(o.state,At[o.state]||o.state)}</div></div>
                 <div class="o-field-row"><div class="o-field-label">Empresa</div><div class="o-field-value">${o.company_id||o.company_name||'<span class="o-field-empty">—</span>'}</div></div>
-                <div class="o-field-row"><div class="o-field-label">Facturación</div><div class="o-field-value">${o.invoice_status?q(o.invoice_status,de[o.invoice_status]||o.invoice_status):'<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Facturación</div><div class="o-field-value">${o.invoice_status?q(o.invoice_status,re[o.invoice_status]||o.invoice_status):'<span class="o-field-empty">—</span>'}</div></div>
                 <div class="o-field-row"><div class="o-field-label">Notas</div><div class="o-field-value">${o.note||'<span class="o-field-empty">—</span>'}</div></div>
               </div>
             </div>
@@ -472,19 +472,19 @@
                   <span class="o-msg-author">Sistema</span>
                   <span class="o-msg-date">${new Date().toLocaleDateString("es-MX")}</span>
                 </div>
-                <div class="o-msg-text">Orden ${o.name||""} registrada. Estado: ${Ft[o.state]||o.state}</div>
+                <div class="o-msg-text">Orden ${o.name||""} registrada. Estado: ${At[o.state]||o.state}</div>
               </div>
             </div>
           </div>
         </div>
-      </div>`),window._st=c=>{document.querySelectorAll(".o-tab").forEach(r=>r.classList.remove("active")),document.querySelectorAll(".o-tab-panel").forEach(r=>r.classList.remove("active"));const d=document.querySelector(`.o-tab[onclick*="'${c}'"]`);d&&d.classList.add("active");const n=document.getElementById("tab-panel-"+c);n&&n.classList.add("active")};try{const c=await p.get(`/ventas/${t}/lineas`),d=(c==null?void 0:c.data)||[],n=document.getElementById("vlineas");n&&(n.innerHTML=d.length?d.map(r=>`<tr>
+      </div>`),window._st=c=>{document.querySelectorAll(".o-tab").forEach(r=>r.classList.remove("active")),document.querySelectorAll(".o-tab-panel").forEach(r=>r.classList.remove("active"));const l=document.querySelector(`.o-tab[onclick*="'${c}'"]`);l&&l.classList.add("active");const n=document.getElementById("tab-panel-"+c);n&&n.classList.add("active")};try{const c=await u.get(`/ventas/${t}/lineas`),l=(c==null?void 0:c.data)||[],n=document.getElementById("vlineas");n&&(n.innerHTML=l.length?l.map(r=>`<tr>
               <td>${r.product_id?"#"+r.product_id:'<span class="o-field-empty">—</span>'}</td>
               <td>${r.name||"-"}</td>
               <td style="text-align:right">${r.product_uom_qty??0}</td>
               <td style="text-align:right">${f(r.price_unit)}</td>
               <td style="text-align:right">${r.discount?r.discount+"%":"0%"}</td>
               <td style="text-align:right;font-weight:700">${f(r.price_subtotal)}</td>
-            </tr>`).join(""):'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-400)">Sin líneas de pedido</td></tr>')}catch{}window._confV=async c=>{if(confirm("¿Confirmar orden?"))try{await p.put(`/ventas/${c}/confirmar`,{}),b("OK","Venta confirmada","success"),window._vVenta(c)}catch(d){b("Error",d.message,"error")}},window._cancV=async c=>{if(confirm("¿Cancelar orden?"))try{await p.put(`/ventas/${c}/cancelar`,{}),b("Cancelado","","info"),window._go("ventas")}catch(d){b("Error",d.message,"error")}}}catch(i){w(`<div style="padding:40px;text-align:center"><p style="color:#DC2626">⚠️ ${i.message}</p><button class="o-btn-new" onclick="window._go('ventas')">Volver</button></div>`)}};function Oe(t,e){let a;return(...i)=>{clearTimeout(a),a=setTimeout(()=>t(...i),e)}}let tt="list",D=1,Lt="",Pt=null,Et=[];async function He(){C(),$([{label:"Facturas"}]),w(`<div class="nx-module-page"><div id="mcp"></div><div id="mcontent">${x(5,7)}</div></div>`),ce(),await et()}function ce(){const t=document.getElementById("mcp");t&&(t.innerHTML=`
+            </tr>`).join(""):'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-400)">Sin líneas de pedido</td></tr>')}catch{}window._confV=async c=>{if(confirm("¿Confirmar orden?"))try{await u.put(`/ventas/${c}/confirmar`,{}),b("OK","Venta confirmada","success"),window._vVenta(c)}catch(l){b("Error",l.message,"error")}},window._cancV=async c=>{if(confirm("¿Cancelar orden?"))try{await u.put(`/ventas/${c}/cancelar`,{}),b("Cancelado","","info"),window._go("ventas")}catch(l){b("Error",l.message,"error")}}}catch(i){w(`<div style="padding:40px;text-align:center"><p style="color:#DC2626">⚠️ ${i.message}</p><button class="o-btn-new" onclick="window._go('ventas')">Volver</button></div>`)}};function Ke(t,e){let a;return(...i)=>{clearTimeout(a),a=setTimeout(()=>t(...i),e)}}let et="list",D=1,Mt="",zt=null,It=[];async function Xe(){C(),$([{label:"Facturas"}]),w(`<div class="nx-module-page"><div id="mcp"></div><div id="mcontent">${x(5,7)}</div></div>`),ve(),await K()}function ve(){const t=document.getElementById("mcp");t&&(t.innerHTML=`
     <div class="o-control-panel">
       <div class="o-cp-left">
         <button class="o-btn-new" onclick="window._newFactura()">+ Nueva Factura</button>
@@ -509,11 +509,11 @@
       </div>
       <div class="o-cp-right">
         <div class="o-view-switcher">
-          <button class="o-view-btn ${tt==="list"?"active":""}" onclick="window._fvv('list')" title="Lista">☰</button>
-          <button class="o-view-btn ${tt==="kanban"?"active":""}" onclick="window._fvv('kanban')" title="Kanban">⬜</button>
+          <button class="o-view-btn ${et==="list"?"active":""}" onclick="window._fvv('list')" title="Lista">☰</button>
+          <button class="o-view-btn ${et==="kanban"?"active":""}" onclick="window._fvv('kanban')" title="Kanban">⬜</button>
         </div>
       </div>
-    </div>`,Ue(),window._fvv=e=>{tt=e,ce(),et()},window._sf=Qe(e=>{Lt=e,D=1,et()},300),window._ff=e=>{Pt=e,D=1,et(),window._cdd()},window._newFactura=()=>window._go("cfdi"))}function Ue(){window._tog=t=>{const e=document.getElementById(t+"-menu");if(!e)return;const a=e.classList.contains("open");window._cdd(),a||e.classList.add("open")},window._cdd=()=>document.querySelectorAll(".o-dropdown-menu.open").forEach(t=>t.classList.remove("open")),window._ddInit||(document.addEventListener("click",t=>{t.target.closest(".o-dropdown")||window._cdd()}),window._ddInit=!0)}async function et(){const t=document.getElementById("mcontent");if(t){t.innerHTML=x(5,7);try{const e=await p.facturas(D);Et=(e==null?void 0:e.data)||[];let a=Pt?Et.filter(o=>o.state===Pt):Et;if(Lt){const o=Lt.toLowerCase();a=a.filter(l=>(l.name||"").toLowerCase().includes(o)||(l.partner_name||"").toLowerCase().includes(o))}const i=document.getElementById("fcount");i&&(i.textContent=a.length+" registros"),t.innerHTML=tt==="kanban"?Ke(a):Ge(a),tt==="list"&&Xe()}catch(e){t.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-400)">⚠️ ${e.message}</div>`}}}const At={draft:"Borrador",posted:"Publicada",in_payment:"En Pago",paid:"Pagada",cancel:"Cancelada"};function Ge(t){return t.length?`
+    </div>`,Qe(),window._fvv=e=>{et=e,ve(),K()},window._sf=Ze(e=>{Mt=e,D=1,K()},300),window._ff=e=>{zt=e,D=1,K(),window._cdd()},window._newFactura=()=>{dt(()=>import("./create_forms-6H4RCJr_.js"),[]).then(e=>e.nuevaFactura(()=>K()))})}function Qe(){window._tog=t=>{const e=document.getElementById(t+"-menu");if(!e)return;const a=e.classList.contains("open");window._cdd(),a||e.classList.add("open")},window._cdd=()=>document.querySelectorAll(".o-dropdown-menu.open").forEach(t=>t.classList.remove("open")),window._ddInit||(document.addEventListener("click",t=>{t.target.closest(".o-dropdown")||window._cdd()}),window._ddInit=!0)}async function K(){const t=document.getElementById("mcontent");if(t){t.innerHTML=x(5,7);try{const e=await u.facturas(D);It=(e==null?void 0:e.data)||[];let a=zt?It.filter(o=>o.state===zt):It;if(Mt){const o=Mt.toLowerCase();a=a.filter(d=>(d.name||"").toLowerCase().includes(o)||(d.partner_name||"").toLowerCase().includes(o))}const i=document.getElementById("fcount");i&&(i.textContent=a.length+" registros"),t.innerHTML=et==="kanban"?We(a):Je(a),et==="list"&&Ye()}catch(e){t.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-400)">⚠️ ${e.message}</div>`}}}const Dt={draft:"Borrador",posted:"Publicada",in_payment:"En Pago",paid:"Pagada",cancel:"Cancelada"};function Je(t){return t.length?`
     <div class="o-list-actions-bar" id="flab"><span class="o-actions-count" id="fsel-cnt">0 seleccionados</span>
       <button class="o-action-btn-sm" onclick="alert('Exportar')">Exportar</button>
     </div>
@@ -530,7 +530,7 @@
             <td>${e.partner_name||e.partner_id||"-"}</td>
             <td><span style="font-size:11px;color:var(--text-400)">${e.move_type==="out_invoice"?"Factura":e.move_type||"-"}</span></td>
             <td>${((a=e.invoice_date)==null?void 0:a.slice(0,10))||((i=e.date)==null?void 0:i.slice(0,10))||"-"}</td>
-            <td>${q(e.state,At[e.state]||e.state)}</td>
+            <td>${q(e.state,Dt[e.state]||e.state)}</td>
             <td style="text-align:right;font-weight:700;color:var(--primary)">${f(e.amount_total)}</td>
             <td style="text-align:right;color:${e.amount_residual>0?"#DC2626":"var(--text-400)"}">${f(e.amount_residual||0)}</td>
           </tr>`}).join("")}
@@ -541,7 +541,7 @@
         <button class="o-action-btn-sm" ${D<=1?"disabled":""} onclick="window._fp(${D-1})">‹ Anterior</button>
         <span style="padding:5px 10px;font-size:13px">${D}</span>
         <button class="o-action-btn-sm" onclick="window._fp(${D+1})">Siguiente ›</button>
-      </div></div>`:'<div style="padding:60px;text-align:center"><div style="font-size:48px;margin-bottom:12px">🧾</div><p style="color:var(--text-400)">Sin facturas. Timbra la primera.</p></div>'}const ee=[{key:"draft",label:"Borrador",color:"#9CA3AF"},{key:"posted",label:"Publicada",color:"#059669"},{key:"in_payment",label:"En Pago",color:"#7C3AED"},{key:"paid",label:"Pagada",color:"#0EA5E9"},{key:"cancel",label:"Cancelada",color:"#DC2626"}];function Ke(t){const e={};return ee.forEach(a=>e[a.key]=[]),t.forEach(a=>{e[a.state]?e[a.state].push(a):e.draft&&e.draft.push(a)}),`<div class="o-kanban-view">${ee.map(a=>`
+      </div></div>`:'<div style="padding:60px;text-align:center"><div style="font-size:48px;margin-bottom:12px">🧾</div><p style="color:var(--text-400)">Sin facturas. Timbra la primera.</p></div>'}const oe=[{key:"draft",label:"Borrador",color:"#9CA3AF"},{key:"posted",label:"Publicada",color:"#059669"},{key:"in_payment",label:"En Pago",color:"#7C3AED"},{key:"paid",label:"Pagada",color:"#0EA5E9"},{key:"cancel",label:"Cancelada",color:"#DC2626"}];function We(t){const e={};return oe.forEach(a=>e[a.key]=[]),t.forEach(a=>{e[a.state]?e[a.state].push(a):e.draft&&e.draft.push(a)}),`<div class="o-kanban-view">${oe.map(a=>`
     <div class="o-kanban-col">
       <div class="o-kanban-col-header" style="border-top:3px solid ${a.color}">
         <span>${a.label}</span><span class="o-kanban-col-count">${e[a.key].length}</span>
@@ -557,13 +557,13 @@
             </div>
           </div>`}).join("")||'<div style="padding:16px;text-align:center;color:var(--text-300);font-size:12px">Vacío</div>'}
       </div>
-    </div>`).join("")}</div>`}function Xe(){window._fca=t=>{document.querySelectorAll(".frc").forEach(e=>e.checked=t),window._frc()},window._frc=()=>{const t=document.querySelectorAll(".frc:checked").length,e=document.getElementById("flab"),a=document.getElementById("fsel-cnt");e&&e.classList.toggle("visible",t>0),a&&(a.textContent=t+" seleccionado"+(t!==1?"s":"")),document.querySelectorAll("[data-id]").forEach(i=>{const o=i.querySelector(".frc");o&&i.classList.toggle("selected",o.checked)})}}window._fp=t=>{D=t,et()};window._vVF=async t=>{var e,a,i,o;$([{label:"Facturas",href:"#facturas"},{label:"Cargando…"}]),w(`<div style="padding:40px">${x(3,5)}</div>`);try{const l=await p.factura(t),s=(l==null?void 0:l.data)||l;if(!s)throw new Error("No encontrada");$([{label:"Facturas",href:"#facturas"},{label:s.name||"#"+t}]);const c=["draft","posted","in_payment","paid"];s.state==="cancel"&&c.push("cancel");const d=c.indexOf(s.state),n={draft:"Borrador",posted:"Publicada",in_payment:"En Pago",paid:"Pagada",cancel:"Cancelada"};w(`
+    </div>`).join("")}</div>`}function Ye(){window._fca=t=>{document.querySelectorAll(".frc").forEach(e=>e.checked=t),window._frc()},window._frc=()=>{const t=document.querySelectorAll(".frc:checked").length,e=document.getElementById("flab"),a=document.getElementById("fsel-cnt");e&&e.classList.toggle("visible",t>0),a&&(a.textContent=t+" seleccionado"+(t!==1?"s":"")),document.querySelectorAll("[data-id]").forEach(i=>{const o=i.querySelector(".frc");o&&i.classList.toggle("selected",o.checked)})}}window._fp=t=>{D=t,K()};window._vVF=async t=>{var e,a,i,o;$([{label:"Facturas",href:"#facturas"},{label:"Cargando…"}]),w(`<div style="padding:40px">${x(3,5)}</div>`);try{const d=await u.factura(t),s=(d==null?void 0:d.data)||d;if(!s)throw new Error("No encontrada");$([{label:"Facturas",href:"#facturas"},{label:s.name||"#"+t}]);const c=["draft","posted","in_payment","paid"];s.state==="cancel"&&c.push("cancel");const l=c.indexOf(s.state),n={draft:"Borrador",posted:"Publicada",in_payment:"En Pago",paid:"Pagada",cancel:"Cancelada"};w(`
       <div class="o-form-view" id="ffv">
         <div class="o-statusbar">
           <div class="o-statusbar-status">
             ${c.map((r,v)=>`
-              <div class="o-status-step ${r===s.state?"active":""} ${v<d?"done":""}">
-                ${v<d?"✔ ":""}${n[r]||r}
+              <div class="o-status-step ${r===s.state?"active":""} ${v<l?"done":""}">
+                ${v<l?"✔ ":""}${n[r]||r}
               </div>${v<c.length-1?'<span class="o-status-arrow">›</span>':""}`).join("")}
           </div>
           <div class="o-statusbar-buttons">
@@ -596,7 +596,7 @@
                 <div class="o-field-row"><div class="o-field-label">Referencia</div><div class="o-field-value">${s.ref||'<span class="o-field-empty">—</span>'}</div></div>
               </div>
               <div class="o-form-col">
-                <div class="o-field-row"><div class="o-field-label">Estado</div><div class="o-field-value">${q(s.state,At[s.state]||s.state)}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Estado</div><div class="o-field-value">${q(s.state,Dt[s.state]||s.state)}</div></div>
                 <div class="o-field-row"><div class="o-field-label">Empresa</div><div class="o-field-value">${s.company_id||s.company_name||'<span class="o-field-empty">—</span>'}</div></div>
                 <div class="o-field-row"><div class="o-field-label">Diario</div><div class="o-field-value">${s.journal_id||s.journal_name||'<span class="o-field-empty">—</span>'}</div></div>
                 <div class="o-field-row"><div class="o-field-label">Método Pago</div><div class="o-field-value">${s.invoice_payment_term_id||s.payment_term||'<span class="o-field-empty">—</span>'}</div></div>
@@ -655,19 +655,19 @@
                   <span class="o-msg-author">Sistema</span>
                   <span class="o-msg-date">${new Date().toLocaleDateString("es-MX")}</span>
                 </div>
-                <div class="o-msg-text">Factura ${s.name||""} — Estado: ${At[s.state]||s.state}</div>
+                <div class="o-msg-text">Factura ${s.name||""} — Estado: ${Dt[s.state]||s.state}</div>
               </div>
             </div>
           </div>
         </div>
-      </div>`),window._ft=r=>{document.querySelectorAll(".o-tab").forEach(g=>g.classList.remove("active")),document.querySelectorAll(".o-tab-panel").forEach(g=>g.classList.remove("active"));const v=document.querySelector(`.o-tab[onclick*="'${r}'"]`);v&&v.classList.add("active");const u=document.getElementById("tab-panel-"+r);u&&u.classList.add("active")};try{const r=await p.get(`/facturas/${t}/lineas`),v=(r==null?void 0:r.data)||[],u=document.getElementById("flineas");u&&(u.innerHTML=v.length?v.map(g=>{var y;return`<tr>
+      </div>`),window._ft=r=>{document.querySelectorAll(".o-tab").forEach(g=>g.classList.remove("active")),document.querySelectorAll(".o-tab-panel").forEach(g=>g.classList.remove("active"));const v=document.querySelector(`.o-tab[onclick*="'${r}'"]`);v&&v.classList.add("active");const p=document.getElementById("tab-panel-"+r);p&&p.classList.add("active")};try{const r=await u.get(`/facturas/${t}/lineas`),v=(r==null?void 0:r.data)||[],p=document.getElementById("flineas");p&&(p.innerHTML=v.length?v.map(g=>{var y;return`<tr>
               <td>${g.product_id?"#"+g.product_id:'<span class="o-field-empty">Servicio</span>'}</td>
               <td>${g.name||"-"}</td>
               <td style="text-align:right">${g.quantity??0}</td>
               <td style="text-align:right">${f(g.price_unit)}</td>
               <td style="text-align:right;font-size:11px">${(y=g.tax_ids)!=null&&y.length?"IVA 16%":"—"}</td>
               <td style="text-align:right;font-weight:700">${f(g.price_subtotal)}</td>
-            </tr>`}).join(""):'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-400)">Sin líneas de factura</td></tr>')}catch{}window._pubF=async r=>{if(confirm("¿Confirmar y publicar factura?"))try{await p.put(`/facturas/${r}/confirmar`,{}),b("OK","Factura publicada","success"),window._vVF(r)}catch(v){b("Error",v.message,"error")}},window._pagoF=async r=>{if(confirm("¿Registrar pago de esta factura?"))try{await p.post(`/facturas/${r}/pago`,{}),b("OK","Pago registrado","success"),window._vVF(r)}catch(v){b("Error",v.message,"error")}},window._timF=r=>{window._go("cfdi")},window._cancF=async r=>{if(confirm("¿Cancelar factura?"))try{await p.put(`/facturas/${r}/cancelar`,{}),b("Cancelado","","info"),window._go("facturas")}catch(v){b("Error",v.message,"error")}}}catch(l){w(`<div style="padding:40px;text-align:center"><p style="color:#DC2626">⚠️ ${l.message}</p><button class="o-btn-new" onclick="window._go('facturas')">Volver</button></div>`)}};function Qe(t,e){let a;return(...i)=>{clearTimeout(a),a=setTimeout(()=>t(...i),e)}}function Je(t,e){X("Editar Contacto",`
+            </tr>`}).join(""):'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-400)">Sin líneas de factura</td></tr>')}catch{}window._pubF=async r=>{if(confirm("¿Confirmar y publicar factura?"))try{await u.put(`/facturas/${r}/confirmar`,{}),b("OK","Factura publicada","success"),window._vVF(r)}catch(v){b("Error",v.message,"error")}},window._pagoF=async r=>{if(confirm("¿Registrar pago de esta factura?"))try{await u.post(`/facturas/${r}/pago`,{}),b("OK","Pago registrado","success"),window._vVF(r)}catch(v){b("Error",v.message,"error")}},window._timF=r=>{window._go("cfdi")},window._cancF=async r=>{if(confirm("¿Cancelar factura?"))try{await u.put(`/facturas/${r}/cancelar`,{}),b("Cancelado","","info"),window._go("facturas")}catch(v){b("Error",v.message,"error")}}}catch(d){w(`<div style="padding:40px;text-align:center"><p style="color:#DC2626">⚠️ ${d.message}</p><button class="o-btn-new" onclick="window._go('facturas')">Volver</button></div>`)}};function Ze(t,e){let a;return(...i)=>{clearTimeout(a),a=setTimeout(()=>t(...i),e)}}function ta(t,e){J("Editar Contacto",`
   <form id="form-edit-partner" onsubmit="event.preventDefault();window._submitEditPartner()">
     <div class="modal-form-grid">
       <div class="modal-form-full">
@@ -704,7 +704,7 @@
       <button type="submit" class="btn btn-primary btn-sm" id="btn-save-partner">💾 Guardar</button>
     </div>
     <div id="edit-partner-result" style="margin-top:12px"></div>
-  </form>`),window._submitEditPartner=async()=>{var o,l,s,c,d,n,r,v,u;const a=document.getElementById("btn-save-partner"),i=(l=(o=document.getElementById("ep-name"))==null?void 0:o.value)==null?void 0:l.trim();if(!i){b("Error de validación","El nombre es obligatorio","error");return}a.textContent="⏳ Guardando…",a.disabled=!0;try{const g={name:i,email:((s=document.getElementById("ep-email"))==null?void 0:s.value)||"",phone:((c=document.getElementById("ep-phone"))==null?void 0:c.value)||"",mobile:((d=document.getElementById("ep-mobile"))==null?void 0:d.value)||"",city:((n=document.getElementById("ep-city"))==null?void 0:n.value)||"",vat:((v=(r=document.getElementById("ep-vat"))==null?void 0:r.value)==null?void 0:v.toUpperCase())||"",website:((u=document.getElementById("ep-website"))==null?void 0:u.value)||""};await p.put(`/partners/${t.id}`,g).catch(()=>null),b("Contacto actualizado",i,"success"),window.__closeModal(),e&&e()}catch(g){const y=document.getElementById("edit-partner-result");y&&(y.innerHTML=`<p style="color:var(--red)">${g.message}</p>`)}finally{a.textContent="💾 Guardar",a.disabled=!1}}}function We(t,e){const a=t.name&&typeof t.name=="object"?t.name.es_MX||t.name.en_US||Object.values(t.name)[0]||"":t.name||t.nombre||"";X("Editar Producto",`
+  </form>`),window._submitEditPartner=async()=>{var o,d,s,c,l,n,r,v,p;const a=document.getElementById("btn-save-partner"),i=(d=(o=document.getElementById("ep-name"))==null?void 0:o.value)==null?void 0:d.trim();if(!i){b("Error de validación","El nombre es obligatorio","error");return}a.textContent="⏳ Guardando…",a.disabled=!0;try{const g={name:i,email:((s=document.getElementById("ep-email"))==null?void 0:s.value)||"",phone:((c=document.getElementById("ep-phone"))==null?void 0:c.value)||"",mobile:((l=document.getElementById("ep-mobile"))==null?void 0:l.value)||"",city:((n=document.getElementById("ep-city"))==null?void 0:n.value)||"",vat:((v=(r=document.getElementById("ep-vat"))==null?void 0:r.value)==null?void 0:v.toUpperCase())||"",website:((p=document.getElementById("ep-website"))==null?void 0:p.value)||""};await u.put(`/partners/${t.id}`,g).catch(()=>null),b("Contacto actualizado",i,"success"),window.__closeModal(),e&&e()}catch(g){const y=document.getElementById("edit-partner-result");y&&(y.innerHTML=`<p style="color:var(--red)">${g.message}</p>`)}finally{a.textContent="💾 Guardar",a.disabled=!1}}}function ea(t,e){const a=t.name&&typeof t.name=="object"?t.name.es_MX||t.name.en_US||Object.values(t.name)[0]||"":t.name||t.nombre||"";J("Editar Producto",`
   <form id="form-edit-producto" onsubmit="event.preventDefault();window._submitEditProducto()">
     <div class="modal-form-grid">
       <div class="modal-form-full">
@@ -729,7 +729,7 @@
       <button type="submit" class="btn btn-primary btn-sm" id="btn-save-producto">💾 Guardar</button>
     </div>
     <div id="edit-producto-result" style="margin-top:12px"></div>
-  </form>`),window._submitEditProducto=async()=>{var o,l,s,c;const i=document.getElementById("btn-save-producto");i.textContent="⏳ Guardando…",i.disabled=!0;try{const d={name:((o=document.getElementById("epr-name"))==null?void 0:o.value)||a,default_code:((l=document.getElementById("epr-code"))==null?void 0:l.value)||"",list_price:parseFloat(((s=document.getElementById("epr-precio"))==null?void 0:s.value)||0),standard_price:parseFloat(((c=document.getElementById("epr-costo"))==null?void 0:c.value)||0)};let n=!1;try{await p.put(`/productos/${t.id}`,d),n=!0}catch{n=!1}n?b("Producto actualizado",d.name,"success"):b("Guardado localmente","Se sincronizará cuando el endpoint esté disponible","warning"),window.__closeModal(),e&&e()}catch(d){const n=document.getElementById("edit-producto-result");n&&(n.innerHTML=`<p style="color:var(--red)">${d.message}</p>`)}finally{i.textContent="💾 Guardar",i.disabled=!1}}}function ae(t,e){const a=parseFloat(t.cantidad_disponible||0);X("Ajuste de Inventario",`
+  </form>`),window._submitEditProducto=async()=>{var o,d,s,c;const i=document.getElementById("btn-save-producto");i.textContent="⏳ Guardando…",i.disabled=!0;try{const l={name:((o=document.getElementById("epr-name"))==null?void 0:o.value)||a,default_code:((d=document.getElementById("epr-code"))==null?void 0:d.value)||"",list_price:parseFloat(((s=document.getElementById("epr-precio"))==null?void 0:s.value)||0),standard_price:parseFloat(((c=document.getElementById("epr-costo"))==null?void 0:c.value)||0)};let n=!1;try{await u.put(`/productos/${t.id}`,l),n=!0}catch{n=!1}n?b("Producto actualizado",l.name,"success"):b("Guardado localmente","Se sincronizará cuando el endpoint esté disponible","warning"),window.__closeModal(),e&&e()}catch(l){const n=document.getElementById("edit-producto-result");n&&(n.innerHTML=`<p style="color:var(--red)">${l.message}</p>`)}finally{i.textContent="💾 Guardar",i.disabled=!1}}}function ie(t,e){const a=parseFloat(t.cantidad_disponible||0);J("Ajuste de Inventario",`
   <form id="form-ajuste-stock" onsubmit="event.preventDefault();window._submitAjusteStock()">
     <div style="margin-bottom:16px;padding:12px;background:var(--bg-100);border-radius:10px">
       <div style="font-size:12px;color:var(--text-400);margin-bottom:4px">Producto</div>
@@ -756,7 +756,7 @@
       <button type="submit" class="btn btn-primary btn-sm" id="btn-save-stock">📋 Aplicar ajuste</button>
     </div>
     <div id="ajuste-stock-result" style="margin-top:12px"></div>
-  </form>`),window._submitAjusteStock=async()=>{var o,l;const i=document.getElementById("btn-save-stock");i.textContent="⏳ Guardando…",i.disabled=!0;try{const s={cantidad:parseFloat(((o=document.getElementById("ast-qty"))==null?void 0:o.value)||0),motivo:((l=document.getElementById("ast-motivo"))==null?void 0:l.value)||"Corrección"};try{await p.put(`/stock/${t.product_id}/ajuste`,s)}catch{}b("Inventario ajustado",`Nuevo stock: ${s.cantidad} — ${s.motivo}`,"success"),window.__closeModal(),e&&e()}catch(s){const c=document.getElementById("ajuste-stock-result");c&&(c.innerHTML=`<p style="color:var(--red)">${s.message}</p>`)}finally{i.textContent="📋 Aplicar ajuste",i.disabled=!1}}}function Ye(t,e){const a=t.state==="draft";X("Editar Orden de Compra",`
+  </form>`),window._submitAjusteStock=async()=>{var o,d;const i=document.getElementById("btn-save-stock");i.textContent="⏳ Guardando…",i.disabled=!0;try{const s={cantidad:parseFloat(((o=document.getElementById("ast-qty"))==null?void 0:o.value)||0),motivo:((d=document.getElementById("ast-motivo"))==null?void 0:d.value)||"Corrección"};try{await u.put(`/stock/${t.product_id}/ajuste`,s)}catch{}b("Inventario ajustado",`Nuevo stock: ${s.cantidad} — ${s.motivo}`,"success"),window.__closeModal(),e&&e()}catch(s){const c=document.getElementById("ajuste-stock-result");c&&(c.innerHTML=`<p style="color:var(--red)">${s.message}</p>`)}finally{i.textContent="📋 Aplicar ajuste",i.disabled=!1}}}function aa(t,e){const a=t.state==="draft";J("Editar Orden de Compra",`
   <form id="form-edit-compra" onsubmit="event.preventDefault();window._submitEditCompra()">
     ${a?"":`
     <div style="margin-bottom:12px;padding:10px 14px;background:var(--warning-light,#fef9ec);border:1px solid var(--warning,#f59e0b);border-radius:8px;font-size:12px;color:var(--warning,#b45309)">
@@ -781,7 +781,7 @@
       ${a?'<button type="submit" class="btn btn-primary btn-sm" id="btn-save-compra">💾 Guardar</button>':""}
     </div>
     <div id="edit-compra-result" style="margin-top:12px"></div>
-  </form>`),window._submitEditCompra=async()=>{var o,l;if(!a)return;const i=document.getElementById("btn-save-compra");i.textContent="⏳ Guardando…",i.disabled=!0;try{const s={note:((o=document.getElementById("ec-note"))==null?void 0:o.value)||"",date_planned:((l=document.getElementById("ec-date"))==null?void 0:l.value)||""};await p.put(`/compras/${t.id}`,s).catch(()=>null),b("Compra actualizada",`OC ${t.name||t.id} guardada`,"success"),window.__closeModal(),e&&e()}catch(s){const c=document.getElementById("edit-compra-result");c&&(c.innerHTML=`<p style="color:var(--red)">${s.message}</p>`)}finally{i.textContent="💾 Guardar",i.disabled=!1}}}function Ze(t,e){X("Editar Empleado",`
+  </form>`),window._submitEditCompra=async()=>{var o,d;if(!a)return;const i=document.getElementById("btn-save-compra");i.textContent="⏳ Guardando…",i.disabled=!0;try{const s={note:((o=document.getElementById("ec-note"))==null?void 0:o.value)||"",date_planned:((d=document.getElementById("ec-date"))==null?void 0:d.value)||""};await u.put(`/compras/${t.id}`,s).catch(()=>null),b("Compra actualizada",`OC ${t.name||t.id} guardada`,"success"),window.__closeModal(),e&&e()}catch(s){const c=document.getElementById("edit-compra-result");c&&(c.innerHTML=`<p style="color:var(--red)">${s.message}</p>`)}finally{i.textContent="💾 Guardar",i.disabled=!1}}}function oa(t,e){J("Editar Empleado",`
   <form id="form-edit-empleado" onsubmit="event.preventDefault();window._submitEditEmpleado()">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:var(--bg-100);border-radius:10px">
       <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,hsl(${t.id*47%360},60%,55%),hsl(${t.id*89%360},70%,45%));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0">
@@ -815,7 +815,7 @@
       <button type="submit" class="btn btn-primary btn-sm" id="btn-save-emp">💾 Guardar</button>
     </div>
     <div id="edit-emp-result" style="margin-top:12px"></div>
-  </form>`),window._submitEditEmpleado=async()=>{var i,o,l,s;const a=document.getElementById("btn-save-emp");a.textContent="⏳ Guardando…",a.disabled=!0;try{const c={job_title:((i=document.getElementById("ee-title"))==null?void 0:i.value)||"",ssnid:((o=document.getElementById("ee-imss"))==null?void 0:o.value)||"",work_email:((l=document.getElementById("ee-email"))==null?void 0:l.value)||"",work_phone:((s=document.getElementById("ee-phone"))==null?void 0:s.value)||""};await p.put(`/nomina/${t.id}`,c).catch(()=>null),b("Empleado actualizado",t.name,"success"),window.__closeModal(),e&&e()}catch(c){const d=document.getElementById("edit-emp-result");d&&(d.innerHTML=`<p style="color:var(--red)">${c.message}</p>`)}finally{a.textContent="💾 Guardar",a.disabled=!1}}}let lt="list",G=1,at=[],V="",pt="";async function Nt(){C(),lt="list",G=1,V="",pt="",$([{label:"Productos"}]),ta(),await _t()}function ta(){w(`
+  </form>`),window._submitEditEmpleado=async()=>{var i,o,d,s;const a=document.getElementById("btn-save-emp");a.textContent="⏳ Guardando…",a.disabled=!0;try{const c={job_title:((i=document.getElementById("ee-title"))==null?void 0:i.value)||"",ssnid:((o=document.getElementById("ee-imss"))==null?void 0:o.value)||"",work_email:((d=document.getElementById("ee-email"))==null?void 0:d.value)||"",work_phone:((s=document.getElementById("ee-phone"))==null?void 0:s.value)||""};await u.put(`/nomina/${t.id}`,c).catch(()=>null),b("Empleado actualizado",t.name,"success"),window.__closeModal(),e&&e()}catch(c){const l=document.getElementById("edit-emp-result");l&&(l.innerHTML=`<p style="color:var(--red)">${c.message}</p>`)}finally{a.textContent="💾 Guardar",a.disabled=!1}}}let lt="list",X=1,at=[],V="",mt="";async function Vt(){C(),lt="list",X=1,V="",mt="",$([{label:"Productos"}]),ia(),await ct()}function ia(){w(`
   <div class="o-cp" id="productos-cp">
     <div class="o-cp-left">
       <button class="o-btn-primary" onclick="window._productoNuevo()">
@@ -848,7 +848,7 @@
   </div>
   <div id="productos-content" class="o-view-content">
     ${x(10,6)}
-  </div>`);let t;setTimeout(()=>{var e;(e=document.getElementById("o-search-productos"))==null||e.addEventListener("input",a=>{clearTimeout(t),t=setTimeout(()=>{V=a.target.value.trim(),G=1,_t()},380)})},100)}async function _t(){try{const t=await p.productos(G,V);at=((t==null?void 0:t.data)||[]).filter(i=>!pt||(i.type_||i.type)===pt);const e=((t==null?void 0:t.data)||[]).length>=20,a=document.getElementById("productos-content");if(!a)return;lt==="kanban"?a.innerHTML=ve(at):a.innerHTML=re(at,e)}catch(t){console.error(t),b("Error",t.message,"error")}}function re(t,e){return t.length?`
+  </div>`);let t;setTimeout(()=>{var e;(e=document.getElementById("o-search-productos"))==null||e.addEventListener("input",a=>{clearTimeout(t),t=setTimeout(()=>{V=a.target.value.trim(),X=1,ct()},380)})},100)}async function ct(){try{const t=await u.productos(X,V);at=((t==null?void 0:t.data)||[]).filter(i=>!mt||(i.type_||i.type)===mt);const e=((t==null?void 0:t.data)||[]).length>=20,a=document.getElementById("productos-content");if(!a)return;lt==="kanban"?a.innerHTML=ue(at):a.innerHTML=pe(at,e)}catch(t){console.error(t),b("Error",t.message,"error")}}function pe(t,e){return t.length?`
   <div class="o-list-view">
     <table class="o-list-table">
       <thead>
@@ -864,7 +864,7 @@
         </tr>
       </thead>
       <tbody>
-        ${t.map((a,i)=>{var u,g,y;const o=typeof a.name=="object"?((u=a.name)==null?void 0:u.es_MX)||((g=a.name)==null?void 0:g.en_US)||Object.values(a.name)[0]||`Producto #${a.id}`:a.name||a.nombre||`Producto #${a.id}`,l=a.type_||a.type||"",s=l==="consu"?"Consumible":l==="service"?"Servicio":l==="product"?"Almacenable":"Consumible",c=l==="service"?"o-badge-info":l==="consu"?"o-badge-warn":"o-badge-success",d=f(parseFloat(a.list_price||a.precio||0)),n=f(parseFloat(a.standard_price||a.costo||0)),r=a.id*67%360,v=((y=o[0])==null?void 0:y.toUpperCase())||"P";return`
+        ${t.map((a,i)=>{var p,g,y;const o=typeof a.name=="object"?((p=a.name)==null?void 0:p.es_MX)||((g=a.name)==null?void 0:g.en_US)||Object.values(a.name)[0]||`Producto #${a.id}`:a.name||a.nombre||`Producto #${a.id}`,d=a.type_||a.type||"",s=d==="consu"?"Consumible":d==="service"?"Servicio":d==="product"?"Almacenable":"Consumible",c=d==="service"?"o-badge-info":d==="consu"?"o-badge-warn":"o-badge-success",l=f(parseFloat(a.list_price||a.precio||0)),n=f(parseFloat(a.standard_price||a.costo||0)),r=a.id*67%360,v=((y=o[0])==null?void 0:y.toUpperCase())||"P";return`
           <tr class="o-list-row" onclick="window._verProducto(${a.id})">
             <td class="o-list-chk"><input type="checkbox" class="o-chk" onclick="event.stopPropagation()"></td>
             <td>
@@ -872,33 +872,33 @@
             </td>
             <td class="o-td-primary">${o}</td>
             <td class="o-td-mono">${a.default_code||"—"}</td>
-            <td class="o-td-amount">${d}</td>
+            <td class="o-td-amount">${l}</td>
             <td class="o-td-amount o-td-muted">${n}</td>
             <td><span class="o-badge ${c}">${s}</span></td>
-            <td class="o-td-amount">${a.qty_available!=null?F(parseFloat(a.qty_available)):"—"}</td>
+            <td class="o-td-amount">${a.qty_available!=null?L(parseFloat(a.qty_available)):"—"}</td>
           </tr>`}).join("")}
       </tbody>
     </table>
     <div class="o-list-footer">
       <span class="o-list-count">${t.length} producto${t.length!==1?"s":""}</span>
-      ${K(G,e,a=>{G=a,_t()})}
+      ${Q(X,e,a=>{X=a,ct()})}
     </div>
   </div>`:`
     <div class="o-empty-state">
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity=".3"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
       <p>${V?`Sin resultados para "${V}"`:"Sin productos en catálogo"}</p>
-    </div>`}function ve(t){return t.length?`
+    </div>`}function ue(t){return t.length?`
   <div class="o-kanban-grid">
-    ${t.map(e=>{var n,r,v;const a=typeof e.name=="object"?((n=e.name)==null?void 0:n.es_MX)||((r=e.name)==null?void 0:r.en_US)||`Producto #${e.id}`:e.name||`Producto #${e.id}`,i=e.type_||e.type||"",o=i==="consu"?"Consumible":i==="service"?"Servicio":"Almacenable",l=i==="service"?"o-badge-info":i==="consu"?"o-badge-warn":"o-badge-success",s=f(parseFloat(e.list_price||0)),c=e.id*67%360,d=((v=a[0])==null?void 0:v.toUpperCase())||"P";return`
+    ${t.map(e=>{var n,r,v;const a=typeof e.name=="object"?((n=e.name)==null?void 0:n.es_MX)||((r=e.name)==null?void 0:r.en_US)||`Producto #${e.id}`:e.name||`Producto #${e.id}`,i=e.type_||e.type||"",o=i==="consu"?"Consumible":i==="service"?"Servicio":"Almacenable",d=i==="service"?"o-badge-info":i==="consu"?"o-badge-warn":"o-badge-success",s=f(parseFloat(e.list_price||0)),c=e.id*67%360,l=((v=a[0])==null?void 0:v.toUpperCase())||"P";return`
       <div class="o-kanban-card" onclick="window._verProducto(${e.id})">
         <div class="o-kanban-img" style="background:linear-gradient(135deg,hsl(${c},50%,65%),hsl(${(c+60)%360},60%,55%))">
-          <span style="font-size:40px;font-weight:800;color:rgba(255,255,255,.7)">${d}</span>
+          <span style="font-size:40px;font-weight:800;color:rgba(255,255,255,.7)">${l}</span>
         </div>
         <div class="o-kanban-body">
           <div class="o-kanban-title">${a}</div>
           <div class="o-kanban-sub">${e.default_code||"(sin SKU)"}</div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-            <span class="o-badge ${l}">${o}</span>
+            <span class="o-badge ${d}">${o}</span>
             <strong class="o-kanban-price">${s}</strong>
           </div>
         </div>
@@ -906,7 +906,7 @@
   </div>`:`
     <div class="o-empty-state">
       <p>Sin productos${V?` para "${V}"`:""}</p>
-    </div>`}window._verProducto=async t=>{var e,a,i,o,l;$([{label:"Productos",onclick:()=>Nt()},{label:"Cargando…",id:"bc-prod-name"}]),w(`<div class="o-form-loading">${x(4,3)}</div>`);try{const s=await p.producto(t);if(!s){b("Error","Producto no encontrado","error");return}const c=document.getElementById("bc-prod-name");c&&(c.textContent=typeof s.name=="object"?((e=s.name)==null?void 0:e.es_MX)||((a=s.name)==null?void 0:a.en_US)||"Producto":s.name||"Producto");const d=typeof s.name=="object"?((i=s.name)==null?void 0:i.es_MX)||((o=s.name)==null?void 0:o.en_US)||`Producto #${s.id}`:s.name||`Producto #${s.id}`,n=s.type_||s.type||"",r=n==="consu"?"Consumible":n==="service"?"Servicio":n==="product"?"Almacenable":"Consumible",v=n==="service"?"o-badge-info":n==="consu"?"o-badge-warn":"o-badge-success",u=f(parseFloat(s.list_price||0)),g=f(parseFloat(s.standard_price||0)),y=s.id*67%360,I=((l=d[0])==null?void 0:l.toUpperCase())||"P",L=(()=>{const k=s.categ_name||s.categoria||"";return k==="Goods"?"Mercancía":k==="Services"?"Servicios":k||"—"})();w(`
+    </div>`}window._verProducto=async t=>{var e,a,i,o,d;$([{label:"Productos",onclick:()=>Vt()},{label:"Cargando…",id:"bc-prod-name"}]),w(`<div class="o-form-loading">${x(4,3)}</div>`);try{const s=await u.producto(t);if(!s){b("Error","Producto no encontrado","error");return}const c=document.getElementById("bc-prod-name");c&&(c.textContent=typeof s.name=="object"?((e=s.name)==null?void 0:e.es_MX)||((a=s.name)==null?void 0:a.en_US)||"Producto":s.name||"Producto");const l=typeof s.name=="object"?((i=s.name)==null?void 0:i.es_MX)||((o=s.name)==null?void 0:o.en_US)||`Producto #${s.id}`:s.name||`Producto #${s.id}`,n=s.type_||s.type||"",r=n==="consu"?"Consumible":n==="service"?"Servicio":n==="product"?"Almacenable":"Consumible",v=n==="service"?"o-badge-info":n==="consu"?"o-badge-warn":"o-badge-success",p=f(parseFloat(s.list_price||0)),g=f(parseFloat(s.standard_price||0)),y=s.id*67%360,T=((d=l[0])==null?void 0:d.toUpperCase())||"P",F=(()=>{const k=s.categ_name||s.categoria||"";return k==="Goods"?"Mercancía":k==="Services"?"Servicios":k||"—"})();w(`
     <div class="o-form-topbar">
       <button class="o-back-btn" onclick="window._productosBack()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -920,7 +920,7 @@
 
     <div class="o-smart-buttons">
       <button class="o-smart-btn" onclick="alert('Stock disponible')">
-        <span class="o-smart-count">${s.qty_available!=null?F(parseFloat(s.qty_available)):0}</span>
+        <span class="o-smart-count">${s.qty_available!=null?L(parseFloat(s.qty_available)):0}</span>
         <span class="o-smart-label">En Stock</span>
       </button>
       <button class="o-smart-btn" onclick="alert('Ventas del producto')">
@@ -935,9 +935,9 @@
 
     <div class="o-form-sheet">
       <div class="o-sheet-header">
-        <div class="o-prod-thumb o-prod-thumb-lg" style="background:linear-gradient(135deg,hsl(${y},50%,65%),hsl(${(y+60)%360},60%,55%))">${I}</div>
+        <div class="o-prod-thumb o-prod-thumb-lg" style="background:linear-gradient(135deg,hsl(${y},50%,65%),hsl(${(y+60)%360},60%,55%))">${T}</div>
         <div class="o-sheet-title-block">
-          <h1 class="o-form-title">${d}</h1>
+          <h1 class="o-form-title">${l}</h1>
           <div style="display:flex;gap:6px;margin-top:4px">
             <span class="o-badge ${v}">${r}</span>
             ${s.active!==!1?'<span class="o-badge o-badge-success">Activo</span>':'<span class="o-badge o-badge-gray">Inactivo</span>'}
@@ -953,10 +953,10 @@
           <div class="o-field-group"><label class="o-field-label">Peso</label><div class="o-field-value">${s.weight!=null?s.weight+" kg":"—"}</div></div>
         </div>
         <div class="o-form-col">
-          <div class="o-field-group"><label class="o-field-label">Precio de Venta</label><div class="o-field-value o-field-price">${u}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Precio de Venta</label><div class="o-field-value o-field-price">${p}</div></div>
           <div class="o-field-group"><label class="o-field-label">Costo</label><div class="o-field-value o-td-muted">${g}</div></div>
           <div class="o-field-group"><label class="o-field-label">Impuestos</label><div class="o-field-value">${s.taxes_name||"IVA 16%"}</div></div>
-          <div class="o-field-group"><label class="o-field-label">Categoría</label><div class="o-field-value">${L}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Categoría</label><div class="o-field-value">${F}</div></div>
         </div>
       </div>
 
@@ -999,7 +999,7 @@
           </div>
         </div>
       </div>
-    </div>`),window._editarProductoForm=k=>We({id:k,...s},()=>window._verProducto(k)),window._prodTab=(k,A)=>{document.querySelectorAll("#prod-tabs .o-tab").forEach(_=>_.classList.remove("active")),A.classList.add("active"),document.querySelectorAll(".o-tab-pane").forEach(_=>_.style.display="none");const h=document.getElementById(`tab-${k}`);h&&(h.style.display="")}}catch(s){console.error(s),b("Error",s.message,"error")}};window._productosBack=()=>Nt();window._productoSetView=t=>{var i;lt=t,document.querySelectorAll("#productos-cp .o-view-btn").forEach(o=>o.classList.remove("o-active"));const e=t==="list"?0:1;(i=document.querySelectorAll("#productos-cp .o-view-btn")[e])==null||i.classList.add("o-active");const a=document.getElementById("productos-content");a&&(t==="kanban"?a.innerHTML=ve(at):a.innerHTML=re(at,!1))};window._productoFiltroTipo=t=>{var a;pt=t,G=1,document.querySelectorAll("#productos-cp .o-filter-btn").forEach(i=>i.removeAttribute("data-active"));const e={"":"ptf-todos",consu:"ptf-consu",service:"ptf-serv",product:"ptf-prod"};(a=document.getElementById(e[t]))==null||a.setAttribute("data-active",""),_t()};window._productoNuevo=()=>alert("Nuevo producto — próximamente");window._chkAllProductos=t=>document.querySelectorAll("#productos-content .o-chk").forEach(e=>e.checked=t.checked);let R=1,Ct=[],ut="",H="";async function Rt(){C(),R=1,ut="",H="",$([{label:"Clientes / Proveedores"}]),ea(),await qt()}function ea(){w(`
+    </div>`),window._editarProductoForm=k=>ea({id:k,...s},()=>window._verProducto(k)),window._prodTab=(k,A)=>{document.querySelectorAll("#prod-tabs .o-tab").forEach(_=>_.classList.remove("active")),A.classList.add("active"),document.querySelectorAll(".o-tab-pane").forEach(_=>_.style.display="none");const h=document.getElementById(`tab-${k}`);h&&(h.style.display="")}}catch(s){console.error(s),b("Error",s.message,"error")}};window._productosBack=()=>Vt();window._productoSetView=t=>{var i;lt=t,document.querySelectorAll("#productos-cp .o-view-btn").forEach(o=>o.classList.remove("o-active"));const e=t==="list"?0:1;(i=document.querySelectorAll("#productos-cp .o-view-btn")[e])==null||i.classList.add("o-active");const a=document.getElementById("productos-content");a&&(t==="kanban"?a.innerHTML=ue(at):a.innerHTML=pe(at,!1))};window._productoFiltroTipo=t=>{var a;mt=t,X=1,document.querySelectorAll("#productos-cp .o-filter-btn").forEach(i=>i.removeAttribute("data-active"));const e={"":"ptf-todos",consu:"ptf-consu",service:"ptf-serv",product:"ptf-prod"};(a=document.getElementById(e[t]))==null||a.setAttribute("data-active",""),ct()};window._productoNuevo=()=>{dt(()=>import("./create_forms-6H4RCJr_.js"),[]).then(t=>t.nuevoProducto(()=>ct()))};window._chkAllProductos=t=>document.querySelectorAll("#productos-content .o-chk").forEach(e=>e.checked=t.checked);let R=1,Tt=[],bt="",H="";async function $t(){C(),R=1,bt="",H="",$([{label:"Clientes / Proveedores"}]),sa(),await Ot()}function sa(){w(`
   <!-- ── ODOO CONTROL PANEL ── -->
   <div class="o-cp" id="partners-cp">
     <div class="o-cp-left">
@@ -1011,7 +1011,7 @@
     <div class="o-cp-center">
       <div class="o-search-bar">
         <svg class="o-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input id="o-search-partners" class="o-search-input" type="text" placeholder="Buscar…" value="${ut}">
+        <input id="o-search-partners" class="o-search-input" type="text" placeholder="Buscar…" value="${bt}">
         <div class="o-search-filters">
           <button class="o-filter-btn" onclick="window._partnerFilter('')" id="pf-all" ${H===""?"data-active":""}>Todos</button>
           <button class="o-filter-btn" onclick="window._partnerFilter('clientes')" id="pf-cli" ${H==="clientes"?"data-active":""}>Clientes</button>
@@ -1030,7 +1030,7 @@
   <!-- ── CONTENT AREA ── -->
   <div id="partners-content" class="o-view-content">
     ${x(10,6)}
-  </div>`),setTimeout(()=>{var t;(t=document.getElementById("o-search-partners"))==null||t.addEventListener("input",e=>{ut=e.target.value.toLowerCase(),aa()})},100)}function aa(){document.querySelectorAll("#partners-content tbody tr").forEach(t=>{t.style.display=t.textContent.toLowerCase().includes(ut)?"":"none"})}async function qt(){try{let t;H==="clientes"?t=p.clientes(R):H==="proveedores"?t=p.proveedores(R):t=p.partners(R);const e=await t;Ct=(e==null?void 0:e.data)||[];const a=Ct.length>=20,i=document.getElementById("partners-content");if(!i)return;i.innerHTML=oa(Ct,a)}catch(t){console.error(t),b("Error",t.message,"error");const e=document.getElementById("partners-content");e&&(e.innerHTML='<div class="o-empty-state"><p>Error al cargar contactos</p></div>')}}function oa(t,e){return t.length?`
+  </div>`),setTimeout(()=>{var t;(t=document.getElementById("o-search-partners"))==null||t.addEventListener("input",e=>{bt=e.target.value.toLowerCase(),na()})},100)}function na(){document.querySelectorAll("#partners-content tbody tr").forEach(t=>{t.style.display=t.textContent.toLowerCase().includes(bt)?"":"none"})}async function Ot(){try{let t;H==="clientes"?t=u.clientes(R):H==="proveedores"?t=u.proveedores(R):t=u.partners(R);const e=await t;Tt=(e==null?void 0:e.data)||[];const a=Tt.length>=20,i=document.getElementById("partners-content");if(!i)return;i.innerHTML=la(Tt,a)}catch(t){console.error(t),b("Error",t.message,"error");const e=document.getElementById("partners-content");e&&(e.innerHTML='<div class="o-empty-state"><p>Error al cargar contactos</p></div>')}}function la(t,e){return t.length?`
   <div class="o-list-view">
     <table class="o-list-table">
       <thead>
@@ -1046,13 +1046,13 @@
         </tr>
       </thead>
       <tbody>
-        ${t.map((a,i)=>{const o=(a.customer_rank||0)>0,l=(a.supplier_rank||0)>0,s=a.is_company,c=a.name||a.nombre||"—",d=c.split(" ").map(r=>r[0]).slice(0,2).join(""),n=a.id*37%360;return`
+        ${t.map((a,i)=>{const o=(a.customer_rank||0)>0,d=(a.supplier_rank||0)>0,s=a.is_company,c=a.name||a.nombre||"—",l=c.split(" ").map(r=>r[0]).slice(0,2).join(""),n=a.id*37%360;return`
           <tr class="o-list-row" onclick="window._verPartner(${a.id})">
             <td class="o-list-chk"><input type="checkbox" class="o-chk" onclick="event.stopPropagation()"></td>
             <td class="o-list-num">${(R-1)*20+i+1}</td>
             <td>
               <div class="o-partner-cell">
-                <div class="o-avatar" style="background:linear-gradient(135deg,hsl(${n},60%,55%),hsl(${(n+40)%360},70%,45%))">${d||"?"}</div>
+                <div class="o-avatar" style="background:linear-gradient(135deg,hsl(${n},60%,55%),hsl(${(n+40)%360},70%,45%))">${l||"?"}</div>
                 <div>
                   <div class="o-td-primary">${c}</div>
                   ${s?'<div class="o-td-secondary">Empresa</div>':""}
@@ -1065,21 +1065,21 @@
             <td class="o-td-mono">${a.vat||"—"}</td>
             <td>
               ${o?'<span class="o-badge o-badge-success">Cliente</span>':""}
-              ${l?'<span class="o-badge o-badge-info" style="margin-left:2px">Proveedor</span>':""}
-              ${!o&&!l?'<span class="o-badge o-badge-gray">Contacto</span>':""}
+              ${d?'<span class="o-badge o-badge-info" style="margin-left:2px">Proveedor</span>':""}
+              ${!o&&!d?'<span class="o-badge o-badge-gray">Contacto</span>':""}
             </td>
           </tr>`}).join("")}
       </tbody>
     </table>
     <div class="o-list-footer">
       <span class="o-list-count">${t.length} contacto${t.length!==1?"s":""}</span>
-      ${K(R,e,a=>{R=a,qt()})}
+      ${Q(R,e,a=>{R=a,Ot()})}
     </div>
   </div>`:`
     <div class="o-empty-state">
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity=".3"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       <p>Sin contactos registrados</p>
-    </div>`}window._verPartner=async t=>{$([{label:"Clientes / Proveedores",onclick:()=>Rt()},{label:"Cargando…",id:"bc-partner-name"}]),w(`<div class="o-form-loading">${x(4,3)}</div>`);try{const e=await p.partner(t);if(!e){b("Error","Contacto no encontrado","error");return}const a=document.getElementById("bc-partner-name");a&&(a.textContent=e.name||"Contacto");const i=(e.customer_rank||0)>0,o=(e.supplier_rank||0)>0,l=e.is_company,s=e.name||"—",c=s.split(" ").map(n=>n[0]).slice(0,2).join(""),d=e.id*37%360;w(`
+    </div>`}window._verPartner=async t=>{$([{label:"Clientes / Proveedores",onclick:()=>$t()},{label:"Cargando…",id:"bc-partner-name"}]),w(`<div class="o-form-loading">${x(4,3)}</div>`);try{const e=await u.partner(t);if(!e){b("Error","Contacto no encontrado","error");return}const a=document.getElementById("bc-partner-name");a&&(a.textContent=e.name||"Contacto");const i=(e.customer_rank||0)>0,o=(e.supplier_rank||0)>0,d=e.is_company,s=e.name||"—",c=s.split(" ").map(n=>n[0]).slice(0,2).join(""),l=e.id*37%360;w(`
     <!-- ── FORM BREADCRUMB BAR ── -->
     <div class="o-form-topbar">
       <button class="o-back-btn" onclick="window._partnersBack()">
@@ -1112,13 +1112,13 @@
     <!-- ── FORM SHEET ── -->
     <div class="o-form-sheet">
       <div class="o-sheet-header">
-        <div class="o-avatar o-avatar-lg" style="background:linear-gradient(135deg,hsl(${d},60%,55%),hsl(${(d+40)%360},70%,45%))">${c||"?"}</div>
+        <div class="o-avatar o-avatar-lg" style="background:linear-gradient(135deg,hsl(${l},60%,55%),hsl(${(l+40)%360},70%,45%))">${c||"?"}</div>
         <div class="o-sheet-title-block">
           <h1 class="o-form-title">${s}</h1>
           <div style="display:flex;gap:6px;margin-top:4px">
             ${i?'<span class="o-badge o-badge-success">Cliente</span>':""}
             ${o?'<span class="o-badge o-badge-info">Proveedor</span>':""}
-            ${l?'<span class="o-badge o-badge-gray">Empresa</span>':'<span class="o-badge o-badge-gray">Persona física</span>'}
+            ${d?'<span class="o-badge o-badge-gray">Empresa</span>':'<span class="o-badge o-badge-gray">Persona física</span>'}
           </div>
         </div>
       </div>
@@ -1132,7 +1132,7 @@
           </div>
           <div class="o-field-group">
             <label class="o-field-label">¿Es empresa?</label>
-            <div class="o-field-value">${l?"Sí":"No"}</div>
+            <div class="o-field-value">${d?"Sí":"No"}</div>
           </div>
           <div class="o-field-group">
             <label class="o-field-label">Email</label>
@@ -1212,12 +1212,12 @@
         <div class="o-msg">
           <div class="o-avatar o-avatar-sm" style="background:var(--o-primary)">S</div>
           <div class="o-msg-body">
-            <div class="o-msg-meta"><strong>Sistema</strong> <span>${B(new Date().toISOString())}</span></div>
+            <div class="o-msg-meta"><strong>Sistema</strong> <span>${I(new Date().toISOString())}</span></div>
             <div class="o-msg-text">Registro creado.</div>
           </div>
         </div>
       </div>
-    </div>`),window._editarPartnerForm=n=>{const r={id:n,...e};Je(r,()=>window._verPartner(n))},window._partnerTab=(n,r)=>{document.querySelectorAll("#partner-tabs .o-tab").forEach(u=>u.classList.remove("active")),r.classList.add("active"),document.querySelectorAll(".o-tab-pane").forEach(u=>u.style.display="none");const v=document.getElementById(`tab-${n}`);v&&(v.style.display="")}}catch(e){console.error(e),b("Error",e.message,"error")}};window._partnersBack=()=>Rt();window._partnerFilter=t=>{var i;H=t,R=1,document.querySelectorAll("#partners-cp .o-filter-btn").forEach(o=>o.removeAttribute("data-active"));const e={"":"pf-all",clientes:"pf-cli",proveedores:"pf-prov"};(i=document.getElementById(e[t]))==null||i.setAttribute("data-active","");const a=document.getElementById("partners-content");a&&(a.innerHTML=x(8,6)),qt()};window._partnerNuevo=()=>alert("Nuevo contacto — próximamente");window._chkAllPartners=t=>{document.querySelectorAll("#partners-content .o-chk").forEach(e=>e.checked=t.checked)};let mt=1,vt=[],bt="";async function Vt(){C(),mt=1,bt="",$([{label:"Inventario"}]),ia(),await pe()}function ia(){w(`
+    </div>`),window._editarPartnerForm=n=>{const r={id:n,...e};ta(r,()=>window._verPartner(n))},window._partnerTab=(n,r)=>{document.querySelectorAll("#partner-tabs .o-tab").forEach(p=>p.classList.remove("active")),r.classList.add("active"),document.querySelectorAll(".o-tab-pane").forEach(p=>p.style.display="none");const v=document.getElementById(`tab-${n}`);v&&(v.style.display="")}}catch(e){console.error(e),b("Error",e.message,"error")}};window._partnersBack=()=>$t();window._partnerFilter=t=>{var i;H=t,R=1,document.querySelectorAll("#partners-cp .o-filter-btn").forEach(o=>o.removeAttribute("data-active"));const e={"":"pf-all",clientes:"pf-cli",proveedores:"pf-prov"};(i=document.getElementById(e[t]))==null||i.setAttribute("data-active","");const a=document.getElementById("partners-content");a&&(a.innerHTML=x(8,6)),Ot()};window._partnerNuevo=()=>{dt(()=>import("./create_forms-6H4RCJr_.js"),[]).then(t=>t.nuevoPartner("cliente",()=>$t()))};window._chkAllPartners=t=>{document.querySelectorAll("#partners-content .o-chk").forEach(e=>e.checked=t.checked)};let ft=1,ut=[],gt="";async function Ht(){C(),ft=1,gt="",$([{label:"Inventario"}]),da(),await me()}function da(){w(`
   <div class="o-cp" id="stock-cp">
     <div class="o-cp-left">
       <button class="o-btn-primary" onclick="window._stockAjustarGlobal()">
@@ -1228,7 +1228,7 @@
     <div class="o-cp-center">
       <div class="o-search-bar">
         <svg class="o-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input id="o-search-stock" class="o-search-input" type="text" placeholder="Buscar producto o ubicación…" value="${bt}">
+        <input id="o-search-stock" class="o-search-input" type="text" placeholder="Buscar producto o ubicación…" value="${gt}">
         <div class="o-search-filters">
           <button class="o-filter-btn" onclick="window._stockFiltro('bajo')" id="sf-bajo">Stock Bajo</button>
           <button class="o-filter-btn" onclick="window._stockFiltro('cero')" id="sf-cero">En Cero</button>
@@ -1245,7 +1245,7 @@
   </div>
   <div id="stock-content" class="o-view-content">
     ${x(10,5)}
-  </div>`),setTimeout(()=>{var t;(t=document.getElementById("o-search-stock"))==null||t.addEventListener("input",e=>{bt=e.target.value.toLowerCase(),sa()})},100)}function sa(){document.querySelectorAll("#stock-content tbody tr").forEach(t=>{t.style.display=t.textContent.toLowerCase().includes(bt)?"":"none"})}async function pe(){try{const t=await p.stock(mt);vt=(t==null?void 0:t.data)||[];const e=vt.length>=20,a=document.getElementById("stock-content");if(!a)return;a.innerHTML=na(vt,e)}catch(t){console.error(t),b("Error",t.message,"error")}}function na(t,e){return t.length?`
+  </div>`),setTimeout(()=>{var t;(t=document.getElementById("o-search-stock"))==null||t.addEventListener("input",e=>{gt=e.target.value.toLowerCase(),ca()})},100)}function ca(){document.querySelectorAll("#stock-content tbody tr").forEach(t=>{t.style.display=t.textContent.toLowerCase().includes(gt)?"":"none"})}async function me(){try{const t=await u.stock(ft);ut=(t==null?void 0:t.data)||[];const e=ut.length>=20,a=document.getElementById("stock-content");if(!a)return;a.innerHTML=ra(ut,e)}catch(t){console.error(t),b("Error",t.message,"error")}}function ra(t,e){return t.length?`
   <div class="o-list-view">
     <table class="o-list-table">
       <thead>
@@ -1259,26 +1259,26 @@
         </tr>
       </thead>
       <tbody>
-        ${t.map(a=>{const i=parseFloat(a.cantidad_disponible??a.qty_available??0),o=parseFloat(a.cantidad_reservada??a.reserved_qty??0),l=i<=0?"#ef4444":i<10?"#f59e0b":"#10b981",s=a.product_name||a.nombre||`Producto #${a.product_id||a.id}`,c=a.ubicacion||a.location||"WH/Stock",d=a.uom_name||a.unidad||"Unidades";return`
+        ${t.map(a=>{const i=parseFloat(a.cantidad_disponible??a.qty_available??0),o=parseFloat(a.cantidad_reservada??a.reserved_qty??0),d=i<=0?"#ef4444":i<10?"#f59e0b":"#10b981",s=a.product_name||a.nombre||`Producto #${a.product_id||a.id}`,c=a.ubicacion||a.location||"WH/Stock",l=a.uom_name||a.unidad||"Unidades";return`
           <tr class="o-list-row" onclick="window._verStockItem(${a.product_id||a.id})">
             <td class="o-list-chk"><input type="checkbox" class="o-chk" onclick="event.stopPropagation()"></td>
             <td class="o-td-primary">${s}</td>
             <td class="o-td-muted">${c}</td>
-            <td class="o-td-amount" style="color:${l};font-weight:700">${F(i)}</td>
-            <td class="o-td-amount o-td-muted">${F(o)}</td>
-            <td class="o-td-muted">${d}</td>
+            <td class="o-td-amount" style="color:${d};font-weight:700">${L(i)}</td>
+            <td class="o-td-amount o-td-muted">${L(o)}</td>
+            <td class="o-td-muted">${l}</td>
           </tr>`}).join("")}
       </tbody>
     </table>
     <div class="o-list-footer">
       <span class="o-list-count">${t.length} producto${t.length!==1?"s":""}</span>
-      ${K(mt,e,a=>{mt=a,pe()})}
+      ${Q(ft,e,a=>{ft=a,me()})}
     </div>
   </div>`:`
     <div class="o-empty-state">
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity=".3"><path d="M5 8h14M5 8a2 2 0 1 0 0-4h14a2 2 0 1 0 0 4M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8m-9 4h4"/></svg>
       <p>Sin registros de inventario</p>
-    </div>`}window._verStockItem=async t=>{$([{label:"Inventario",onclick:()=>Vt()},{label:"Detalle de stock",id:"bc-stock-name"}]),w(`<div class="o-form-loading">${x(3,3)}</div>`);try{const e=await p.stockProducto(t),i=(Array.isArray(e==null?void 0:e.data)?e.data:e!=null&&e.data?[e.data]:[])[0]||{},o=parseFloat(i.cantidad_disponible??0),l=parseFloat(i.cantidad_reservada??0),s=o*parseFloat(i.valor_unitario||0),c=i.product_name||`Producto #${t}`,d=document.getElementById("bc-stock-name");d&&(d.textContent=c);const n=o<=0?"#ef4444":o<10?"#f59e0b":"#10b981";w(`
+    </div>`}window._verStockItem=async t=>{$([{label:"Inventario",onclick:()=>Ht()},{label:"Detalle de stock",id:"bc-stock-name"}]),w(`<div class="o-form-loading">${x(3,3)}</div>`);try{const e=await u.stockProducto(t),i=(Array.isArray(e==null?void 0:e.data)?e.data:e!=null&&e.data?[e.data]:[])[0]||{},o=parseFloat(i.cantidad_disponible??0),d=parseFloat(i.cantidad_reservada??0),s=o*parseFloat(i.valor_unitario||0),c=i.product_name||`Producto #${t}`,l=document.getElementById("bc-stock-name");l&&(l.textContent=c);const n=o<=0?"#ef4444":o<10?"#f59e0b":"#10b981";w(`
     <div class="o-form-topbar">
       <button class="o-back-btn" onclick="window._stockBack()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -1291,11 +1291,11 @@
 
     <div class="o-smart-buttons">
       <button class="o-smart-btn">
-        <span class="o-smart-count" style="color:${n}">${F(o)}</span>
+        <span class="o-smart-count" style="color:${n}">${L(o)}</span>
         <span class="o-smart-label">Disponible</span>
       </button>
       <button class="o-smart-btn">
-        <span class="o-smart-count">${F(l)}</span>
+        <span class="o-smart-count">${L(d)}</span>
         <span class="o-smart-label">Reservado</span>
       </button>
     </div>
@@ -1311,8 +1311,8 @@
         <div class="o-form-col">
           <div class="o-field-group"><label class="o-field-label">Producto</label><div class="o-field-value">${c}</div></div>
           <div class="o-field-group"><label class="o-field-label">Ubicación</label><div class="o-field-value">${i.ubicacion||"WH/Stock"}</div></div>
-          <div class="o-field-group"><label class="o-field-label">Cantidad Disponible</label><div class="o-field-value" style="color:${n};font-weight:700;font-size:20px">${F(o)}</div></div>
-          <div class="o-field-group"><label class="o-field-label">Cantidad Reservada</label><div class="o-field-value">${F(l)}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Cantidad Disponible</label><div class="o-field-value" style="color:${n};font-weight:700;font-size:20px">${L(o)}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Cantidad Reservada</label><div class="o-field-value">${L(d)}</div></div>
         </div>
         <div class="o-form-col">
           <div class="o-field-group"><label class="o-field-label">Unidad de Medida</label><div class="o-field-value">${i.uom_name||i.unidad||"Unidades"}</div></div>
@@ -1331,16 +1331,16 @@
           </div>
         </div>
       </div>
-    </div>`),window._ajustarStockForm=r=>{const v=vt.find(u=>(u.product_id||u.id)===r);v?ae(v,()=>window._verStockItem(r)):ae({product_id:r,product_name:c},()=>window._verStockItem(r))}}catch(e){console.error(e),b("Error",e.message,"error")}};window._stockBack=()=>Vt();window._stockAjustarGlobal=()=>alert("Selecciona un producto para ajustar");window._stockFiltro=t=>{document.querySelectorAll("#stock-content tbody tr").forEach(e=>{var i;const a=parseFloat(((i=e.querySelector("td:nth-child(4)"))==null?void 0:i.textContent)||"0");t==="bajo"?e.style.display=a<10?"":"none":t==="cero"?e.style.display=a<=0?"":"none":e.style.display=""})};window._chkAllStock=t=>document.querySelectorAll("#stock-content .o-chk").forEach(e=>e.checked=t.checked);let W=1,ct="historial";async function la(){C(),$([{label:"Dashboard",href:"dashboard"},{label:"CFDI 4.0"}]),W=1,await ue()}async function ue(){w(`
+    </div>`),window._ajustarStockForm=r=>{const v=ut.find(p=>(p.product_id||p.id)===r);v?ie(v,()=>window._verStockItem(r)):ie({product_id:r,product_name:c},()=>window._verStockItem(r))}}catch(e){console.error(e),b("Error",e.message,"error")}};window._stockBack=()=>Ht();window._stockAjustarGlobal=()=>alert("Selecciona un producto para ajustar");window._stockFiltro=t=>{document.querySelectorAll("#stock-content tbody tr").forEach(e=>{var i;const a=parseFloat(((i=e.querySelector("td:nth-child(4)"))==null?void 0:i.textContent)||"0");t==="bajo"?e.style.display=a<10?"":"none":t==="cero"?e.style.display=a<=0?"":"none":e.style.display=""})};window._chkAllStock=t=>document.querySelectorAll("#stock-content .o-chk").forEach(e=>e.checked=t.checked);let Z=1,vt="historial";async function va(){C(),$([{label:"Dashboard",href:"dashboard"},{label:"CFDI 4.0"}]),Z=1,await be()}async function be(){w(`
   <div class="page-header anim-1">
     <div>
       <h1 class="page-title">🔏 CFDI 4.0</h1>
       <p class="page-subtitle" id="cfdi-sub">Comprobantes Fiscales Digitales</p>
     </div>
     <div class="page-actions">
-      <button class="btn ${ct==="historial"?"btn-primary":"btn-secondary"}"
+      <button class="btn ${vt==="historial"?"btn-primary":"btn-secondary"}"
         onclick="window._cfdiTab('historial')">📋 Historial</button>
-      <button class="btn ${ct==="timbrar"?"btn-primary":"btn-secondary"}"
+      <button class="btn ${vt==="timbrar"?"btn-primary":"btn-secondary"}"
         onclick="window._cfdiTab('timbrar')">➕ Timbrar</button>
     </div>
   </div>
@@ -1352,13 +1352,13 @@
 
   <div class="data-card anim-3" id="cfdi-content">
     <div id="cfdi-body">${x(6,6)}</div>
-  </div>`),window._cfdiTab=t=>{ct=t,ue()};try{const t=await p.cfdiKpis().catch(()=>null),e=t==null?void 0:t.data,a=document.getElementById("kpi-row");a&&(a.innerHTML=[{label:"Total Timbrados",val:(e==null?void 0:e.total_timbrados)??0,tipo:"num",color:"indigo",icon:"🧾"},{label:"Vigentes",val:(e==null?void 0:e.vigentes)??0,tipo:"num",color:"emerald",icon:"✅"},{label:"Cancelados",val:(e==null?void 0:e.cancelados)??0,tipo:"num",color:"red",icon:"❌"},{label:"Monto Total",val:(e==null?void 0:e.monto_total)??0,tipo:"mxn",color:"violet",icon:"💰"}].map(i=>`
+  </div>`),window._cfdiTab=t=>{vt=t,be()};try{const t=await u.cfdiKpis().catch(()=>null),e=t==null?void 0:t.data,a=document.getElementById("kpi-row");a&&(a.innerHTML=[{label:"Total Timbrados",val:(e==null?void 0:e.total_timbrados)??0,tipo:"num",color:"indigo",icon:"🧾"},{label:"Vigentes",val:(e==null?void 0:e.vigentes)??0,tipo:"num",color:"emerald",icon:"✅"},{label:"Cancelados",val:(e==null?void 0:e.cancelados)??0,tipo:"num",color:"red",icon:"❌"},{label:"Monto Total",val:(e==null?void 0:e.monto_total)??0,tipo:"mxn",color:"violet",icon:"💰"}].map(i=>`
       <div class="data-card" style="padding:16px">
         <div style="font-size:11px;color:var(--text-400);font-weight:600;margin-bottom:4px">${i.icon} ${i.label}</div>
         <div style="font-size:22px;font-weight:800;color:var(--text-900)">
           ${i.tipo==="mxn"?f(parseFloat(i.val)):Number(i.val).toLocaleString("es-MX")}
         </div>
-      </div>`).join("")),ct==="historial"?await Mt():da()}catch(t){console.error(t),b("Error CFDI",t.message,"error")}}async function Mt(){const t=document.getElementById("cfdi-body");t&&(t.innerHTML=x(6,6));const e=await p.cfdiTimbrados(W).catch(()=>({data:[],total:0})),a=(e==null?void 0:e.data)||[],i=(e==null?void 0:e.total)??a.length,o=a.length>=20,l=document.getElementById("cfdi-sub");if(l&&(l.textContent=`${i} CFDIs timbrados · Página ${W}`),!!t){if(a.length===0){t.innerHTML=`
+      </div>`).join("")),vt==="historial"?await jt():pa()}catch(t){console.error(t),b("Error CFDI",t.message,"error")}}async function jt(){const t=document.getElementById("cfdi-body");t&&(t.innerHTML=x(6,6));const e=await u.cfdiTimbrados(Z).catch(()=>({data:[],total:0})),a=(e==null?void 0:e.data)||[],i=(e==null?void 0:e.total)??a.length,o=a.length>=20,d=document.getElementById("cfdi-sub");if(d&&(d.textContent=`${i} CFDIs timbrados · Página ${Z}`),!!t){if(a.length===0){t.innerHTML=`
     <div style="text-align:center;padding:60px 24px">
       <div style="font-size:48px;margin-bottom:16px">🧾</div>
       <div style="font-size:16px;font-weight:700;color:var(--text-700);margin-bottom:8px">Sin CFDIs timbrados</div>
@@ -1382,18 +1382,18 @@
           <td class="td-amount" style="font-weight:700">${f(parseFloat(s.total||0))}</td>
           <td><span class="badge badge-sky">${s.tipo_cfdi==="I"?"Ingreso":s.tipo_cfdi==="E"?"Egreso":s.tipo_cfdi||"—"}</span></td>
           <td><span class="badge badge-${c}">${s.estado||"—"}</span></td>
-          <td style="font-size:12px">${B(s.fecha_timbrado||s.created_at)}</td>
+          <td style="font-size:12px">${I(s.fecha_timbrado||s.created_at)}</td>
         </tr>`}).join("")}
     </tbody>
   </table>
-  ${K(W,o,s=>{W=s,Mt()})}`,window._verCfdi=s=>{Ae("Detalle CFDI",()=>p.cfdiTimbrado(s),c=>`
-      ${$t("Comprobante",[T("UUID",`<span style="font-family:monospace;font-size:11px">${c.uuid}</span>`),T("Serie / Folio",`${c.serie||""}${c.folio||"—"}`),T("Tipo",c.tipo_cfdi==="I"?"Ingreso":c.tipo_cfdi==="E"?"Egreso":c.tipo_cfdi),T("Estado",`<span class="badge badge-${c.estado==="vigente"?"emerald":"red"}">${c.estado}</span>`),T("Fecha emisión",B(c.fecha_emision)),T("Fecha timbrado",B(c.fecha_timbrado))].join(""))}
-      ${$t("Partes",[T("RFC Emisor",c.rfc_emisor),T("Emisor",c.nombre_emisor||"—"),T("RFC Receptor",c.rfc_receptor),T("Receptor",c.nombre_receptor||"—")].join(""))}
-      ${$t("Importes",[T("Total",`<strong>${f(parseFloat(c.total||0))}</strong>`,{color:"var(--primary)"})].join(""))}
+  ${Q(Z,o,s=>{Z=s,jt()})}`,window._verCfdi=s=>{ze("Detalle CFDI",()=>u.cfdiTimbrado(s),c=>`
+      ${Ct("Comprobante",[B("UUID",`<span style="font-family:monospace;font-size:11px">${c.uuid}</span>`),B("Serie / Folio",`${c.serie||""}${c.folio||"—"}`),B("Tipo",c.tipo_cfdi==="I"?"Ingreso":c.tipo_cfdi==="E"?"Egreso":c.tipo_cfdi),B("Estado",`<span class="badge badge-${c.estado==="vigente"?"emerald":"red"}">${c.estado}</span>`),B("Fecha emisión",I(c.fecha_emision)),B("Fecha timbrado",I(c.fecha_timbrado))].join(""))}
+      ${Ct("Partes",[B("RFC Emisor",c.rfc_emisor),B("Emisor",c.nombre_emisor||"—"),B("RFC Receptor",c.rfc_receptor),B("Receptor",c.nombre_receptor||"—")].join(""))}
+      ${Ct("Importes",[B("Total",`<strong>${f(parseFloat(c.total||0))}</strong>`,{color:"var(--primary)"})].join(""))}
       <div style="display:flex;gap:10px;margin-top:16px">
         <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
         ${c.estado==="vigente"?`<button class="btn btn-danger btn-sm" onclick="window._cancelarCfdi('${c.uuid}')">❌ Cancelar</button>`:""}
-      </div>`)},window._cancelarCfdi=async s=>{if(confirm(`¿Cancelar el CFDI ${s.substring(0,18)}…?`))try{await p.cancelarCfdi({uuid:s,rfc_emisor:"",motivo:"02"}),b("CFDI cancelado",s,"success"),window.__closeModal(),Mt()}catch(c){b("Error al cancelar",c.message,"error")}}}}function da(){var e;const t=document.getElementById("cfdi-body");t&&(t.innerHTML=`
+      </div>`)},window._cancelarCfdi=async s=>{if(confirm(`¿Cancelar el CFDI ${s.substring(0,18)}…?`))try{await u.cancelarCfdi({uuid:s,rfc_emisor:"",motivo:"02"}),b("CFDI cancelado",s,"success"),window.__closeModal(),jt()}catch(c){b("Error al cancelar",c.message,"error")}}}}function pa(){var e;const t=document.getElementById("cfdi-body");t&&(t.innerHTML=`
   <div class="data-card-header">
     <div class="data-card-title">Timbrar CFDI 4.0</div>
   </div>
@@ -1483,13 +1483,13 @@
       <button class="btn btn-primary" id="btn-timbrar" onclick="window._timbrar()">🔏 Timbrar CFDI</button>
     </div>
     <div id="cfdi-resultado" style="margin-top:16px"></div>
-  </div>`,(e=document.getElementById("f-subtotal"))==null||e.addEventListener("input",a=>{const i=parseFloat(a.target.value)||0,o=i*.16;document.getElementById("f-iva").value=o.toFixed(2),document.getElementById("f-total").value=(i+o).toFixed(2)}),window._timbrar=async()=>{var o,l,s,c,d,n,r,v,u,g,y,I,L,k;const a=document.getElementById("btn-timbrar");a.textContent="⏳ Timbrando…",a.disabled=!0;const i=document.getElementById("cfdi-resultado");try{const A=(o=document.getElementById("f-cer"))==null?void 0:o.files[0],h=(l=document.getElementById("f-key"))==null?void 0:l.files[0],_=Kt=>new Promise((Xt,_e)=>{if(!Kt){Xt("");return}const xt=new FileReader;xt.onload=xe=>Xt(xe.target.result.split(",")[1]||""),xt.onerror=_e,xt.readAsDataURL(Kt)}),[S,Q]=await Promise.all([_(A),_(h)]),M=parseFloat((s=document.getElementById("f-subtotal"))==null?void 0:s.value)||0,dt=M*.16,we={cfdi:{serie:((c=document.getElementById("f-serie"))==null?void 0:c.value)||"A",folio:((d=document.getElementById("f-folio"))==null?void 0:d.value)||"1",tipo_comprobante:((n=document.getElementById("f-tipo"))==null?void 0:n.value)||"I",emisor:{rfc:((r=document.getElementById("f-rfc-emisor"))==null?void 0:r.value)||"",nombre:((v=document.getElementById("f-nombre-emisor"))==null?void 0:v.value)||"",regimen_fiscal:((u=document.getElementById("f-regimen"))==null?void 0:u.value)||"601"},receptor:{rfc:((g=document.getElementById("f-rfc-receptor"))==null?void 0:g.value)||"",nombre:((y=document.getElementById("f-nombre-receptor"))==null?void 0:y.value)||"",uso_cfdi:((I=document.getElementById("f-uso"))==null?void 0:I.value)||"G03",domicilio_fiscal_receptor:"64000",regimen_fiscal_receptor:"601"},conceptos:[{clave_prod_serv:"84111506",descripcion:((L=document.getElementById("f-concepto"))==null?void 0:L.value)||"Servicio",cantidad:"1",unidad:"ACT",valor_unitario:M.toFixed(2),importe:M.toFixed(2),impuestos:{traslados:[{base:M.toFixed(2),impuesto:"002",tipo_factor:"Tasa",tasa:"0.160000",importe:dt.toFixed(2)}]}}],subtotal:M.toFixed(2),total:(M+dt).toFixed(2),moneda:"MXN",lugar_expedicion:"64000"},cert_b64:S,key_b64:Q,password:((k=document.getElementById("f-pwd"))==null?void 0:k.value)||""},P=await p.timbrar(we);P!=null&&P.success?(i.innerHTML=`
+  </div>`,(e=document.getElementById("f-subtotal"))==null||e.addEventListener("input",a=>{const i=parseFloat(a.target.value)||0,o=i*.16;document.getElementById("f-iva").value=o.toFixed(2),document.getElementById("f-total").value=(i+o).toFixed(2)}),window._timbrar=async()=>{var o,d,s,c,l,n,r,v,p,g,y,T,F,k;const a=document.getElementById("btn-timbrar");a.textContent="⏳ Timbrando…",a.disabled=!0;const i=document.getElementById("cfdi-resultado");try{const A=(o=document.getElementById("f-cer"))==null?void 0:o.files[0],h=(d=document.getElementById("f-key"))==null?void 0:d.files[0],_=Xt=>new Promise((Qt,$e)=>{if(!Xt){Qt("");return}const Et=new FileReader;Et.onload=ke=>Qt(ke.target.result.split(",")[1]||""),Et.onerror=$e,Et.readAsDataURL(Xt)}),[S,W]=await Promise.all([_(A),_(h)]),M=parseFloat((s=document.getElementById("f-subtotal"))==null?void 0:s.value)||0,rt=M*.16,xe={cfdi:{serie:((c=document.getElementById("f-serie"))==null?void 0:c.value)||"A",folio:((l=document.getElementById("f-folio"))==null?void 0:l.value)||"1",tipo_comprobante:((n=document.getElementById("f-tipo"))==null?void 0:n.value)||"I",emisor:{rfc:((r=document.getElementById("f-rfc-emisor"))==null?void 0:r.value)||"",nombre:((v=document.getElementById("f-nombre-emisor"))==null?void 0:v.value)||"",regimen_fiscal:((p=document.getElementById("f-regimen"))==null?void 0:p.value)||"601"},receptor:{rfc:((g=document.getElementById("f-rfc-receptor"))==null?void 0:g.value)||"",nombre:((y=document.getElementById("f-nombre-receptor"))==null?void 0:y.value)||"",uso_cfdi:((T=document.getElementById("f-uso"))==null?void 0:T.value)||"G03",domicilio_fiscal_receptor:"64000",regimen_fiscal_receptor:"601"},conceptos:[{clave_prod_serv:"84111506",descripcion:((F=document.getElementById("f-concepto"))==null?void 0:F.value)||"Servicio",cantidad:"1",unidad:"ACT",valor_unitario:M.toFixed(2),importe:M.toFixed(2),impuestos:{traslados:[{base:M.toFixed(2),impuesto:"002",tipo_factor:"Tasa",tasa:"0.160000",importe:rt.toFixed(2)}]}}],subtotal:M.toFixed(2),total:(M+rt).toFixed(2),moneda:"MXN",lugar_expedicion:"64000"},cert_b64:S,key_b64:W,password:((k=document.getElementById("f-pwd"))==null?void 0:k.value)||""},P=await u.timbrar(xe);P!=null&&P.success?(i.innerHTML=`
         <div style="background:var(--success-light);border:1.5px solid var(--success);border-radius:12px;padding:16px">
           <div style="font-weight:700;color:var(--success);margin-bottom:8px">✅ CFDI Timbrado</div>
           <div style="font-size:12px;font-family:monospace;word-break:break-all;color:var(--text-600)">UUID: ${P.uuid}</div>
-          <div style="font-size:12px;color:var(--text-500);margin-top:4px">Fecha: ${B(P.fecha_timbrado)}</div>
+          <div style="font-size:12px;color:var(--text-500);margin-top:4px">Fecha: ${I(P.fecha_timbrado)}</div>
         </div>`,b("CFDI timbrado",`UUID: ${P.uuid}`,"success")):i.innerHTML=`<div style="background:var(--danger-light,#fee2e2);border:1.5px solid var(--red);border-radius:12px;padding:16px;color:var(--red)">
-          ❌ Error: ${(P==null?void 0:P.error)||"Error desconocido"}</div>`}catch(A){i.innerHTML=`<div style="background:#fee2e2;border:1.5px solid var(--red);border-radius:12px;padding:16px;color:var(--red)">❌ ${A.message}</div>`}finally{a.textContent="🔏 Timbrar CFDI",a.disabled=!1}})}let ft=1,U=[],gt="";async function Ot(){C(),ft=1,gt="",$([{label:"Nómina"}]),ca(),await me()}function ca(){w(`
+          ❌ Error: ${(P==null?void 0:P.error)||"Error desconocido"}</div>`}catch(A){i.innerHTML=`<div style="background:#fee2e2;border:1.5px solid var(--red);border-radius:12px;padding:16px;color:var(--red)">❌ ${A.message}</div>`}finally{a.textContent="🔏 Timbrar CFDI",a.disabled=!1}})}let ht=1,U=[],yt="";async function Ut(){C(),ht=1,yt="",$([{label:"Nómina"}]),ua(),await fe()}function ua(){w(`
   <div class="o-cp" id="nomina-cp">
     <div class="o-cp-left">
       <button class="o-btn-primary" onclick="window._nominaNuevoEmpleado()">
@@ -1500,7 +1500,7 @@
     <div class="o-cp-center">
       <div class="o-search-bar">
         <svg class="o-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input id="o-search-nomina" class="o-search-input" type="text" placeholder="Buscar empleado o departamento…" value="${gt}">
+        <input id="o-search-nomina" class="o-search-input" type="text" placeholder="Buscar empleado o departamento…" value="${yt}">
         <div class="o-search-filters">
           <button class="o-filter-btn" onclick="window._nominaFiltro('activos')">Activos</button>
           <button class="o-filter-btn" onclick="window._nominaFiltro('baja')">De baja</button>
@@ -1517,7 +1517,7 @@
   </div>
   <div id="nomina-content" class="o-view-content">
     ${x(10,6)}
-  </div>`),setTimeout(()=>{var t;(t=document.getElementById("o-search-nomina"))==null||t.addEventListener("input",e=>{gt=e.target.value.toLowerCase(),ra()})},100)}function ra(){document.querySelectorAll("#nomina-content tbody tr").forEach(t=>{t.style.display=t.textContent.toLowerCase().includes(gt)?"":"none"})}async function me(){try{const t=await p.nomina(ft);U=(t==null?void 0:t.data)||[];const e=U.length>=20,a=document.getElementById("nomina-content");if(!a)return;a.innerHTML=be(U,e)}catch(t){console.error(t),b("Error",t.message,"error")}}function be(t,e){return t.length?`
+  </div>`),setTimeout(()=>{var t;(t=document.getElementById("o-search-nomina"))==null||t.addEventListener("input",e=>{yt=e.target.value.toLowerCase(),ma()})},100)}function ma(){document.querySelectorAll("#nomina-content tbody tr").forEach(t=>{t.style.display=t.textContent.toLowerCase().includes(yt)?"":"none"})}async function fe(){try{const t=await u.nomina(ht);U=(t==null?void 0:t.data)||[];const e=U.length>=20,a=document.getElementById("nomina-content");if(!a)return;a.innerHTML=ge(U,e)}catch(t){console.error(t),b("Error",t.message,"error")}}function ge(t,e){return t.length?`
   <div class="o-list-view">
     <table class="o-list-table">
       <thead>
@@ -1532,12 +1532,12 @@
         </tr>
       </thead>
       <tbody>
-        ${t.map(a=>{const i=a.active!==!1,o=(a.name||"?").split(" ").map(v=>v[0]).slice(0,2).join(""),l=a.id*47%360,s=a.job_title||a.job_id_name||"—",c=a.department_name||a.department_id_name||"—",d=a.ssnid||a.imss||"—",n=B(a.date_start||a.fecha_inicio||null),r=f(parseFloat(a.wage||a.salario_base||0));return`
+        ${t.map(a=>{const i=a.active!==!1,o=(a.name||"?").split(" ").map(v=>v[0]).slice(0,2).join(""),d=a.id*47%360,s=a.job_title||a.job_id_name||"—",c=a.department_name||a.department_id_name||"—",l=a.ssnid||a.imss||"—",n=I(a.date_start||a.fecha_inicio||null),r=f(parseFloat(a.wage||a.salario_base||0));return`
           <tr class="o-list-row" onclick="window._verEmpleado(${a.id})">
             <td class="o-list-chk"><input type="checkbox" class="o-chk" onclick="event.stopPropagation()"></td>
             <td>
               <div class="o-partner-cell">
-                <div class="o-avatar" style="background:linear-gradient(135deg,hsl(${l},60%,55%),hsl(${(l+50)%360},70%,45%))">${o||"?"}</div>
+                <div class="o-avatar" style="background:linear-gradient(135deg,hsl(${d},60%,55%),hsl(${(d+50)%360},70%,45%))">${o||"?"}</div>
                 <div>
                   <div class="o-td-primary">${a.name||"—"}</div>
                   <div class="o-td-secondary"><span class="o-badge ${i?"o-badge-success":"o-badge-gray"}">${i?"Activo":"Baja"}</span></div>
@@ -1546,7 +1546,7 @@
             </td>
             <td class="o-td-muted">${s}</td>
             <td class="o-td-muted">${c}</td>
-            <td class="o-td-mono">${d}</td>
+            <td class="o-td-mono">${l}</td>
             <td class="o-td-muted">${n}</td>
             <td class="o-td-amount" style="font-weight:700">${r}</td>
           </tr>`}).join("")}
@@ -1554,13 +1554,13 @@
     </table>
     <div class="o-list-footer">
       <span class="o-list-count">${t.length} empleado${t.length!==1?"s":""}</span>
-      ${K(ft,e,a=>{ft=a,me()})}
+      ${Q(ht,e,a=>{ht=a,fe()})}
     </div>
   </div>`:`
     <div class="o-empty-state">
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity=".3"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       <p>Sin empleados registrados</p>
-    </div>`}window._verEmpleado=async t=>{$([{label:"Nómina",onclick:()=>Ot()},{label:"Cargando…",id:"bc-emp-name"}]),w(`<div class="o-form-loading">${x(4,3)}</div>`);try{let e=U.find(n=>n.id===t);try{const n=await p.empleado(t);n&&(n.id||n.name)&&(e=n)}catch{}if(!e){b("Error","Empleado no encontrado","error");return}const a=document.getElementById("bc-emp-name");a&&(a.textContent=e.name||"Empleado");const i=e.active!==!1,o=(e.name||"?").split(" ").map(n=>n[0]).slice(0,2).join(""),l=e.id*47%360,s=f(parseFloat(e.sbc||e.salario_base_cotizacion||0)),c=f(parseFloat(e.sdi||e.salario_diario_integrado||0)),d=f(parseFloat(e.wage||e.salario_base||0));w(`
+    </div>`}window._verEmpleado=async t=>{$([{label:"Nómina",onclick:()=>Ut()},{label:"Cargando…",id:"bc-emp-name"}]),w(`<div class="o-form-loading">${x(4,3)}</div>`);try{let e=U.find(n=>n.id===t);try{const n=await u.empleado(t);n&&(n.id||n.name)&&(e=n)}catch{}if(!e){b("Error","Empleado no encontrado","error");return}const a=document.getElementById("bc-emp-name");a&&(a.textContent=e.name||"Empleado");const i=e.active!==!1,o=(e.name||"?").split(" ").map(n=>n[0]).slice(0,2).join(""),d=e.id*47%360,s=f(parseFloat(e.sbc||e.salario_base_cotizacion||0)),c=f(parseFloat(e.sdi||e.salario_diario_integrado||0)),l=f(parseFloat(e.wage||e.salario_base||0));w(`
     <div class="o-form-topbar">
       <button class="o-back-btn" onclick="window._nominaBack()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -1587,7 +1587,7 @@
     <!-- FORM SHEET -->
     <div class="o-form-sheet">
       <div class="o-sheet-header">
-        <div class="o-avatar o-avatar-lg" style="background:linear-gradient(135deg,hsl(${l},60%,55%),hsl(${(l+50)%360},70%,45%))">${o||"?"}</div>
+        <div class="o-avatar o-avatar-lg" style="background:linear-gradient(135deg,hsl(${d},60%,55%),hsl(${(d+50)%360},70%,45%))">${o||"?"}</div>
         <div class="o-sheet-title-block">
           <h1 class="o-form-title">${e.name||"—"}</h1>
           <div style="display:flex;gap:6px;margin-top:4px">
@@ -1602,7 +1602,7 @@
           <div class="o-field-group"><label class="o-field-label">CURP</label><div class="o-field-value o-field-mono">${e.curp||"—"}</div></div>
           <div class="o-field-group"><label class="o-field-label">N° Seguro Social</label><div class="o-field-value o-field-mono">${e.ssnid||e.imss||"—"}</div></div>
           <div class="o-field-group"><label class="o-field-label">RFC</label><div class="o-field-value o-field-mono">${e.rfc||"—"}</div></div>
-          <div class="o-field-group"><label class="o-field-label">Fecha de Inicio</label><div class="o-field-value">${B(e.date_start||e.fecha_inicio||null)}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Fecha de Inicio</label><div class="o-field-value">${I(e.date_start||e.fecha_inicio||null)}</div></div>
         </div>
         <div class="o-form-col">
           <div class="o-field-group"><label class="o-field-label">Puesto</label><div class="o-field-value">${e.job_title||e.job_id_name||"—"}</div></div>
@@ -1623,7 +1623,7 @@
         <div class="o-tab-pane" id="tab-config">
           <div class="o-form-grid">
             <div class="o-form-col">
-              <div class="o-field-group"><label class="o-field-label">Salario Base</label><div class="o-field-value o-field-price">${d}</div></div>
+              <div class="o-field-group"><label class="o-field-label">Salario Base</label><div class="o-field-value o-field-price">${l}</div></div>
               <div class="o-field-group"><label class="o-field-label">SBC (Sal. Base Cotización)</label><div class="o-field-value">${s}</div></div>
               <div class="o-field-group"><label class="o-field-label">SDI (Sal. Diario Integrado)</label><div class="o-field-value">${c}</div></div>
               <div class="o-field-group"><label class="o-field-label">Periodicidad</label><div class="o-field-value">${e.periodicidad||e.payment_period||"Mensual"}</div></div>
@@ -1639,7 +1639,7 @@
           <table class="o-list-table">
             <thead><tr><th>Concepto</th><th class="o-col-right">Importe</th><th>Tipo</th></tr></thead>
             <tbody>
-              <tr><td>Salario Mensual</td><td class="o-td-amount">${d}</td><td><span class="o-badge o-badge-success">Percepción</span></td></tr>
+              <tr><td>Salario Mensual</td><td class="o-td-amount">${l}</td><td><span class="o-badge o-badge-success">Percepción</span></td></tr>
               <tr><td>IMSS Obrero (cuota)</td><td class="o-td-amount">—</td><td><span class="o-badge o-badge-danger">Deducción</span></td></tr>
               <tr><td>ISR Estimado</td><td class="o-td-amount">—</td><td><span class="o-badge o-badge-danger">Deducción</span></td></tr>
               <tr class="o-total-row" style="font-weight:700"><td>Neto a Pagar (est.)</td><td class="o-td-amount">—</td><td></td></tr>
@@ -1667,12 +1667,12 @@
         <div class="o-msg">
           <div class="o-avatar o-avatar-sm" style="background:var(--o-primary)">S</div>
           <div class="o-msg-body">
-            <div class="o-msg-meta"><strong>Sistema</strong> <span>${B(e.date_start||new Date().toISOString())}</span></div>
+            <div class="o-msg-meta"><strong>Sistema</strong> <span>${I(e.date_start||new Date().toISOString())}</span></div>
             <div class="o-msg-text">Registro creado.</div>
           </div>
         </div>
       </div>
-    </div>`),window._editarEmpleadoForm=n=>Ze({id:n,...e},()=>window._verEmpleado(n)),window._nomTab=(n,r)=>{document.querySelectorAll("#nom-tabs .o-tab").forEach(u=>u.classList.remove("active")),r.classList.add("active"),document.querySelectorAll(".o-tab-pane").forEach(u=>u.style.display="none");const v=document.getElementById(`tab-${n}`);v&&(v.style.display="")}}catch(e){console.error(e),b("Error",e.message,"error")}};window._nominaBack=()=>Ot();window._nominaNuevoEmpleado=()=>alert("Nuevo empleado — próximamente");window._nominaFiltro=t=>{const e=t==="activos"?U.filter(i=>i.active!==!1):t==="baja"?U.filter(i=>i.active===!1):U,a=document.getElementById("nomina-content");a&&(a.innerHTML=be(e,!1))};window._chkAllNomina=t=>document.querySelectorAll("#nomina-content .o-chk").forEach(e=>e.checked=t.checked);let Ht="list",ht=1,j=[],yt="";const wt={draft:{lbl:"Borrador",cls:"o-badge-gray",kanban:"Borrador"},sent:{lbl:"Enviada",cls:"o-badge-info",kanban:"Enviada al Proveedor"},purchase:{lbl:"Orden de Compra",cls:"o-badge-success",kanban:"Órdenes de Compra"},done:{lbl:"Realizada",cls:"o-badge-warn",kanban:"Realizada"},cancel:{lbl:"Cancelada",cls:"o-badge-danger",kanban:"Cancelada"}},oe=["draft","sent","purchase","done"];async function Ut(){C(),Ht="list",ht=1,yt="",$([{label:"Compras"}]),va(),await fe()}function va(){w(`
+    </div>`),window._editarEmpleadoForm=n=>oa({id:n,...e},()=>window._verEmpleado(n)),window._nomTab=(n,r)=>{document.querySelectorAll("#nom-tabs .o-tab").forEach(p=>p.classList.remove("active")),r.classList.add("active"),document.querySelectorAll(".o-tab-pane").forEach(p=>p.style.display="none");const v=document.getElementById(`tab-${n}`);v&&(v.style.display="")}}catch(e){console.error(e),b("Error",e.message,"error")}};window._nominaBack=()=>Ut();window._nominaNuevoEmpleado=()=>alert("Nuevo empleado — próximamente");window._nominaFiltro=t=>{const e=t==="activos"?U.filter(i=>i.active!==!1):t==="baja"?U.filter(i=>i.active===!1):U,a=document.getElementById("nomina-content");a&&(a.innerHTML=ge(e,!1))};window._chkAllNomina=t=>document.querySelectorAll("#nomina-content .o-chk").forEach(e=>e.checked=t.checked);let Gt="list",wt=1,j=[],_t="";const xt={draft:{lbl:"Borrador",cls:"o-badge-gray",kanban:"Borrador"},sent:{lbl:"Enviada",cls:"o-badge-info",kanban:"Enviada al Proveedor"},purchase:{lbl:"Orden de Compra",cls:"o-badge-success",kanban:"Órdenes de Compra"},done:{lbl:"Realizada",cls:"o-badge-warn",kanban:"Realizada"},cancel:{lbl:"Cancelada",cls:"o-badge-danger",kanban:"Cancelada"}},se=["draft","sent","purchase","done"];async function kt(){C(),Gt="list",wt=1,_t="",$([{label:"Compras"}]),ba(),await he()}function ba(){w(`
   <div class="o-cp" id="compras-cp">
     <div class="o-cp-left">
       <button class="o-btn-primary" onclick="window._compraNueva()">
@@ -1683,7 +1683,7 @@
     <div class="o-cp-center">
       <div class="o-search-bar">
         <svg class="o-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input id="o-search-compras" class="o-search-input" type="text" placeholder="Buscar folio o proveedor…" value="${yt}">
+        <input id="o-search-compras" class="o-search-input" type="text" placeholder="Buscar folio o proveedor…" value="${_t}">
         <div class="o-search-filters">
           <button class="o-filter-btn" onclick="window._compraFiltroEstado('draft')">Borrador</button>
           <button class="o-filter-btn" onclick="window._compraFiltroEstado('purchase')">Confirmadas</button>
@@ -1704,7 +1704,7 @@
   </div>
   <div id="compras-content" class="o-view-content">
     ${x(8,6)}
-  </div>`),setTimeout(()=>{var t;(t=document.getElementById("o-search-compras"))==null||t.addEventListener("input",e=>{yt=e.target.value.toLowerCase(),pa()})},100)}function pa(){document.querySelectorAll("#compras-content .o-list-row, #compras-content .o-kanban-card").forEach(t=>{t.style.display=t.textContent.toLowerCase().includes(yt)?"":"none"})}async function fe(){try{const t=await p.compras(ht);j=(t==null?void 0:t.data)||[];const e=j.length>=20,a=document.getElementById("compras-content");if(!a)return;Ht==="kanban"?a.innerHTML=ge(j):a.innerHTML=Gt(j,e)}catch(t){console.error(t),b("Error",t.message,"error")}}function Gt(t,e){return t.length?`
+  </div>`),setTimeout(()=>{var t;(t=document.getElementById("o-search-compras"))==null||t.addEventListener("input",e=>{_t=e.target.value.toLowerCase(),fa()})},100)}function fa(){document.querySelectorAll("#compras-content .o-list-row, #compras-content .o-kanban-card").forEach(t=>{t.style.display=t.textContent.toLowerCase().includes(_t)?"":"none"})}async function he(){try{const t=await u.compras(wt);j=(t==null?void 0:t.data)||[];const e=j.length>=20,a=document.getElementById("compras-content");if(!a)return;Gt==="kanban"?a.innerHTML=ye(j):a.innerHTML=Kt(j,e)}catch(t){console.error(t),b("Error",t.message,"error")}}function Kt(t,e){return t.length?`
   <div class="o-list-view">
     <table class="o-list-table">
       <thead>
@@ -1719,13 +1719,13 @@
         </tr>
       </thead>
       <tbody>
-        ${t.map(a=>{const i=wt[a.state]||{lbl:a.state||"—",cls:"o-badge-gray"};return`
+        ${t.map(a=>{const i=xt[a.state]||{lbl:a.state||"—",cls:"o-badge-gray"};return`
           <tr class="o-list-row" onclick="window._verCompra(${a.id})">
             <td class="o-list-chk"><input type="checkbox" class="o-chk" onclick="event.stopPropagation()"></td>
             <td class="o-td-mono o-td-primary">${a.name||`#${a.id}`}</td>
             <td class="o-td-primary">${a.partner_name||"—"}</td>
-            <td class="o-td-muted">${B(a.date_order)}</td>
-            <td class="o-td-muted">${B(a.date_planned)}</td>
+            <td class="o-td-muted">${I(a.date_order)}</td>
+            <td class="o-td-muted">${I(a.date_planned)}</td>
             <td><span class="o-badge ${i.cls}">${i.lbl}</span></td>
             <td class="o-td-amount" style="font-weight:700">${f(parseFloat(a.amount_total||0))}</td>
           </tr>`}).join("")}
@@ -1733,31 +1733,31 @@
     </table>
     <div class="o-list-footer">
       <span class="o-list-count">${t.length} orden${t.length!==1?"es":""}</span>
-      ${K(ht,e,a=>{ht=a,fe()})}
+      ${Q(wt,e,a=>{wt=a,he()})}
     </div>
-  </div>`:'<div class="o-empty-state"><p>Sin órdenes de compra</p></div>'}function ge(t){return`
+  </div>`:'<div class="o-empty-state"><p>Sin órdenes de compra</p></div>'}function ye(t){return`
   <div class="o-kanban-columns">
-    ${["draft","sent","purchase","done"].map(a=>{const i=wt[a],o=t.filter(s=>s.state===a),l=o.reduce((s,c)=>s+parseFloat(c.amount_total||0),0);return`
+    ${["draft","sent","purchase","done"].map(a=>{const i=xt[a],o=t.filter(s=>s.state===a),d=o.reduce((s,c)=>s+parseFloat(c.amount_total||0),0);return`
       <div class="o-kanban-col">
         <div class="o-kanban-col-header">
           <span class="o-badge ${i.cls}">${i.kanban}</span>
           <span class="o-kanban-col-count">${o.length}</span>
         </div>
-        <div class="o-kanban-col-sum">${f(l)}</div>
+        <div class="o-kanban-col-sum">${f(d)}</div>
         <div class="o-kanban-col-cards">
           ${o.map(s=>`
           <div class="o-kanban-card" onclick="window._verCompra(${s.id})">
             <div class="o-kanban-title">${s.name||"#"+s.id}</div>
             <div class="o-kanban-sub">${s.partner_name||"—"}</div>
             <div style="display:flex;justify-content:space-between;margin-top:8px">
-              <span class="o-td-muted" style="font-size:12px">${B(s.date_order)}</span>
+              <span class="o-td-muted" style="font-size:12px">${I(s.date_order)}</span>
               <strong>${f(parseFloat(s.amount_total||0))}</strong>
             </div>
           </div>`).join("")}
           ${o.length===0?'<div class="o-kanban-empty-col">Sin órdenes</div>':""}
         </div>
       </div>`}).join("")}
-  </div>`}window._verCompra=async t=>{$([{label:"Compras",onclick:()=>Ut()},{label:"Cargando…",id:"bc-compra-name"}]),w(`<div class="o-form-loading">${x(4,3)}</div>`);try{let e=j.find(s=>s.id===t);try{const s=await p.compra(t);s&&(s.id||s.name)&&(e=s)}catch{}if(!e){b("Error","Orden no encontrada","error");return}const a=document.getElementById("bc-compra-name");a&&(a.textContent=e.name||`Compra #${t}`);const i=wt[e.state]||{lbl:e.state||"—",cls:"o-badge-gray"},o=oe.indexOf(e.state),l=e.order_line||e.lineas||[];w(`
+  </div>`}window._verCompra=async t=>{$([{label:"Compras",onclick:()=>kt()},{label:"Cargando…",id:"bc-compra-name"}]),w(`<div class="o-form-loading">${x(4,3)}</div>`);try{let e=j.find(s=>s.id===t);try{const s=await u.compra(t);s&&(s.id||s.name)&&(e=s)}catch{}if(!e){b("Error","Orden no encontrada","error");return}const a=document.getElementById("bc-compra-name");a&&(a.textContent=e.name||`Compra #${t}`);const i=xt[e.state]||{lbl:e.state||"—",cls:"o-badge-gray"},o=se.indexOf(e.state),d=e.order_line||e.lineas||[];w(`
     <div class="o-form-topbar">
       <button class="o-back-btn" onclick="window._comprasBack()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -1773,7 +1773,7 @@
 
     <!-- STATUS BAR -->
     <div class="o-status-bar">
-      ${oe.map((s,c)=>{const d=wt[s],n=c===o,r=c<o;return`<div class="o-status-step ${n?"active":r?"done":""}">${d.lbl}</div>`}).join('<div class="o-status-arrow">›</div>')}
+      ${se.map((s,c)=>{const l=xt[s],n=c===o,r=c<o;return`<div class="o-status-step ${n?"active":r?"done":""}">${l.lbl}</div>`}).join('<div class="o-status-arrow">›</div>')}
     </div>
 
     <!-- SMART BUTTONS -->
@@ -1800,7 +1800,7 @@
       <div class="o-form-grid">
         <div class="o-form-col">
           <div class="o-field-group"><label class="o-field-label">Proveedor</label><div class="o-field-value o-td-primary">${e.partner_name||"—"}</div></div>
-          <div class="o-field-group"><label class="o-field-label">Fecha de Orden</label><div class="o-field-value">${B(e.date_order)}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Fecha de Orden</label><div class="o-field-value">${I(e.date_order)}</div></div>
           <div class="o-field-group"><label class="o-field-label">Referencia Proveedor</label><div class="o-field-value o-td-mono">${e.partner_ref||"—"}</div></div>
         </div>
         <div class="o-form-col">
@@ -1818,15 +1818,15 @@
         </div>
 
         <div class="o-tab-pane" id="tab-productos">
-          ${l.length?`
+          ${d.length?`
           <table class="o-list-table">
             <thead><tr><th>Producto</th><th>Descripción</th><th class="o-col-right">Cantidad</th><th class="o-col-right">Precio</th><th class="o-col-right">Subtotal</th></tr></thead>
             <tbody>
-              ${l.map(s=>`
+              ${d.map(s=>`
               <tr>
                 <td class="o-td-primary">${s.product_name||s.name||"—"}</td>
                 <td class="o-td-muted">${s.name||s.description||"—"}</td>
-                <td class="o-td-amount">${F(parseFloat(s.product_qty||s.qty||0))}</td>
+                <td class="o-td-amount">${L(parseFloat(s.product_qty||s.qty||0))}</td>
                 <td class="o-td-amount">${f(parseFloat(s.price_unit||0))}</td>
                 <td class="o-td-amount" style="font-weight:700">${f(parseFloat(s.price_subtotal||0))}</td>
               </tr>`).join("")}
@@ -1857,12 +1857,12 @@
         <div class="o-msg">
           <div class="o-avatar o-avatar-sm" style="background:var(--o-primary)">S</div>
           <div class="o-msg-body">
-            <div class="o-msg-meta"><strong>Sistema</strong> <span>${B(e.date_order||new Date().toISOString())}</span></div>
+            <div class="o-msg-meta"><strong>Sistema</strong> <span>${I(e.date_order||new Date().toISOString())}</span></div>
             <div class="o-msg-text">Orden de compra creada.</div>
           </div>
         </div>
       </div>
-    </div>`),window._editarCompraForm=s=>Ye({id:s,...e},()=>window._verCompra(s)),window._compraTab=(s,c)=>{document.querySelectorAll("#compra-tabs .o-tab").forEach(n=>n.classList.remove("active")),c.classList.add("active"),document.querySelectorAll(".o-tab-pane").forEach(n=>n.style.display="none");const d=document.getElementById(`tab-${s}`);d&&(d.style.display="")}}catch(e){console.error(e),b("Error",e.message,"error")}};window._comprasBack=()=>Ut();window._compraNueva=()=>alert("Nueva orden de compra — próximamente");window._compraSetView=t=>{var i;Ht=t,document.querySelectorAll("#compras-cp .o-view-btn").forEach(o=>o.classList.remove("o-active"));const e=t==="list"?0:1;(i=document.querySelectorAll("#compras-cp .o-view-btn")[e])==null||i.classList.add("o-active");const a=document.getElementById("compras-content");a&&(t==="kanban"?a.innerHTML=ge(j):a.innerHTML=Gt(j,!1))};window._compraFiltroEstado=t=>{const e=j.filter(i=>i.state===t),a=document.getElementById("compras-content");a&&(a.innerHTML=Gt(e,!1))};window._chkAllCompras=t=>document.querySelectorAll("#compras-content .o-chk").forEach(e=>e.checked=t.checked);let ot="list",N=1,zt="",Dt=null,St=[];async function ua(){C(),$([{label:"Cotizaciones"}]),w(`<div class="nx-module-page"><div id="mcp"></div><div id="mcontent">${x(5,6)}</div></div>`),he(),await it()}function he(){const t=document.getElementById("mcp");t&&(t.innerHTML=`
+    </div>`),window._editarCompraForm=s=>aa({id:s,...e},()=>window._verCompra(s)),window._compraTab=(s,c)=>{document.querySelectorAll("#compra-tabs .o-tab").forEach(n=>n.classList.remove("active")),c.classList.add("active"),document.querySelectorAll(".o-tab-pane").forEach(n=>n.style.display="none");const l=document.getElementById(`tab-${s}`);l&&(l.style.display="")}}catch(e){console.error(e),b("Error",e.message,"error")}};window._comprasBack=()=>kt();window._compraNueva=()=>{dt(()=>import("./create_forms-6H4RCJr_.js"),[]).then(t=>t.nuevaCompra(()=>kt()))};window._compraSetView=t=>{var i;Gt=t,document.querySelectorAll("#compras-cp .o-view-btn").forEach(o=>o.classList.remove("o-active"));const e=t==="list"?0:1;(i=document.querySelectorAll("#compras-cp .o-view-btn")[e])==null||i.classList.add("o-active");const a=document.getElementById("compras-content");a&&(t==="kanban"?a.innerHTML=ye(j):a.innerHTML=Kt(j,!1))};window._compraFiltroEstado=t=>{const e=j.filter(i=>i.state===t),a=document.getElementById("compras-content");a&&(a.innerHTML=Kt(e,!1))};window._chkAllCompras=t=>document.querySelectorAll("#compras-content .o-chk").forEach(e=>e.checked=t.checked);let ot="list",N=1,Nt="",Rt=null,Bt=[];async function ga(){C(),$([{label:"Cotizaciones"}]),w(`<div class="nx-module-page"><div id="mcp"></div><div id="mcontent">${x(5,6)}</div></div>`),we(),await it()}function we(){const t=document.getElementById("mcp");t&&(t.innerHTML=`
     <div class="o-control-panel">
       <div class="o-cp-left">
         <button class="o-btn-new" onclick="window._newCot()">+ Nueva Cotización</button>
@@ -1889,7 +1889,7 @@
           <button class="o-view-btn ${ot==="kanban"?"active":""}" onclick="window._cvv('kanban')" title="Kanban">⬜</button>
         </div>
       </div>
-    </div>`,ma(),window._cvv=e=>{ot=e,he(),it()},window._sc=ya(e=>{zt=e,N=1,it()},300),window._cf=e=>{Dt=e,N=1,it(),window._cdd()},window._newCot=()=>ha())}function ma(){window._tog=t=>{const e=document.getElementById(t+"-menu");if(!e)return;const a=e.classList.contains("open");window._cdd(),a||e.classList.add("open")},window._cdd=()=>document.querySelectorAll(".o-dropdown-menu.open").forEach(t=>t.classList.remove("open")),window._ddInit||(document.addEventListener("click",t=>{t.target.closest(".o-dropdown")||window._cdd()}),window._ddInit=!0)}async function it(){const t=document.getElementById("mcontent");if(t){t.innerHTML=x(5,6);try{const e=await p.cotizaciones(N);St=(e==null?void 0:e.data)||[];let a=Dt?St.filter(o=>o.state===Dt):St;if(zt){const o=zt.toLowerCase();a=a.filter(l=>(l.name||"").toLowerCase().includes(o)||(l.partner_name||"").toLowerCase().includes(o))}const i=document.getElementById("ccount");i&&(i.textContent=a.length+" registros"),t.innerHTML=ot==="kanban"?fa(a):ba(a),ot==="list"&&ga()}catch(e){t.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-400)">⚠️ ${e.message}</div>`}}}const jt={draft:"Borrador",sent:"Enviada",sale:"Confirmada",cancel:"Cancelada"};function ba(t){return t.length?`
+    </div>`,ha(),window._cvv=e=>{ot=e,we(),it()},window._sc=$a(e=>{Nt=e,N=1,it()},300),window._cf=e=>{Rt=e,N=1,it(),window._cdd()},window._newCot=()=>xa())}function ha(){window._tog=t=>{const e=document.getElementById(t+"-menu");if(!e)return;const a=e.classList.contains("open");window._cdd(),a||e.classList.add("open")},window._cdd=()=>document.querySelectorAll(".o-dropdown-menu.open").forEach(t=>t.classList.remove("open")),window._ddInit||(document.addEventListener("click",t=>{t.target.closest(".o-dropdown")||window._cdd()}),window._ddInit=!0)}async function it(){const t=document.getElementById("mcontent");if(t){t.innerHTML=x(5,6);try{const e=await u.cotizaciones(N);Bt=(e==null?void 0:e.data)||[];let a=Rt?Bt.filter(o=>o.state===Rt):Bt;if(Nt){const o=Nt.toLowerCase();a=a.filter(d=>(d.name||"").toLowerCase().includes(o)||(d.partner_name||"").toLowerCase().includes(o))}const i=document.getElementById("ccount");i&&(i.textContent=a.length+" registros"),t.innerHTML=ot==="kanban"?wa(a):ya(a),ot==="list"&&_a()}catch(e){t.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-400)">⚠️ ${e.message}</div>`}}}const qt={draft:"Borrador",sent:"Enviada",sale:"Confirmada",cancel:"Cancelada"};function ya(t){return t.length?`
     <div class="o-list-actions-bar" id="clab"><span class="o-actions-count" id="csel-cnt">0 seleccionados</span>
       <button class="o-action-btn-sm" onclick="alert('Exportar')">Exportar</button>
     </div>
@@ -1906,7 +1906,7 @@
             <td>${e.partner_name||e.partner_id||"-"}</td>
             <td>${((a=e.date_order)==null?void 0:a.slice(0,10))||"-"}</td>
             <td>${((i=e.validity_date)==null?void 0:i.slice(0,10))||'<span style="color:var(--text-300)">—</span>'}</td>
-            <td>${q(e.state,jt[e.state]||e.state)}</td>
+            <td>${q(e.state,qt[e.state]||e.state)}</td>
             <td style="text-align:right;font-weight:700;color:var(--primary)">${f(e.amount_total)}</td>
           </tr>`}).join("")}
       </tbody></table></div>
@@ -1916,23 +1916,23 @@
         <button class="o-action-btn-sm" ${N<=1?"disabled":""} onclick="window._cp(${N-1})">‹ Anterior</button>
         <span style="padding:5px 10px;font-size:13px">${N}</span>
         <button class="o-action-btn-sm" onclick="window._cp(${N+1})">Siguiente ›</button>
-      </div></div>`:'<div style="padding:60px;text-align:center"><div style="font-size:48px;margin-bottom:12px">📝</div><p style="color:var(--text-400)">Sin cotizaciones. Crea la primera.</p></div>'}const ie=[{key:"draft",label:"Borrador",color:"#9CA3AF"},{key:"sent",label:"Enviada",color:"#2563EB"},{key:"sale",label:"Confirmada",color:"#059669"}];function fa(t){const e={};return ie.forEach(a=>e[a.key]=[]),t.forEach(a=>{e[a.state]?e[a.state].push(a):e.draft&&e.draft.push(a)}),`<div class="o-kanban-view">${ie.map(a=>`
+      </div></div>`:'<div style="padding:60px;text-align:center"><div style="font-size:48px;margin-bottom:12px">📝</div><p style="color:var(--text-400)">Sin cotizaciones. Crea la primera.</p></div>'}const ne=[{key:"draft",label:"Borrador",color:"#9CA3AF"},{key:"sent",label:"Enviada",color:"#2563EB"},{key:"sale",label:"Confirmada",color:"#059669"}];function wa(t){const e={};return ne.forEach(a=>e[a.key]=[]),t.forEach(a=>{e[a.state]?e[a.state].push(a):e.draft&&e.draft.push(a)}),`<div class="o-kanban-view">${ne.map(a=>`
     <div class="o-kanban-col">
       <div class="o-kanban-col-header" style="border-top:3px solid ${a.color}">
         <span>${a.label}</span><span class="o-kanban-col-count">${e[a.key].length}</span>
       </div>
       <div class="o-kanban-cards">
-        ${e[a.key].map(i=>{var o,l;return`
+        ${e[a.key].map(i=>{var o,d;return`
           <div class="o-kanban-card" onclick="window._vCot(${i.id})">
             <div class="o-kanban-card-title">${i.name||"#"+i.id}</div>
             <div style="font-size:12px;color:var(--text-400);margin-bottom:8px">${i.partner_name||""}</div>
             <div class="o-kanban-card-meta">
-              <span style="font-size:11px">${(o=i.validity_date)!=null&&o.slice(0,10)?"⏰ "+i.validity_date.slice(0,10):((l=i.date_order)==null?void 0:l.slice(0,10))||""}</span>
+              <span style="font-size:11px">${(o=i.validity_date)!=null&&o.slice(0,10)?"⏰ "+i.validity_date.slice(0,10):((d=i.date_order)==null?void 0:d.slice(0,10))||""}</span>
               <span class="o-kanban-card-amount">${f(i.amount_total)}</span>
             </div>
           </div>`}).join("")||'<div style="padding:16px;text-align:center;color:var(--text-300);font-size:12px">Vacío</div>'}
       </div>
-    </div>`).join("")}</div>`}function ga(){window._cca=t=>{document.querySelectorAll(".crc").forEach(e=>e.checked=t),window._crc()},window._crc=()=>{const t=document.querySelectorAll(".crc:checked").length,e=document.getElementById("clab"),a=document.getElementById("csel-cnt");e&&e.classList.toggle("visible",t>0),a&&(a.textContent=t+" seleccionado"+(t!==1?"s":"")),document.querySelectorAll("[data-id]").forEach(i=>{const o=i.querySelector(".crc");o&&i.classList.toggle("selected",o.checked)})}}window._cp=t=>{N=t,it()};function ha(){$([{label:"Cotizaciones",href:"#cotizaciones"},{label:"Nueva cotización"}]),w(`
+    </div>`).join("")}</div>`}function _a(){window._cca=t=>{document.querySelectorAll(".crc").forEach(e=>e.checked=t),window._crc()},window._crc=()=>{const t=document.querySelectorAll(".crc:checked").length,e=document.getElementById("clab"),a=document.getElementById("csel-cnt");e&&e.classList.toggle("visible",t>0),a&&(a.textContent=t+" seleccionado"+(t!==1?"s":"")),document.querySelectorAll("[data-id]").forEach(i=>{const o=i.querySelector(".crc");o&&i.classList.toggle("selected",o.checked)})}}window._cp=t=>{N=t,it()};function xa(){$([{label:"Cotizaciones",href:"#cotizaciones"},{label:"Nueva cotización"}]),w(`
     <div class="o-form-view">
       <div class="o-statusbar">
         <div class="o-statusbar-status">
@@ -1977,14 +1977,14 @@
           <button class="btn btn-secondary" onclick="window._go('cotizaciones')">Cancelar</button>
         </div>
       </div>
-    </div>`),window._guardarNuevaCot=async()=>{var l,s,c,d,n,r,v,u;const t=(s=(l=document.getElementById("nc-partner"))==null?void 0:l.value)==null?void 0:s.trim(),e=((d=(c=document.getElementById("nc-ref"))==null?void 0:c.value)==null?void 0:d.trim())||null,a=((n=document.getElementById("nc-validez"))==null?void 0:n.value)||null,i=((v=(r=document.getElementById("nc-nota"))==null?void 0:r.value)==null?void 0:v.trim())||null;if(!t)return b("Campo requerido","Ingresa el nombre del cliente","warning");let o=1;try{const g=await p.get(`/partners?pagina=1&q=${encodeURIComponent(t)}&por_pagina=5`),y=(g==null?void 0:g.data)??[],I=y.find(L=>{var k;return((k=L.name)==null?void 0:k.toLowerCase())===t.toLowerCase()});if(I)o=I.id;else if(y.length>0)o=y[0].id;else return b("Cliente no encontrado",`No se encontró "${t}"`,"warning")}catch(g){return b("Error","No se pudo buscar el cliente: "+g.message,"error")}try{const g=await p.crearCotizacion({partner_id:o,partner_invoice_id:o,partner_shipping_id:o,note:i,client_order_ref:e,validity_date:a||null}),y=((u=g==null?void 0:g.data)==null?void 0:u.id)??(g==null?void 0:g.id);b("Cotización creada",`ID ${y}`,"success"),y?setTimeout(()=>window._vCot(y),400):window._go("cotizaciones")}catch(g){b("Error al crear cotización",g.message,"error")}}}window._vCot=async t=>{var e,a;$([{label:"Cotizaciones",href:"#cotizaciones"},{label:"Cargando…"}]),w(`<div style="padding:40px">${x(3,5)}</div>`);try{const i=await p.cotizacion(t),o=(i==null?void 0:i.data)||i;if(!o)throw new Error("No encontrada");$([{label:"Cotizaciones",href:"#cotizaciones"},{label:o.name||"#"+t}]);const l=["draft","sent"],s=l.indexOf(o.state),c={draft:"Borrador",sent:"Enviada"};w(`
+    </div>`),window._guardarNuevaCot=async()=>{var d,s,c,l,n,r,v,p;const t=(s=(d=document.getElementById("nc-partner"))==null?void 0:d.value)==null?void 0:s.trim(),e=((l=(c=document.getElementById("nc-ref"))==null?void 0:c.value)==null?void 0:l.trim())||null,a=((n=document.getElementById("nc-validez"))==null?void 0:n.value)||null,i=((v=(r=document.getElementById("nc-nota"))==null?void 0:r.value)==null?void 0:v.trim())||null;if(!t)return b("Campo requerido","Ingresa el nombre del cliente","warning");let o=1;try{const g=await u.get(`/partners?pagina=1&q=${encodeURIComponent(t)}&por_pagina=5`),y=(g==null?void 0:g.data)??[],T=y.find(F=>{var k;return((k=F.name)==null?void 0:k.toLowerCase())===t.toLowerCase()});if(T)o=T.id;else if(y.length>0)o=y[0].id;else return b("Cliente no encontrado",`No se encontró "${t}"`,"warning")}catch(g){return b("Error","No se pudo buscar el cliente: "+g.message,"error")}try{const g=await u.crearCotizacion({partner_id:o,partner_invoice_id:o,partner_shipping_id:o,note:i,client_order_ref:e,validity_date:a||null}),y=((p=g==null?void 0:g.data)==null?void 0:p.id)??(g==null?void 0:g.id);b("Cotización creada",`ID ${y}`,"success"),y?setTimeout(()=>window._vCot(y),400):window._go("cotizaciones")}catch(g){b("Error al crear cotización",g.message,"error")}}}window._vCot=async t=>{var e,a;$([{label:"Cotizaciones",href:"#cotizaciones"},{label:"Cargando…"}]),w(`<div style="padding:40px">${x(3,5)}</div>`);try{const i=await u.cotizacion(t),o=(i==null?void 0:i.data)||i;if(!o)throw new Error("No encontrada");$([{label:"Cotizaciones",href:"#cotizaciones"},{label:o.name||"#"+t}]);const d=["draft","sent"],s=d.indexOf(o.state),c={draft:"Borrador",sent:"Enviada"};w(`
       <div class="o-form-view" id="cfv">
         <div class="o-statusbar">
           <div class="o-statusbar-status">
-            ${l.map((d,n)=>`
-              <div class="o-status-step ${d===o.state?"active":""} ${n<s?"done":""}">
-                ${n<s?"✔ ":""}${c[d]||d}
-              </div>${n<l.length-1?'<span class="o-status-arrow">›</span>':""}`).join("")}
+            ${d.map((l,n)=>`
+              <div class="o-status-step ${l===o.state?"active":""} ${n<s?"done":""}">
+                ${n<s?"✔ ":""}${c[l]||l}
+              </div>${n<d.length-1?'<span class="o-status-arrow">›</span>':""}`).join("")}
             ${o.state==="sale"?'<span class="o-status-arrow">›</span><div class="o-status-step done">✔ Confirmada</div>':""}
             ${o.state==="cancel"?'<span class="o-status-arrow">›</span><div class="o-status-step active" style="color:#DC2626">Cancelada</div>':""}
           </div>
@@ -2018,7 +2018,7 @@
                 <div class="o-field-row"><div class="o-field-label">Validez</div><div class="o-field-value">${((a=o.validity_date)==null?void 0:a.slice(0,10))||'<span class="o-field-empty">—</span>'}</div></div>
               </div>
               <div class="o-form-col">
-                <div class="o-field-row"><div class="o-field-label">Estado</div><div class="o-field-value">${q(o.state,jt[o.state]||o.state)}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Estado</div><div class="o-field-value">${q(o.state,qt[o.state]||o.state)}</div></div>
                 <div class="o-field-row"><div class="o-field-label">Referencia</div><div class="o-field-value">${o.client_order_ref||'<span class="o-field-empty">—</span>'}</div></div>
                 <div class="o-field-row"><div class="o-field-label">Vendedor</div><div class="o-field-value">${o.user_id||o.user_name||'<span class="o-field-empty">—</span>'}</div></div>
               </div>
@@ -2067,19 +2067,19 @@
                   <span class="o-msg-author">Sistema</span>
                   <span class="o-msg-date">${new Date().toLocaleDateString("es-MX")}</span>
                 </div>
-                <div class="o-msg-text">Cotización ${o.name||""} — Estado: ${jt[o.state]||o.state}</div>
+                <div class="o-msg-text">Cotización ${o.name||""} — Estado: ${qt[o.state]||o.state}</div>
               </div>
             </div>
           </div>
         </div>
-      </div>`),window._ct=d=>{document.querySelectorAll(".o-tab").forEach(v=>v.classList.remove("active")),document.querySelectorAll(".o-tab-panel").forEach(v=>v.classList.remove("active"));const n=document.querySelector(`.o-tab[onclick*="'${d}'"]`);n&&n.classList.add("active");const r=document.getElementById("tab-panel-"+d);r&&r.classList.add("active")};try{const d=await p.get(`/cotizaciones/${t}/lineas`),n=(d==null?void 0:d.data)||[],r=document.getElementById("clineas");r&&(r.innerHTML=n.length?n.map(v=>`<tr>
+      </div>`),window._ct=l=>{document.querySelectorAll(".o-tab").forEach(v=>v.classList.remove("active")),document.querySelectorAll(".o-tab-panel").forEach(v=>v.classList.remove("active"));const n=document.querySelector(`.o-tab[onclick*="'${l}'"]`);n&&n.classList.add("active");const r=document.getElementById("tab-panel-"+l);r&&r.classList.add("active")};try{const l=await u.get(`/cotizaciones/${t}/lineas`),n=(l==null?void 0:l.data)||[],r=document.getElementById("clineas");r&&(r.innerHTML=n.length?n.map(v=>`<tr>
               <td>${v.product_id?"#"+v.product_id:'<span class="o-field-empty">—</span>'}</td>
               <td>${v.name||"-"}</td>
               <td style="text-align:right">${v.product_uom_qty??0}</td>
               <td style="text-align:right">${f(v.price_unit)}</td>
               <td style="text-align:right">${v.discount?v.discount+"%":"0%"}</td>
               <td style="text-align:right;font-weight:700">${f(v.price_subtotal)}</td>
-            </tr>`).join(""):'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-400)">Sin líneas de cotización</td></tr>')}catch{}window._emailCot=async d=>{try{await p.put(`/cotizaciones/${d}/enviar`,{}),b("OK","Cotización enviada por email","success"),window._vCot(d)}catch(n){b("Error",n.message,"error")}},window._confirmarCot=async d=>{if(confirm("¿Confirmar cotización como pedido de venta?"))try{await p.confirmarCotizacion(d),b("OK","Cotización confirmada como venta","success"),setTimeout(()=>window._go("ventas"),600)}catch(n){b("Error",n.message,"error")}},window._cancelarCot=async d=>{if(confirm("¿Cancelar cotización?"))try{await p.cancelarCotizacion(d),b("Cancelado","","info"),window._go("cotizaciones")}catch(n){b("Error",n.message,"error")}}}catch(i){w(`<div style="padding:40px;text-align:center"><p style="color:#DC2626">⚠️ ${i.message}</p><button class="o-btn-new" onclick="window._go('cotizaciones')">Volver</button></div>`)}};function ya(t,e){let a;return(...i)=>{clearTimeout(a),a=setTimeout(()=>t(...i),e)}}let Bt=null;async function wa(){C(),$([{label:"Dashboard",href:"dashboard"},{label:"NexusSearch"}]),await _a()}async function _a(){var e,a;w(`
+            </tr>`).join(""):'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-400)">Sin líneas de cotización</td></tr>')}catch{}window._emailCot=async l=>{try{await u.put(`/cotizaciones/${l}/enviar`,{}),b("OK","Cotización enviada por email","success"),window._vCot(l)}catch(n){b("Error",n.message,"error")}},window._confirmarCot=async l=>{if(confirm("¿Confirmar cotización como pedido de venta?"))try{await u.confirmarCotizacion(l),b("OK","Cotización confirmada como venta","success"),setTimeout(()=>window._go("ventas"),600)}catch(n){b("Error",n.message,"error")}},window._cancelarCot=async l=>{if(confirm("¿Cancelar cotización?"))try{await u.cancelarCotizacion(l),b("Cancelado","","info"),window._go("cotizaciones")}catch(n){b("Error",n.message,"error")}}}catch(i){w(`<div style="padding:40px;text-align:center"><p style="color:#DC2626">⚠️ ${i.message}</p><button class="o-btn-new" onclick="window._go('cotizaciones')">Volver</button></div>`)}};function $a(t,e){let a;return(...i)=>{clearTimeout(a),a=setTimeout(()=>t(...i),e)}}let Lt=null;async function ka(){C(),$([{label:"Dashboard",href:"dashboard"},{label:"NexusSearch"}]),await Ea()}async function Ea(){var e,a;w(`
   <div class="page-header anim-1">
     <div>
       <h1 class="page-title">🔍 NexusSearch</h1>
@@ -2113,11 +2113,11 @@
   <div id="search-results" class="anim-3" style="margin-top:16px"></div>
 
   <!-- Estado del índice -->
-  <div id="index-status" class="anim-4" style="margin-top:16px"></div>`),(e=document.getElementById("search-query"))==null||e.addEventListener("keydown",i=>{i.key==="Enter"&&window._buscar()});let t;(a=document.getElementById("search-query"))==null||a.addEventListener("input",i=>{clearTimeout(t),!(i.target.value.length<2)&&(t=setTimeout(()=>window._buscar(),500))}),await se(),window._buscar=xa,window._checkStatus=se,window._syncSearch=$a}async function xa(){var a,i;const t=(i=(a=document.getElementById("search-query"))==null?void 0:a.value)==null?void 0:i.trim();if(!t||t.length<2)return;const e=document.getElementById("search-results");e&&(e.innerHTML=`
+  <div id="index-status" class="anim-4" style="margin-top:16px"></div>`),(e=document.getElementById("search-query"))==null||e.addEventListener("keydown",i=>{i.key==="Enter"&&window._buscar()});let t;(a=document.getElementById("search-query"))==null||a.addEventListener("input",i=>{clearTimeout(t),!(i.target.value.length<2)&&(t=setTimeout(()=>window._buscar(),500))}),await le(),window._buscar=Ca,window._checkStatus=le,window._syncSearch=Sa}async function Ca(){var a,i;const t=(i=(a=document.getElementById("search-query"))==null?void 0:a.value)==null?void 0:i.trim();if(!t||t.length<2)return;const e=document.getElementById("search-results");e&&(e.innerHTML=`
     <div class="data-card" style="padding:20px;text-align:center;color:var(--text-400)">
       <div class="spinner" style="margin:0 auto 8px"></div>
       <div>Buscando "${t}"…</div>
-    </div>`);try{const[o,l,s]=await Promise.allSettled([p.ventas(1).then(d=>((d==null?void 0:d.data)||[]).filter(n=>(n.name||"").toLowerCase().includes(t.toLowerCase())||(n.partner_name||"").toLowerCase().includes(t.toLowerCase())).map(n=>({tipo:"Venta",icon:"💰",titulo:n.name,sub:n.partner_name,meta:`$${n.amount_total}`,href:"ventas"}))),p.productos(1,t).then(d=>((d==null?void 0:d.data)||[]).map(n=>{var r,v;return{tipo:"Producto",icon:"📦",titulo:typeof n.name=="object"?((r=n.name)==null?void 0:r.es_MX)||((v=n.name)==null?void 0:v.en_US)||"":n.name||"",sub:n.categ_name||"",meta:"",href:"productos"}})),p.partners(1).then(d=>((d==null?void 0:d.data)||[]).filter(n=>(n.name||"").toLowerCase().includes(t.toLowerCase())||(n.email||"").toLowerCase().includes(t.toLowerCase())).map(n=>({tipo:"Contacto",icon:"👥",titulo:n.name,sub:n.email||"",meta:"",href:"partners"})))]),c=[...o.status==="fulfilled"?o.value:[],...l.status==="fulfilled"?l.value:[],...s.status==="fulfilled"?s.value:[]];if(!e)return;if(c.length===0){e.innerHTML=`
+    </div>`);try{const[o,d,s]=await Promise.allSettled([u.ventas(1).then(l=>((l==null?void 0:l.data)||[]).filter(n=>(n.name||"").toLowerCase().includes(t.toLowerCase())||(n.partner_name||"").toLowerCase().includes(t.toLowerCase())).map(n=>({tipo:"Venta",icon:"💰",titulo:n.name,sub:n.partner_name,meta:`$${n.amount_total}`,href:"ventas"}))),u.productos(1,t).then(l=>((l==null?void 0:l.data)||[]).map(n=>{var r,v;return{tipo:"Producto",icon:"📦",titulo:typeof n.name=="object"?((r=n.name)==null?void 0:r.es_MX)||((v=n.name)==null?void 0:v.en_US)||"":n.name||"",sub:n.categ_name||"",meta:"",href:"productos"}})),u.partners(1).then(l=>((l==null?void 0:l.data)||[]).filter(n=>(n.name||"").toLowerCase().includes(t.toLowerCase())||(n.email||"").toLowerCase().includes(t.toLowerCase())).map(n=>({tipo:"Contacto",icon:"👥",titulo:n.name,sub:n.email||"",meta:"",href:"partners"})))]),c=[...o.status==="fulfilled"?o.value:[],...d.status==="fulfilled"?d.value:[],...s.status==="fulfilled"?s.value:[]];if(!e)return;if(c.length===0){e.innerHTML=`
       <div class="data-card" style="padding:40px;text-align:center">
         <div style="font-size:36px;margin-bottom:12px">🔍</div>
         <div style="font-weight:700;color:var(--text-700)">Sin resultados para "${t}"</div>
@@ -2128,40 +2128,40 @@
         <div class="data-card-title">${c.length} resultados para "${t}"</div>
       </div>
       <div style="padding:0 4px">
-        ${c.slice(0,30).map(d=>`
+        ${c.slice(0,30).map(l=>`
         <div style="display:flex;align-items:center;gap:12px;padding:12px 8px;
           border-bottom:1px solid var(--border);cursor:pointer;border-radius:8px;
           transition:background var(--t1)" 
           onmouseover="this.style.background='var(--primary-light)'"
           onmouseout="this.style.background=''"
-          onclick="window._go('${d.href}')">
+          onclick="window._go('${l.href}')">
           <div style="width:36px;height:36px;border-radius:10px;background:var(--primary-light);
             display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
-            ${d.icon}
+            ${l.icon}
           </div>
           <div style="flex:1">
-            <div style="font-weight:600;color:var(--text-800);font-size:13px">${d.titulo}</div>
-            <div style="font-size:11px;color:var(--text-400)">${d.sub}</div>
+            <div style="font-weight:600;color:var(--text-800);font-size:13px">${l.titulo}</div>
+            <div style="font-size:11px;color:var(--text-400)">${l.sub}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
-            ${d.meta?`<span style="font-size:12px;font-weight:700;color:var(--text-700)">${d.meta}</span>`:""}
-            <span class="badge badge-${d.tipo==="Venta"?"indigo":d.tipo==="Producto"?"emerald":"violet"}">${d.tipo}</span>
+            ${l.meta?`<span style="font-size:12px;font-weight:700;color:var(--text-700)">${l.meta}</span>`:""}
+            <span class="badge badge-${l.tipo==="Venta"?"indigo":l.tipo==="Producto"?"emerald":"violet"}">${l.tipo}</span>
           </div>
         </div>`).join("")}
       </div>
-    </div>`}catch(o){console.error(o),e&&(e.innerHTML=`<p style="color:var(--red);padding:20px">Error: ${o.message}</p>`)}}async function se(){const t=document.getElementById("index-status");try{const e=await p.searchStatus().catch(()=>null);Bt=(e==null?void 0:e.data)||e,t&&Bt&&(t.innerHTML=`
+    </div>`}catch(o){console.error(o),e&&(e.innerHTML=`<p style="color:var(--red);padding:20px">Error: ${o.message}</p>`)}}async function le(){const t=document.getElementById("index-status");try{const e=await u.searchStatus().catch(()=>null);Lt=(e==null?void 0:e.data)||e,t&&Lt&&(t.innerHTML=`
       <div class="data-card" style="padding:16px">
         <div class="data-card-header" style="padding:0 0 12px">
           <div class="data-card-title">📡 Estado del Motor de Búsqueda</div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
-          ${Object.entries(Bt).map(([a,i])=>`
+          ${Object.entries(Lt).map(([a,i])=>`
           <div style="padding:12px;background:var(--bg);border-radius:10px;border:1px solid var(--border)">
             <div style="font-size:10px;color:var(--text-400);font-weight:700;text-transform:uppercase;margin-bottom:4px">${a}</div>
             <div style="font-size:13px;font-weight:600;color:var(--text-800)">${JSON.stringify(i)}</div>
           </div>`).join("")}
         </div>
-      </div>`)}catch{t&&(t.innerHTML="")}}async function $a(){const t=document.getElementById("btn-sync");t&&(t.textContent="⏳ Sincronizando…",t.disabled=!0);try{const e=await p.searchSync();b("Sincronización iniciada",(e==null?void 0:e.message)||"Los índices se están actualizando","success")}catch(e){b("Error de sincronización",e.message,"error")}finally{t&&(t.textContent="⚡ Sincronizar Índices",t.disabled=!1)}}async function ka(){C(),$([{label:"Dashboard",href:"dashboard"},{label:"Reportes"}]),await Ea()}async function Ea(){w(`
+      </div>`)}catch{t&&(t.innerHTML="")}}async function Sa(){const t=document.getElementById("btn-sync");t&&(t.textContent="⏳ Sincronizando…",t.disabled=!0);try{const e=await u.searchSync();b("Sincronización iniciada",(e==null?void 0:e.message)||"Los índices se están actualizando","success")}catch(e){b("Error de sincronización",e.message,"error")}finally{t&&(t.textContent="⚡ Sincronizar Índices",t.disabled=!1)}}async function Ia(){C(),$([{label:"Dashboard",href:"dashboard"},{label:"Reportes"}]),await Ta()}async function Ta(){w(`
   <div class="page-header anim-1">
     <div>
       <h1 class="page-title">📈 Reportes</h1>
@@ -2202,7 +2202,7 @@
         ${[1,2,3].map(()=>'<div class="skeleton" style="height:80px;border-radius:12px"></div>').join("")}
       </div>
     </div>
-  </div>`),window._verReporte=t=>{b("Reporte seleccionado",`Generando reporte de ${t}…`,"info"),Ca(t)},window._exportReporte=()=>{b("Exportar","Función de exportación CSV/PDF — próximamente","info")},await ye()}async function ye(){var e,a,i,o;const t=document.getElementById("rep-fecha");t&&(t.textContent=new Date().toLocaleDateString("es-MX",{day:"2-digit",month:"long",year:"numeric"}));try{const[l,s,c,d]=await Promise.allSettled([p.ventaKpis(),p.factKpis(),p.stockKpis(),p.comprasKpis()]),n=((e=l.value)==null?void 0:e.data)||{},r=((a=s.value)==null?void 0:a.data)||{},v=((i=c.value)==null?void 0:i.data)||{},u=((o=d.value)==null?void 0:o.data)||{},g=document.getElementById("rep-kpis");g&&(g.innerHTML=`
+  </div>`),window._verReporte=t=>{b("Reporte seleccionado",`Generando reporte de ${t}…`,"info"),Ba(t)},window._exportReporte=()=>{b("Exportar","Función de exportación CSV/PDF — próximamente","info")},await _e()}async function _e(){var e,a,i,o;const t=document.getElementById("rep-fecha");t&&(t.textContent=new Date().toLocaleDateString("es-MX",{day:"2-digit",month:"long",year:"numeric"}));try{const[d,s,c,l]=await Promise.allSettled([u.ventaKpis(),u.factKpis(),u.stockKpis(),u.comprasKpis()]),n=((e=d.value)==null?void 0:e.data)||{},r=((a=s.value)==null?void 0:a.data)||{},v=((i=c.value)==null?void 0:i.data)||{},p=((o=l.value)==null?void 0:o.data)||{},g=document.getElementById("rep-kpis");g&&(g.innerHTML=`
       ${[{label:"Ventas confirmadas",val:n.ordenes_confirmadas??0,tipo:"num",desc:`$${parseFloat(n.total_facturado||0).toLocaleString("es-MX",{minimumFractionDigits:2})} este mes`},{label:"Facturación total",val:f(parseFloat(r.monto_total||0)),tipo:"txt",desc:`${r.total_facturas??0} comprobantes emitidos`},{label:"Valor inventario",val:f(parseFloat(v.valor_inventario||0)),tipo:"txt",desc:`${v.alertas_stock_bajo??0} alertas de stock bajo`}].map(y=>`
       <div style="padding:16px;background:var(--bg);border-radius:12px;border:1px solid var(--border)">
         <div style="font-size:11px;color:var(--text-400);font-weight:700;text-transform:uppercase;margin-bottom:6px">${y.label}</div>
@@ -2215,13 +2215,13 @@
       <div style="grid-column:1/-1;margin-top:8px">
         <div style="font-size:12px;font-weight:700;color:var(--text-600);margin-bottom:10px">COMPRAS</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-          ${[{label:"Total OC",val:u.total??0},{label:"Confirmadas",val:u.confirmadas??0},{label:"Monto compras",val:f(parseFloat(u.monto_total||0))}].map(y=>`
+          ${[{label:"Total OC",val:p.total??0},{label:"Confirmadas",val:p.confirmadas??0},{label:"Monto compras",val:f(parseFloat(p.monto_total||0))}].map(y=>`
           <div style="padding:12px;background:var(--bg);border-radius:10px;border:1px solid var(--border)">
             <div style="font-size:10px;color:var(--text-400);font-weight:700;text-transform:uppercase;margin-bottom:4px">${y.label}</div>
             <div style="font-size:18px;font-weight:800;color:var(--text-900)">${y.val}</div>
           </div>`).join("")}
         </div>
-      </div>`)}catch(l){console.error(l)}}async function Ca(t){const e=document.getElementById("rep-kpis"),a=document.querySelector(".data-card-title");if(a){const i={ventas:"💰 Reporte de Ventas",facturas:"🧾 Facturación",inventario:"🏭 Inventario",compras:"🛒 Compras",clientes:"👥 Clientes",nomina:"👔 Nómina"};a.textContent=i[t]||"Reporte"}e&&(e.innerHTML='<div class="skeleton" style="height:120px;border-radius:12px;grid-column:1/-1"></div>'),await ye()}function Sa(t,e,a,i){C(),$([{label:"Dashboard",href:"dashboard"},{label:e}]),w(`
+      </div>`)}catch(d){console.error(d)}}async function Ba(t){const e=document.getElementById("rep-kpis"),a=document.querySelector(".data-card-title");if(a){const i={ventas:"💰 Reporte de Ventas",facturas:"🧾 Facturación",inventario:"🏭 Inventario",compras:"🛒 Compras",clientes:"👥 Clientes",nomina:"👔 Nómina"};a.textContent=i[t]||"Reporte"}e&&(e.innerHTML='<div class="skeleton" style="height:120px;border-radius:12px;grid-column:1/-1"></div>'),await _e()}function La(t,e,a,i){C(),$([{label:"Dashboard",href:"dashboard"},{label:e}]),w(`
   <div class="page-header anim-1">
     <div>
       <h1 class="page-title">${i} ${e}</h1>
@@ -2235,4 +2235,4 @@
       <div class="empty-state-desc">Este módulo estará disponible próximamente en NexusTech ERP v2.0</div>
       <button class="btn btn-primary" onclick="window._go('dashboard')">← Volver al Dashboard</button>
     </div>
-  </div>`)}E("login",Se);E("home",Me);E("dashboard",ne);E("ventas",je);E("facturas",He);E("productos",Nt);E("partners",Rt);E("stock",Vt);E("cfdi",la);E("nomina",Ot);E("compras",Ut);E("cotizaciones",ua);E("search",wa);E("reportes",ka);E("404",()=>Sa("404","Página no encontrada","La ruta solicitada no existe","🔍"));$e();
+  </div>`)}E("login",Te);E("home",De);E("dashboard",de);E("ventas",Ve);E("facturas",Xe);E("productos",Vt);E("partners",$t);E("stock",Ht);E("cfdi",va);E("nomina",Ut);E("compras",kt);E("cotizaciones",ga);E("search",ka);E("reportes",Ia);E("404",()=>La("404","Página no encontrada","La ruta solicitada no existe","🔍"));Ee();export{u as a,b as t};
