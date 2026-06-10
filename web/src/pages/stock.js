@@ -2,6 +2,7 @@ import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
 import { fmt, fmtMxn, paginationHtml, skeletonTable, toast,
          openDetailModal, detailRow, detailSection } from '../ui.js'
 import { api } from '../api.js'
+import { ajustarStock } from './forms/edit_forms.js'
 
 // Productos de sistema que no son del negocio — filtrar de la vista
 const SYSTEM_PRODUCTS = ['deposit', 'down payment', 'downpayment', 'pago inicial']
@@ -190,10 +191,15 @@ async function loadStock() {
           ].join(''))}
           <div style="display:flex;gap:10px;margin-top:16px">
             <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
-            <button class="btn btn-primary btn-sm" onclick="alert('Ajuste de inventario — próximamente')">📋 Ajustar</button>
+            <button class="btn btn-primary btn-sm" onclick="window._ajustarStockFn(${main.product_id ?? productId})">📋 Ajustar</button>
           </div>`
         }
       )
+    }
+
+    window._ajustarStockFn = (productId) => {
+      const s = items.find(x => x.product_id === productId)
+      if (s) ajustarStock(s, () => loadStock())
     }
 
   } catch (err) {

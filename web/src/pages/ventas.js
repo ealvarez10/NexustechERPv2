@@ -3,6 +3,7 @@ import { fmtMxn, fmtDate, paginationHtml, skeletonTable, toast,
          stateBadge, openDetailModal, detailRow, detailSection } from '../ui.js'
 import { api } from '../api.js'
 import { openNuevaVenta } from './forms/venta_form.js'
+import { editarVenta } from './forms/edit_forms.js'
 
 const ESTADO_MAP = {
   sale:   { lbl:'Confirmada', color:'indigo'  },
@@ -74,6 +75,7 @@ async function loadVentas() {
 
     // ─── Lista ───────────────────────────────────────────────────────────────
     const ventas = listRes.status === 'fulfilled' ? (listRes.value?.data || []) : []
+    const ordenes = ventas
     _total = listRes.value?.total ?? ventas.length
     const hasMore = ventas.length >= 20
 
@@ -127,6 +129,12 @@ async function loadVentas() {
       })
     })
 
+    // Editar venta
+    window._editarVenta = (id) => {
+      const v = ordenes.find(x => x.id === id)
+      if (v) editarVenta(v, () => loadVentas())
+    }
+
     // Ver detalle
     window._verVenta = (id) => {
       openDetailModal(
@@ -150,7 +158,8 @@ async function loadVentas() {
           ].join(''))}
           <div style="display:flex;gap:10px;margin-top:16px">
             <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
-            <button class="btn btn-primary btn-sm" onclick="alert('Crear CFDI — próximamente')">🔏 Timbrar CFDI</button>
+            <button class="btn btn-secondary btn-sm" onclick="window._editarVenta(${v.id})">✏️ Editar</button>
+            <button class="btn btn-primary btn-sm" onclick="window.__closeModal();window._go('cfdi')">🔏 Timbrar CFDI</button>
           </div>`
         }
       )

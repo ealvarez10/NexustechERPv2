@@ -84,10 +84,29 @@ export const api = {
   compras:      (p=1) => req('GET', `/compras?pagina=${p}`),
   comprasKpis:  ()    => req('GET', '/compras/kpis'),
 
+  // Cotizaciones
+  cotizaciones:        (p=1)           => req('GET', `/cotizaciones?pagina=${p}`),
+  cotizacionKpis:      ()              => req('GET', '/cotizaciones/kpis'),
+  cotizacion:          (id)            => req('GET', `/cotizaciones/${id}`),
+  crearCotizacion:     (data)          => req('POST', '/cotizaciones', data),
+  confirmarCotizacion: (id)            => req('PUT', `/cotizaciones/${id}/confirmar`),
+  cancelarCotizacion:  (id)            => req('PUT', `/cotizaciones/${id}/cancelar`),
+  actualizarCotizacion:(id, data)      => req('PUT', `/cotizaciones/${id}`, data),
+  agregarLinea:        (orderId, data) => req('POST', `/cotizaciones/${orderId}/lineas`, data),
+  eliminarLinea:       (orderId, lineaId) => req('DELETE', `/cotizaciones/${orderId}/lineas/${lineaId}`),
+
   // Búsqueda
   searchSync:   ()    => req('POST', '/search/sync', {}),
   searchStatus: ()    => req('GET', '/search/status'),
 
   // Health
   health: ()          => req('GET', '/health'),
+
+  // PUT endpoints para módulos de edición
+  putVenta:    (id, data) => req('PUT', `/ventas/${id}`,    data),
+  putPartner:  (id, data) => req('PUT', `/partners/${id}`,  data),
+  putProducto: (id, data) => req('PUT', `/productos/${id}`, data),
+  putCompra:   (id, data) => req('PUT', `/compras/${id}`,   data),
+  putEmpleado: (id, data) => req('PUT', `/nomina/${id}`,    data),
+  ajusteStock: (productId, data) => req('PUT', `/stock/${productId}/ajuste`, data),
 }

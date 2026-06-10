@@ -2,6 +2,7 @@ import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
 import { fmtMxn, fmtDate, paginationHtml, skeletonTable, toast,
          openDetailModal, detailRow, detailSection, stateBadge } from '../ui.js'
 import { api } from '../api.js'
+import { editarCompra } from './forms/edit_forms.js'
 
 const ESTADO_MAP = {
   purchase: { lbl:'Confirmada', color:'indigo'  },
@@ -138,10 +139,16 @@ async function loadCompras() {
           ].join(''))}
           <div style="display:flex;gap:10px;margin-top:16px">
             <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
+            <button class="btn btn-secondary btn-sm" onclick="window._editarCompraFn(${c.id})">✏️ Editar</button>
             <button class="btn btn-primary btn-sm" onclick="alert('Recibir mercancía — próximamente')">📦 Recibir</button>
           </div>`
         }
       )
+    }
+
+    window._editarCompraFn = (id) => {
+      const c = compras.find(x => x.id === id)
+      if (c) editarCompra(c, () => loadCompras())
     }
 
   } catch (err) {

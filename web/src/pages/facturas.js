@@ -2,6 +2,7 @@ import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
 import { fmtMxn, fmtDate, fmtNum, paginationHtml, skeletonTable, toast,
          stateBadge, openDetailModal, detailRow, detailSection } from '../ui.js'
 import { api } from '../api.js'
+import { verFacturaDetalle } from './forms/edit_forms.js'
 
 const ESTADO_MAP = {
   posted:     { lbl: 'Publicada',  color: 'emerald' },
@@ -166,28 +167,9 @@ async function loadFacturas() {
         'Detalle de Factura',
         () => api.factura(id),
         (f) => {
-          const e = ESTADO_MAP[f.state] || { lbl: f.state, color: 'gray' }
-          const cliente = f.partner_name && isNaN(f.partner_name) ? f.partner_name : `Cliente #${f.partner_id}`
-          return `
-          ${detailSection('Comprobante', [
-            detailRow('Folio', f.name),
-            detailRow('Estado', stateBadge(f.state, e.lbl)),
-            detailRow('Cliente', cliente),
-            detailRow('Fecha emisión', fmtDate(f.invoice_date || f.date)),
-            detailRow('Vencimiento', fmtDate(f.invoice_date_due)),
-            detailRow('Referencia', f.ref || '—'),
-            detailRow('Diario', f.journal_name || '—'),
-          ].join(''))}
-          ${detailSection('Importes', [
-            detailRow('Subtotal', fmtMxn(parseFloat(f.amount_untaxed || 0))),
-            detailRow('IVA', fmtMxn(parseFloat(f.amount_tax || 0))),
-            detailRow('Total', `<strong>${fmtMxn(parseFloat(f.amount_total || 0))}</strong>`, {color:'var(--primary)'}),
-            detailRow('Saldo pendiente', fmtMxn(parseFloat(f.amount_residual || 0)), {color: f.amount_residual > 0 ? 'var(--warning)' : 'var(--success)'}),
-          ].join(''))}
-          <div style="display:flex;gap:10px;margin-top:16px">
-            <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
-            <button class="btn btn-primary btn-sm" onclick="window._go('cfdi')">🔏 Timbrar CFDI</button>
-          </div>`
+          // Abrir el form de detalle con botones de acción
+          setTimeout(() => verFacturaDetalle(f), 0)
+          return '<div style="padding:24px;text-align:center;color:var(--text-400)">Cargando…</div>'
         }
       )
     }

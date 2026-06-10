@@ -2,6 +2,7 @@ import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
 import { fmtMxn, fmtNum, paginationHtml, skeletonTable, toast,
          openDetailModal, detailRow, detailSection } from '../ui.js'
 import { api } from '../api.js'
+import { editarProducto } from './forms/edit_forms.js'
 
 let _page = 1
 let _query = ''
@@ -138,9 +139,14 @@ async function loadProductos() {
         ].join(''))}
         <div style="display:flex;gap:10px;margin-top:16px">
           <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
-          <button class="btn btn-primary btn-sm" onclick="alert('Editar producto — próximamente')">✏️ Editar</button>
+          <button class="btn btn-primary btn-sm" onclick="window._editarProductoFn(${p.id})">✏️ Editar</button>
         </div>`
       )
+    }
+
+    window._editarProductoFn = (id) => {
+      const p = productos.find(x => x.id === id)
+      if (p) editarProducto(p, () => loadProductos())
     }
 
   } catch (err) {

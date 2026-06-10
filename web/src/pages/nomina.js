@@ -2,6 +2,7 @@ import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
 import { fmtMxn, fmtDate, paginationHtml, skeletonTable, toast,
          openDetailModal, detailRow, detailSection } from '../ui.js'
 import { api } from '../api.js'
+import { editarEmpleado } from './forms/edit_forms.js'
 
 let _page = 1
 
@@ -144,9 +145,15 @@ async function loadNomina() {
         ].join(''))}
         <div style="display:flex;gap:10px;margin-top:16px">
           <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
+          <button class="btn btn-secondary btn-sm" onclick="window._editarEmpleadoFn(${e.id})">✏️ Editar</button>
           <button class="btn btn-primary btn-sm" onclick="alert('Recibo de nómina — próximamente')">📄 Ver recibo</button>
         </div>`
       )
+    }
+
+    window._editarEmpleadoFn = (id) => {
+      const emp = empleados.find(e => e.id === id)
+      if (emp) editarEmpleado(emp, () => loadNomina())
     }
 
   } catch (err) {

@@ -3,6 +3,7 @@ import { fmtMxn, fmtNum, paginationHtml, skeletonTable, toast,
          openDetailModal, detailRow, detailSection } from '../ui.js'
 import { api } from '../api.js'
 import { openNuevoContacto } from './forms/venta_form.js'
+import { editarPartner } from './forms/edit_forms.js'
 
 let _page = 1
 let _filtro = '' // 'clientes' | 'proveedores' | ''
@@ -160,10 +161,15 @@ async function loadPartners() {
           ].join(''))}
           <div style="display:flex;gap:10px;margin-top:16px">
             <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
-            <button class="btn btn-primary btn-sm" onclick="alert('Editar contacto — próximamente')">✏️ Editar</button>
+            <button class="btn btn-primary btn-sm" onclick="window._editarPartnerFn(${p.id})">✏️ Editar</button>
           </div>`
         }
       )
+    }
+
+    window._editarPartnerFn = (id) => {
+      const p = partners.find(x => x.id === id)
+      if (p) editarPartner(p, () => loadPartners())
     }
 
   } catch (err) {
