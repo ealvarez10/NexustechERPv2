@@ -8,6 +8,7 @@ members = [
     "crates/nexus-ledger",
     "crates/nexus-pos",
     "crates/nexus-sale",
+    "crates/nexus-search",
     "app",
 ]
 

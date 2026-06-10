@@ -1,0 +1,17 @@
+[package]
+name = "nexus-search"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Integración NexusSearch (Meilisearch) para NexusTech ERP v2"
+
+[dependencies]
+serde        = { workspace = true }
+serde_json   = { workspace = true }
+anyhow       = { workspace = true }
+thiserror    = { workspace = true }
+tracing      = { workspace = true }
+reqwest      = { workspace = true }
+tokio        = { workspace = true }
+meilisearch-sdk = { workspace = true }
+nexus-core   = { path = "../nexus-core" }
