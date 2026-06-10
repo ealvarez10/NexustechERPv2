@@ -370,7 +370,7 @@ window._partnerFilter = (f) => {
   _loadAndRender()
 }
 
-window._partnerNuevo = () => alert('Nuevo contacto — próximamente')
+window._partnerNuevo = () => { import('./forms/create_forms.js').then(m => m.nuevoPartner('cliente', () => renderPartners())) }
 
 window._chkAllPartners = (master) => {
   document.querySelectorAll('#partners-content .o-chk').forEach(c => c.checked = master.checked)

@@ -340,7 +340,7 @@ window._verCompra = async (id) => {
    GLOBAL HANDLERS
    ═══════════════════════════════════════════════ */
 window._comprasBack = () => renderCompras()
-window._compraNueva = () => alert('Nueva orden de compra — próximamente')
+window._compraNueva = () => { import('./forms/create_forms.js').then(m => m.nuevaCompra(() => renderCompras())) }
 
 window._compraSetView = (view) => {
   _currentView = view

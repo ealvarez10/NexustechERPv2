@@ -366,5 +366,5 @@ window._productoFiltroTipo = (tipo) => {
   _loadAndRender()
 }
 
-window._productoNuevo = () => alert('Nuevo producto — próximamente')
+window._productoNuevo = () => { import('./forms/create_forms.js').then(m => m.nuevoProducto(() => _loadAndRender())) }
 window._chkAllProductos = (master) => document.querySelectorAll('#productos-content .o-chk').forEach(c => c.checked = master.checked)

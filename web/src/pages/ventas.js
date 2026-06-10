@@ -52,7 +52,7 @@ function _renderCP() {
   window._vv = (v) => { _view = v; _renderCP(); _load() }
   window._sv = _deb((q) => { _search = q; _page = 1; _load() }, 300)
   window._fv = (s) => { _filter = s; _page = 1; _load(); window._cdd() }
-  window._newVenta = () => toast('Info', 'Usa el backend para crear órdenes', 'info')
+  window._newVenta = () => { import('./forms/create_forms.js').then(m => m.nuevaVenta(() => _load())) }
 }
 
 function _initDD() {

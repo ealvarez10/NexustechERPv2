@@ -1852,3 +1852,125 @@ body {
 
 /* ── nx-module-page ── */
 .nx-module-page { display: flex; flex-direction: column; height: 100%; }
+
+/* ========================================================
+   NEXUSTECH — Modales de Creación (create_forms.js)
+   ======================================================== */
+
+.nx-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 900;
+  animation: fadeIn var(--t2);
+}
+
+#nx-modal-overlay {
+  position: fixed; inset: 0; z-index: 901;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+
+.nx-create-modal {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl, 20px);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.2), 0 4px 16px rgba(79,70,229,0.1);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow: auto;
+  animation: slideUp var(--t3) cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 902;
+  border: 1px solid rgba(79,70,229,0.15);
+}
+
+@keyframes slideUp {
+  from { opacity:0; transform: translateY(24px) scale(0.97); }
+  to   { opacity:1; transform: translateY(0)   scale(1);    }
+}
+
+.nx-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--primary-light, #EEF2FF) 0%, white 100%);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.nx-modal-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 17px; font-weight: 800;
+  color: var(--text-800); margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.nx-modal-close {
+  width: 30px; height: 30px;
+  border: none; background: rgba(0,0,0,0.06);
+  border-radius: 50%; cursor: pointer;
+  font-size: 14px; color: var(--text-500);
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--t1);
+}
+.nx-modal-close:hover { background: var(--danger-light); color: var(--danger); }
+
+.nx-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  max-height: calc(90vh - 160px);
+}
+
+.nx-modal-footer {
+  display: flex; gap: 10px; justify-content: flex-end;
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-table-head, #F8FAFC);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+/* Form fields */
+.nx-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
+}
+
+.nx-field { display: flex; flex-direction: column; gap: 5px; }
+.nx-field-full { grid-column: 1 / -1; }
+
+.nx-label {
+  font-size: 12px; font-weight: 700;
+  color: var(--text-600);
+  letter-spacing: 0.02em;
+}
+
+.nx-req { color: var(--danger); margin-left: 2px; }
+.nx-hint { font-size: 11px; color: var(--text-400); margin-top: 2px; }
+
+.nx-input {
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px; color: var(--text-900);
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-input, #fff);
+  transition: var(--t2);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.nx-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+  background: #fff;
+}
+
+.nx-input:invalid { border-color: var(--danger); }
+.nx-textarea { resize: vertical; min-height: 72px; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

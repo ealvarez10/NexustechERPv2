@@ -53,7 +53,7 @@ function _renderCP() {
   window._fvv = (v) => { _view = v; _renderCP(); _load() }
   window._sf = _deb((q) => { _search = q; _page = 1; _load() }, 300)
   window._ff = (s) => { _filter = s; _page = 1; _load(); window._cdd() }
-  window._newFactura = () => window._go('cfdi')
+  window._newFactura = () => { import('./forms/create_forms.js').then(m => m.nuevaFactura(() => _load())) }
 }
 
 function _initDD() {
