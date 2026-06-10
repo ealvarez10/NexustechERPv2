@@ -110,7 +110,7 @@ impl Pac for SwSapienPac {
             rfc: rfc_emisor,
             uuid,
             motivo,
-            folioSustitucion: uuid_relacionado,
+            folio_sustitucion: uuid_relacionado,
         };
 
         let resp = self.client
