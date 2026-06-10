@@ -25,6 +25,9 @@ use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Local, NaiveDate};
 use crate::error::LedgerError;
 use crate::clabe::validar_clabe;
+use base64::{engine::general_purpose::STANDARD as B64, Engine};
+use ring::signature::{self, RsaKeyPair};
+use ring::rand::SystemRandom;
 
 // ─── Tipos y estructuras ──────────────────────────────────────────────────────
 
@@ -326,6 +329,8 @@ struct PayloadOrdenStp {
 pub struct ClienteStp {
     config: ClienteStpConfig,
     client: reqwest::Client,
+    /// Llave privada PKCS#8 DER para firma digital (opcional en sandbox)
+    llave_privada: Option<Vec<u8>>,
 }
 
 impl ClienteStp {
@@ -335,7 +340,22 @@ impl ClienteStp {
             .timeout(std::time::Duration::from_secs(30))
             .build()
             .expect("Error creando cliente HTTP para STP");
-        Self { config, client }
+
+        // Cargar llave privada desde env var (Base64 PKCS#8 DER)
+        let llave_privada = std::env::var("STP_FIRMA_PRIVADA")
+            .ok()
+            .and_then(|b64| B64.decode(b64).ok());
+
+        Self { config, client, llave_privada }
+    }
+
+    /// Crea el cliente con llave privada explícita (PKCS#8 DER bytes)
+    pub fn con_llave(config: ClienteStpConfig, llave_der: Vec<u8>) -> Self {
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(30))
+            .build()
+            .expect("Error creando cliente HTTP para STP");
+        Self { config, client, llave_privada: Some(llave_der) }
     }
 
     /// Registra una orden de pago en STP
@@ -373,11 +393,33 @@ impl ClienteStp {
 
         let url = format!("{}/ordenPago/registra", self.config.url);
 
-        let response = self.client
-            .post(&url)
-            .json(&payload)
-            .send()
-            .await?;
+        let payload_json = serde_json::to_string(&payload)
+            .map_err(|e| LedgerError::Spei(format!("Error serializando payload: {}", e)))?;
+
+        let mut req = self.client.post(&url).header("Content-Type", "application/json");
+
+        // Firma PKCS#1 SHA-256 requerida en producción
+        if let Some(ref llave_der) = self.llave_privada {
+            match firma_pkcs1_sha256(&payload_json, llave_der) {
+                Ok(firma_b64) => {
+                    // STP requiere la firma en header X-B3-Firma o como campo del JSON
+                    req = req.header("X-NXT-Firma", &firma_b64);
+                    tracing::debug!("STP: firma PKCS1 SHA-256 incluida ({} bytes B64)", firma_b64.len());
+                }
+                Err(e) => {
+                    tracing::error!("STP: no se pudo firmar payload: {}", e);
+                    if !self.config.sandbox {
+                        return Err(LedgerError::Spei(format!("Firma requerida en producción: {}", e)));
+                    }
+                }
+            }
+        } else if !self.config.sandbox {
+            return Err(LedgerError::Spei(
+                "STP producción requiere STP_FIRMA_PRIVADA configurada".into()
+            ));
+        }
+
+        let response = req.body(payload_json).send().await?;
 
         let status = response.status();
         let body: serde_json::Value = response.json().await
@@ -458,6 +500,35 @@ pub fn formatear_monto_spei(monto: Decimal) -> String {
 /// Genera una referencia numérica de 7 dígitos a partir de un ID
 pub fn referencia_desde_id(id: u64) -> u32 {
     (id % 9_999_999) as u32 + 1
+}
+
+/// Firma un mensaje con RSA PKCS#1 v1.5 + SHA-256 usando llave privada PKCS#8 DER.
+///
+/// Requerida por STP en producción para autenticar solicitudes de pago.
+/// La firma se calcula sobre el JSON del payload serializado.
+///
+/// # Variables de entorno requeridas en producción
+/// - `STP_FIRMA_PRIVADA`: Llave privada PKCS#8 DER codificada en Base64
+///
+/// # Retorna
+/// La firma en Base64, lista para incluir en header HTTP `X-NXT-Firma`.
+pub fn firma_pkcs1_sha256(mensaje: &str, llave_pkcs8_der: &[u8]) -> Result<String, LedgerError> {
+    let key_pair = RsaKeyPair::from_der(llave_pkcs8_der)
+        .map_err(|e| LedgerError::Spei(format!("Llave privada inválida para SPEI: {}", e)))?;
+
+    let rng = SystemRandom::new();
+    let mut firma = vec![0u8; key_pair.public().modulus_len()];
+
+    key_pair
+        .sign(
+            &signature::RSA_PKCS1_SHA256,
+            &rng,
+            mensaje.as_bytes(),
+            &mut firma,
+        )
+        .map_err(|e| LedgerError::Spei(format!("Error al firmar SPEI: {}", e)))?;
+
+    Ok(B64.encode(&firma))
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

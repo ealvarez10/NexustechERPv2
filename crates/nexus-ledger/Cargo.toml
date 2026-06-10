@@ -13,6 +13,9 @@ tracing = { workspace = true }
 reqwest = { workspace = true }
 rust_decimal = { workspace = true }
 chrono = { workspace = true }
+# Criptografía PKCS#1 para firma SPEI/STP
+ring   = { version = "0.17" }
+base64 = { version = "0.22" }
 
 [dev-dependencies]
 rust_decimal_macros = "1.3"

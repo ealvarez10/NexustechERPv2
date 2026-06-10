@@ -2,6 +2,7 @@ import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
 import { fmtMxn, fmtNum, paginationHtml, skeletonTable, toast,
          openDetailModal, detailRow, detailSection } from '../ui.js'
 import { api } from '../api.js'
+import { openNuevoContacto } from './forms/venta_form.js'
 
 let _page = 1
 let _filtro = '' // 'clientes' | 'proveedores' | ''
@@ -28,7 +29,7 @@ async function loadPartners() {
         <button class="btn ${_filtro==='clientes'?'btn-primary':'btn-secondary'}" id="btn-cli" onclick="window._filterPart('clientes')">👥 Clientes</button>
         <button class="btn ${_filtro==='proveedores'?'btn-primary':'btn-secondary'}" id="btn-prov" onclick="window._filterPart('proveedores')">🏭 Proveedores</button>
       </div>
-      <button class="btn btn-primary">+ Nuevo Contacto</button>
+      <button class="btn btn-primary" onclick="window._nuevoContacto()">+ Nuevo Contacto</button>
     </div>
   </div>
 
@@ -46,6 +47,7 @@ async function loadPartners() {
 
   // Botón filtro handler
   window._filterPart = (f) => { _filtro = f; _page = 1; loadPartners() }
+  window._nuevoContacto = () => openNuevoContacto(() => loadPartners())
 
   try {
     let fetchFn

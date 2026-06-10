@@ -2,6 +2,7 @@ import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
 import { fmtMxn, fmtDate, paginationHtml, skeletonTable, toast,
          stateBadge, openDetailModal, detailRow, detailSection } from '../ui.js'
 import { api } from '../api.js'
+import { openNuevaVenta } from './forms/venta_form.js'
 
 const ESTADO_MAP = {
   sale:   { lbl:'Confirmada', color:'indigo'  },
@@ -156,9 +157,7 @@ async function loadVentas() {
     }
 
     // Nueva venta
-    window._nuevaVenta = () => {
-      toast('Próximamente', 'Formulario de nueva venta en desarrollo', 'info')
-    }
+    window._nuevaVenta = openNuevaVenta
 
   } catch (err) {
     console.error(err)
