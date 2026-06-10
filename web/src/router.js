@@ -12,9 +12,9 @@ export function start() {
 }
 
 function dispatch() {
-  const hash = window.location.hash.replace('#', '') || 'dashboard'
+  const hash = window.location.hash.replace('#', '') || 'home'
   if (!auth.isLoggedIn() && hash !== 'login') { go('login'); return }
-  if (auth.isLoggedIn() && hash === 'login')  { go('dashboard'); return }
+  if (auth.isLoggedIn() && hash === 'login')  { go('home'); return }
   const fn = routes[hash]
   if (fn) fn()
   else if (routes['404']) routes['404']()

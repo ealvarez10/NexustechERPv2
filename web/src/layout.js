@@ -3,15 +3,17 @@ import { go } from './router.js'
 import { toast } from './ui.js'
 
 const NAV = [
+  { id:'home',      icon:'⊞',  label:'Inicio',          section:'Principal' },
   { id:'dashboard', icon:'📊', label:'Dashboard',      section:'Principal' },
   { id:'ventas',    icon:'💰', label:'Ventas',          section:'Principal' },
+  { id:'cotizaciones', icon:'📝', label:'Cotizaciones', section:'Principal' },
   { id:'facturas',  icon:'🧾', label:'Facturación',     section:'Principal' },
   { id:'productos', icon:'📦', label:'Productos',       section:'Principal' },
   { id:'partners',  icon:'👥', label:'Clientes',        section:'Principal' },
   { id:'stock',     icon:'🏭', label:'Inventario',      section:'Principal' },
   { id:'cfdi',      icon:'🔏', label:'CFDI 4.0',        section:'Fiscal', badge:'NUEVO' },
   { id:'nomina',    icon:'👔', label:'Nómina IMSS',     section:'Fiscal' },
-  { id:'compras',   icon:'🛒', label:'Compras',          section:'Operaciones' },
+  { id:'compras',   icon:'🛒', label:'Compras',         section:'Operaciones' },
   { id:'search',    icon:'🔍', label:'NexusSearch',     section:'Sistema' },
   { id:'reportes',  icon:'📈', label:'Reportes',        section:'Sistema' },
 ]
@@ -26,9 +28,9 @@ export function ensureLayout() {
   <div class="app-shell" id="__shell">
     <!-- SIDEBAR -->
     <nav class="sidebar" id="__sidebar">
-      <div class="sidebar-brand">
+      <div class="sidebar-brand" style="cursor:pointer" onclick="window._go('home')" title="Ir al inicio">
         <div class="brand-logo">N</div>
-        <div>
+        <div class="sidebar-brand-text">
           <div class="brand-name">NexusTech</div>
           <div class="brand-version">ERP v2.0</div>
         </div>
@@ -59,6 +61,10 @@ export function ensureLayout() {
           🚪 Cerrar sesión
         </button>
       </div>
+      <!-- Sidebar collapse toggle -->
+      <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Colapsar panel" onclick="window._toggleSidebar()">
+        ◀
+      </button>
     </nav>
 
     <!-- MAIN -->
@@ -99,6 +105,24 @@ export function ensureLayout() {
     toast('Sesión cerrada', 'Hasta pronto', 'info')
   }
 
+  // Sidebar collapse
+  window._toggleSidebar = () => {
+    const sb = document.getElementById('__sidebar')
+    const btn = document.getElementById('sidebar-toggle')
+    if (!sb) return
+    const collapsed = sb.classList.toggle('collapsed')
+    localStorage.setItem('nx_sidebar_collapsed', collapsed ? '1' : '0')
+    if (btn) btn.textContent = collapsed ? '▶' : '◀'
+  }
+
+  // Restore sidebar state
+  if (localStorage.getItem('nx_sidebar_collapsed') === '1') {
+    const sb = document.getElementById('__sidebar')
+    const btn = document.getElementById('sidebar-toggle')
+    if (sb) sb.classList.add('collapsed')
+    if (btn) btn.textContent = '▶'
+  }
+
   // Update active nav on hash change
   window.addEventListener('hashchange', updateNav)
   updateNav()
@@ -120,7 +144,7 @@ export function setBreadcrumb(items) {
 }
 
 function updateNav() {
-  const hash = window.location.hash.replace('#','') || 'dashboard'
+  const hash = window.location.hash.replace('#','') || 'home'
   document.querySelectorAll('.nav-link').forEach(el => {
     el.classList.toggle('active', el.id === `nl-${hash}`)
   })

@@ -15,7 +15,7 @@ mod state;
 
 use axum::{
     middleware as axum_middleware,
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use sqlx::postgres::PgPoolOptions;
@@ -147,6 +147,14 @@ async fn main() -> anyhow::Result<()> {
         // ── Compras ───────────────────────────────────────────────────────
         .route("/compras",              get(handlers::compras::listar))
         .route("/compras/kpis",         get(handlers::compras::kpis))
+        // ── Cotizaciones / Sale ────────────────────────────────────────────────
+        .route("/cotizaciones",          get(handlers::sale::listar_cotizaciones).post(handlers::sale::crear_cotizacion))
+        .route("/cotizaciones/kpis",     get(handlers::sale::kpis_cotizaciones))
+        .route("/cotizaciones/{id}",     get(handlers::sale::obtener_cotizacion).put(handlers::sale::actualizar_cotizacion))
+        .route("/cotizaciones/{id}/confirmar", put(handlers::sale::confirmar_cotizacion))
+        .route("/cotizaciones/{id}/cancelar",  put(handlers::sale::cancelar_cotizacion))
+        .route("/cotizaciones/{id}/lineas",    post(handlers::sale::agregar_linea))
+        .route("/cotizaciones/{id}/lineas/{linea_id}", delete(handlers::sale::eliminar_linea))
         // ── Motor de búsqueda ──────────────────────────────────────────────
         .route("/search/sync",          post(handlers::search::sync))
         .route("/search/status",        get(handlers::search::status))

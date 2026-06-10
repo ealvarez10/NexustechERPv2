@@ -11,3 +11,4 @@ pub mod products;
 pub mod search;
 pub mod stock;
 pub mod ventas;
+pub mod sale;
