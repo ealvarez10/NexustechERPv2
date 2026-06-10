@@ -10,3 +10,9 @@ serde_json = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+reqwest = { workspace = true }
+rust_decimal = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+rust_decimal_macros = "1.3"
