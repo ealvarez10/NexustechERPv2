@@ -1849,3 +1849,6 @@ body {
 /* ── Links ── */
 .o-link { color: var(--primary); text-decoration: none; }
 .o-link:hover { text-decoration: underline; }
+
+/* ── nx-module-page ── */
+.nx-module-page { display: flex; flex-direction: column; height: 100%; }
