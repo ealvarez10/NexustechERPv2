@@ -1,100 +1,139 @@
 import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
-import { fmt, fmtMxn, paginationHtml } from '../ui.js'
+import { fmtMxn, fmtNum, paginationHtml, skeletonTable, toast } from '../ui.js'
+import { api } from '../api.js'
 
-const MOCK_PARTNERS = Array.from({length:20}, (_,i) => ({
-  id: 1000+i,
-  nombre: ['Constructora Azteca SA','Farmacia San Rafael','Hotel Gran Turismo','Tech Solutions MX','Restaurantes La Villa','Distribuidora Norte','Mueblería Central','Servicios Integral'][i%8],
-  rfc: `RFC${String(i).padStart(6,'0')}MEX`,
-  ciudad: ['Ciudad de México','Monterrey','Guadalajara','Puebla','Querétaro'][i%5],
-  ventas: Math.round(50000+Math.random()*2000000),
-  facturas: Math.round(3+Math.random()*80),
-  saldo: Math.round(Math.random()*500000),
-  tipo: i%3===0?'proveedor':'cliente',
-}))
-
-let page = 1, tipo = ''
-const PER = 10
+let _page = 1
+let _filtro = '' // 'clientes' | 'proveedores' | ''
 
 export async function renderPartners() {
   ensureLayout()
-  setBreadcrumb([{label:'Dashboard',href:'dashboard'},{label:'Clientes / Proveedores'}])
-  page = 1; tipo = ''
-  renderList()
+  setBreadcrumb([{ label: 'Dashboard', href: 'dashboard' }, { label: 'Clientes / Proveedores' }])
+  _page = 1
+  _filtro = ''
+  await loadPartners()
 }
 
-function renderList() {
-  const filtered = tipo ? MOCK_PARTNERS.filter(p=>p.tipo===tipo) : MOCK_PARTNERS
-  const items = filtered.slice((page-1)*PER, page*PER)
-  const hasMore = page*PER < filtered.length
-
+async function loadPartners() {
   setPage(`
   <div class="page-header anim-1">
     <div>
-      <h1 class="page-title">Clientes & Proveedores</h1>
-      <p class="page-subtitle">${MOCK_PARTNERS.length} partners registrados en el sistema</p>
+      <h1 class="page-title">Clientes y Proveedores</h1>
+      <p class="page-subtitle" id="part-sub">Cargando directorio…</p>
     </div>
     <div class="page-actions">
-      <button class="btn btn-secondary">📥 Exportar</button>
-      <button class="btn btn-primary">+ Nuevo Partner</button>
+      <input type="text" id="buscar-part" class="search-input" placeholder="🔍 Buscar por nombre…" style="width:220px">
+      <div style="display:flex;gap:6px">
+        <button class="btn ${_filtro===''?'btn-primary':'btn-secondary'}" id="btn-todos" onclick="window._filterPart('')">Todos</button>
+        <button class="btn ${_filtro==='clientes'?'btn-primary':'btn-secondary'}" id="btn-cli" onclick="window._filterPart('clientes')">👥 Clientes</button>
+        <button class="btn ${_filtro==='proveedores'?'btn-primary':'btn-secondary'}" id="btn-prov" onclick="window._filterPart('proveedores')">🏭 Proveedores</button>
+      </div>
+      <button class="btn btn-primary">+ Nuevo Contacto</button>
     </div>
   </div>
 
-  <div class="kpi-grid anim-2" style="grid-template-columns:repeat(4,1fr)">
-    ${[
-      {label:'Total Partners',  val:fmt(MOCK_PARTNERS.length), icon:'👥', color:'indigo'},
-      {label:'Clientes',        val:fmt(MOCK_PARTNERS.filter(p=>p.tipo==='cliente').length), icon:'🏢', color:'emerald'},
-      {label:'Proveedores',     val:fmt(MOCK_PARTNERS.filter(p=>p.tipo==='proveedor').length), icon:'🚚', color:'amber'},
-      {label:'Saldo Por Cobrar',val:fmtMxn(MOCK_PARTNERS.reduce((s,p)=>s+p.saldo,0)), icon:'💳', color:'violet'},
-    ].map(k => `
-    <div class="kpi-card kpi-${k.color}">
-      <div class="kpi-label"><span>${k.label}</span><div class="kpi-icon-box">${k.icon}</div></div>
-      <div class="kpi-value">${k.val}</div>
-    </div>`).join('')}
+  <!-- Stats row -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px" id="stats-row" class="anim-2">
+    ${[1,2,3].map(() => `<div class="data-card" style="padding:16px"><div class="skeleton" style="height:40px"></div></div>`).join('')}
   </div>
 
   <div class="data-card anim-3">
     <div class="data-card-header">
-      <div>
-        <div class="data-card-title">Directorio de Partners</div>
-      </div>
-      <div class="filter-group">
-        <div class="input-search">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input type="text" placeholder="Nombre o RFC...">
-        </div>
-        <div style="display:flex;gap:4px">
-          <button class="btn ${tipo===''?'btn-primary':'btn-secondary'} btn-sm" onclick="window.__setTipo('')">Todos</button>
-          <button class="btn ${tipo==='cliente'?'btn-primary':'btn-secondary'} btn-sm" onclick="window.__setTipo('cliente')">Clientes</button>
-          <button class="btn ${tipo==='proveedor'?'btn-primary':'btn-secondary'} btn-sm" onclick="window.__setTipo('proveedor')">Proveedores</button>
-        </div>
-      </div>
+      <div class="data-card-title">${_filtro === 'clientes' ? '👥 Clientes' : _filtro === 'proveedores' ? '🏭 Proveedores' : '📋 Directorio'}</div>
     </div>
-    <table class="data-table">
-      <thead><tr>
-        <th>#</th><th>Nombre/Razón Social</th><th>RFC</th><th>Ciudad</th><th>Facturas</th><th>Ventas Totales</th><th>Saldo</th><th>Tipo</th><th></th>
-      </tr></thead>
-      <tbody>
-        ${items.map(p => `
-        <tr>
-          <td class="td-mono">${p.id}</td>
-          <td class="td-primary">${p.nombre}</td>
-          <td class="td-mono">${p.rfc}</td>
-          <td>${p.ciudad}</td>
-          <td style="text-align:center">${p.facturas}</td>
-          <td class="td-amount">${fmtMxn(p.ventas)}</td>
-          <td class="${p.saldo>0?'td-amount':''}" style="${p.saldo>0?'color:var(--warning)':'color:var(--text-400)'}">${p.saldo>0?fmtMxn(p.saldo):'—'}</td>
-          <td><span class="badge badge-${p.tipo==='cliente'?'indigo':'amber'}">${p.tipo==='cliente'?'Cliente':'Proveedor'}</span></td>
-          <td>
-            <div style="display:flex;gap:4px">
-              <button class="btn btn-secondary btn-sm">👁 Ver</button>
-              <button class="btn btn-secondary btn-sm">✏️</button>
-            </div>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-    ${paginationHtml(page, hasMore, (p) => { page=p; renderList() })}
+    <div id="part-tabla">${skeletonTable(10, 5)}</div>
   </div>`)
 
-  window.__setTipo = (t) => { tipo=t; page=1; renderList() }
+  // Botón filtro handler
+  window._filterPart = (f) => { _filtro = f; _page = 1; loadPartners() }
+
+  try {
+    let fetchFn
+    if (_filtro === 'clientes')    fetchFn = api.clientes(_page)
+    else if (_filtro === 'proveedores') fetchFn = api.proveedores(_page)
+    else fetchFn = api.partners(_page)
+
+    const [partRes, allRes] = await Promise.allSettled([
+      fetchFn,
+      api.partners(1),
+    ])
+
+    const partners = partRes.status === 'fulfilled' ? (partRes.value?.data || []) : []
+    const allPartners = allRes.status === 'fulfilled' ? (allRes.value?.data || []) : partners
+    const hasMore = partners.length >= 20
+
+    // Stats
+    const statsRow = document.getElementById('stats-row')
+    if (statsRow) {
+      const clientes = allPartners.filter(p => (p.customer_rank || 0) > 0).length
+      const proveedores = allPartners.filter(p => (p.supplier_rank || 0) > 0).length
+      statsRow.innerHTML = [
+        { label: 'Total Contactos',  val: allPartners.length,  color: 'indigo',  icon: '📋' },
+        { label: 'Clientes',         val: clientes,            color: 'emerald', icon: '👥' },
+        { label: 'Proveedores',      val: proveedores,         color: 'violet',  icon: '🏭' },
+      ].map(s => `
+      <div class="data-card" style="padding:16px">
+        <div style="font-size:11px;color:var(--text-400);font-weight:600;margin-bottom:4px">${s.icon} ${s.label}</div>
+        <div style="font-size:26px;font-weight:800;color:var(--text-900)">${fmtNum(s.val)}</div>
+      </div>`).join('')
+    }
+
+    const sub = document.getElementById('part-sub')
+    if (sub) sub.textContent = `${partners.length} contactos · Página ${_page}`
+
+    const tablaEl = document.getElementById('part-tabla')
+    if (tablaEl) {
+      if (partners.length === 0) {
+        tablaEl.innerHTML = '<p style="text-align:center;padding:32px;color:var(--text-400)">Sin contactos registrados</p>'
+      } else {
+        tablaEl.innerHTML = `
+        <table class="data-table">
+          <thead><tr>
+            <th>Nombre</th><th>Tipo</th><th>Email</th><th>Teléfono</th><th>Tags</th>
+          </tr></thead>
+          <tbody>
+            ${partners.map(p => {
+              const esCliente   = (p.customer_rank || 0) > 0
+              const esProveedor = (p.supplier_rank || 0) > 0
+              const esEmpresa   = p.is_company
+              return `
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,hsl(${(p.id * 37) % 360},60%,55%),hsl(${(p.id * 71) % 360},70%,45%));display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">
+                      ${(p.name || p.nombre || '?')[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div class="td-primary">${p.name || p.nombre || '—'}</div>
+                      ${esEmpresa ? '<div style="font-size:11px;color:var(--text-400)">Empresa</div>' : ''}
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  ${esCliente   ? '<span class="badge badge-emerald">Cliente</span>' : ''}
+                  ${esProveedor ? '<span class="badge badge-violet" style="margin-left:2px">Proveedor</span>' : ''}
+                  ${!esCliente && !esProveedor ? '<span class="badge badge-gray">Contacto</span>' : ''}
+                </td>
+                <td style="color:var(--text-500);font-size:12.5px">${p.email || '—'}</td>
+                <td style="color:var(--text-500);font-size:12.5px">${p.phone || '—'}</td>
+                <td>${esEmpresa ? '<span class="badge badge-sky">Empresa</span>' : '<span class="badge badge-gray">Persona</span>'}</td>
+              </tr>`
+            }).join('')}
+          </tbody>
+        </table>
+        ${paginationHtml(_page, hasMore, (p) => { _page = p; loadPartners() })}`
+      }
+    }
+
+    // Búsqueda cliente-side
+    document.getElementById('buscar-part')?.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase()
+      document.querySelectorAll('#part-tabla tbody tr').forEach(r => {
+        r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none'
+      })
+    })
+
+  } catch (err) {
+    console.error(err)
+    toast('Error al cargar contactos', err.message, 'error')
+  }
 }

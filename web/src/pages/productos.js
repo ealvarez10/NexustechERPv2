@@ -1,125 +1,109 @@
 import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
-import { fmtMxn, fmt, paginationHtml } from '../ui.js'
+import { fmtMxn, fmtNum, paginationHtml, skeletonTable, toast } from '../ui.js'
+import { api } from '../api.js'
 
-const CATS = ['Electrónica','Cómputo','Accesorios','Mobiliario','Consumibles','Redes','Telefonía']
-const BASES = ['Monitor 27" 4K','Laptop Core i7','Teclado Mecánico RGB','Silla Ergonómica Pro','Papel A4 Resma 500h','Switch 24 Puertos PoE','Smartphone 5G']
-const PREFIJOS = ['EL','PC','AC','MB','CO','RE','TL']
-
-const MOCK = Array.from({length:35}, (_,i) => {
-  const idx = i%7
-  const stock = Math.round(Math.random()*180)
-  const min = Math.round(5+Math.random()*25)
-  return {
-    sku: `${PREFIJOS[idx]}-${String(1000+i).padStart(4,'0')}`,
-    nombre: `${BASES[idx]} ${i > 6 ? `(Ref ${i+1})` : ''}`.trim(),
-    categoria: CATS[idx],
-    precio: Math.round(400+Math.random()*18000),
-    stock,
-    minimo: min,
-    activo: i%8 !== 0,
-    proveedor: ['Dist. Nacional SA','Importadora MX','Tech Supply SA'][i%3],
-  }
-})
-
-let page = 1
-const PER = 12
-let query = ''
+let _page = 1
+let _query = ''
 
 export async function renderProductos() {
   ensureLayout()
-  setBreadcrumb([{label:'Dashboard',href:'dashboard'},{label:'Productos'}])
-  page = 1
-  renderList()
+  setBreadcrumb([{ label: 'Dashboard', href: 'dashboard' }, { label: 'Productos' }])
+  _page = 1
+  _query = ''
+  await loadProductos()
 }
 
-function renderList() {
-  const filtered = query
-    ? MOCK.filter(p => p.nombre.toLowerCase().includes(query.toLowerCase()) || p.sku.toLowerCase().includes(query.toLowerCase()))
-    : MOCK
-  const items = filtered.slice((page-1)*PER, page*PER)
-  const hasMore = page*PER < filtered.length
-  const activos = MOCK.filter(p=>p.activo).length
-  const bajosMin = MOCK.filter(p=>p.stock<=p.minimo).length
-
+async function loadProductos() {
   setPage(`
   <div class="page-header anim-1">
     <div>
       <h1 class="page-title">Productos</h1>
-      <p class="page-subtitle">${MOCK.length} productos en catálogo · ${activos} activos</p>
+      <p class="page-subtitle" id="prod-sub">Cargando catálogo…</p>
     </div>
     <div class="page-actions">
-      <button class="btn btn-secondary">📥 Importar CSV</button>
+      <input type="text" id="buscar-prod" class="search-input" placeholder="🔍 Buscar producto o código…" style="width:240px" value="${_query}">
       <button class="btn btn-primary">+ Nuevo Producto</button>
     </div>
   </div>
 
-  <div class="kpi-grid anim-2" style="grid-template-columns:repeat(4,1fr)">
-    ${[
-      {label:'Total Productos', val:fmt(MOCK.length), icon:'📦', color:'indigo'},
-      {label:'Activos',         val:fmt(activos),     icon:'✅', color:'emerald'},
-      {label:'Bajo Mínimo',     val:fmt(bajosMin),    icon:'⚠️', color:'amber'},
-      {label:'Categorías',      val:fmt(CATS.length), icon:'🏷️', color:'violet'},
-    ].map(k => `
-    <div class="kpi-card kpi-${k.color}">
-      <div class="kpi-label"><span>${k.label}</span><div class="kpi-icon-box">${k.icon}</div></div>
-      <div class="kpi-value">${k.val}</div>
-    </div>`).join('')}
-  </div>
-
-  <div class="data-card anim-3">
+  <div class="data-card anim-2">
     <div class="data-card-header">
-      <div>
-        <div class="data-card-title">Catálogo de Productos</div>
-        <div class="data-card-subtitle">Mostrando ${(page-1)*PER+1}–${Math.min(page*PER,filtered.length)} de ${filtered.length}</div>
-      </div>
-      <div class="filter-group">
-        <div class="input-search">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input type="text" id="prod-search" placeholder="SKU o nombre..." value="${query}">
-        </div>
-        <select class="form-control" style="width:auto;padding:6px 10px;font-size:13px" id="cat-filter">
-          <option value="">Todas las categorías</option>
-          ${CATS.map(c=>`<option>${c}</option>`).join('')}
-        </select>
-      </div>
+      <div class="data-card-title">Catálogo de Productos</div>
+      <select id="filtro-tipo" class="search-input" style="width:150px;font-size:12px">
+        <option value="">Todos</option>
+        <option value="consu">Consumibles</option>
+        <option value="service">Servicios</option>
+        <option value="product">Almacenables</option>
+      </select>
     </div>
-    <table class="data-table">
-      <thead><tr>
-        <th>SKU</th><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Mínimo</th><th>Proveedor</th><th>Estado</th><th></th>
-      </tr></thead>
-      <tbody>
-        ${items.map(p => `
-        <tr>
-          <td class="td-mono">${p.sku}</td>
-          <td class="td-primary">${p.nombre}</td>
-          <td><span class="badge badge-indigo">${p.categoria}</span></td>
-          <td class="td-amount">${fmtMxn(p.precio)}</td>
-          <td>
-            <span class="badge badge-${p.stock<=p.minimo?'red':p.stock<=p.minimo*2?'amber':'emerald'}">
-              ${fmt(p.stock)}
-            </span>
-          </td>
-          <td style="color:var(--text-400)">${fmt(p.minimo)}</td>
-          <td style="font-size:12px;color:var(--text-500)">${p.proveedor}</td>
-          <td><span class="badge badge-${p.activo?'emerald':'gray'}">${p.activo?'Activo':'Inactivo'}</span></td>
-          <td>
-            <div style="display:flex;gap:4px">
-              <button class="btn btn-secondary btn-sm">✏️ Editar</button>
-            </div>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-    ${paginationHtml(page, hasMore, (p) => { page=p; renderList() })}
+    <div id="prod-tabla">${skeletonTable(10, 6)}</div>
   </div>`)
 
-  // Search handler
-  const searchEl = document.getElementById('prod-search')
-  if (searchEl) {
-    searchEl.addEventListener('input', e => {
-      query = e.target.value
-      page = 1
-      renderList()
+  try {
+    const res = await api.productos(_page, _query)
+    const productos = res?.data || []
+    const hasMore = productos.length >= 20
+
+    const sub = document.getElementById('prod-sub')
+    if (sub) sub.textContent = `${productos.length} productos${_query ? ` para "${_query}"` : ''} · Página ${_page}`
+
+    const tablaEl = document.getElementById('prod-tabla')
+    if (tablaEl) {
+      if (productos.length === 0) {
+        tablaEl.innerHTML = `<p style="text-align:center;padding:40px;color:var(--text-400)">
+          ${_query ? `Sin resultados para "${_query}"` : 'Sin productos en catálogo'}
+        </p>`
+      } else {
+        tablaEl.innerHTML = `
+        <table class="data-table">
+          <thead><tr>
+            <th>Código</th><th>Nombre</th><th>Tipo</th>
+            <th>Precio Venta</th><th>Categoría</th><th>Estado</th>
+          </tr></thead>
+          <tbody>
+            ${productos.map(p => {
+              const nombre = p.name || p.nombre || `Producto #${p.id}`
+              const tipo = p.type === 'consu' ? 'Consumible' : p.type === 'service' ? 'Servicio' : 'Almacenable'
+              const tipoColor = p.type === 'service' ? 'violet' : p.type === 'consu' ? 'sky' : 'indigo'
+              const precio = fmtMxn(parseFloat(p.list_price || p.precio || 0))
+              const activo = p.active !== false
+              return `
+              <tr data-tipo="${p.type || ''}">
+                <td class="td-mono">${p.default_code || '—'}</td>
+                <td class="td-primary">${nombre}</td>
+                <td><span class="badge badge-${tipoColor}">${tipo}</span></td>
+                <td class="td-amount" style="font-weight:700">${precio}</td>
+                <td style="color:var(--text-400);font-size:12px">${p.categ_name || p.categoria || '—'}</td>
+                <td><span class="badge badge-${activo ? 'emerald' : 'gray'}">${activo ? 'Activo' : 'Inactivo'}</span></td>
+              </tr>`
+            }).join('')}
+          </tbody>
+        </table>
+        ${paginationHtml(_page, hasMore, (p) => { _page = p; loadProductos() })}`
+      }
+    }
+
+    // Búsqueda con debounce
+    let timer
+    document.getElementById('buscar-prod')?.addEventListener('input', (e) => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        _query = e.target.value.trim()
+        _page = 1
+        loadProductos()
+      }, 400)
     })
+
+    // Filtro local por tipo
+    document.getElementById('filtro-tipo')?.addEventListener('change', (e) => {
+      const val = e.target.value
+      document.querySelectorAll('#prod-tabla tbody tr').forEach(r => {
+        r.style.display = !val || r.dataset.tipo === val ? '' : 'none'
+      })
+    })
+
+  } catch (err) {
+    console.error(err)
+    toast('Error al cargar productos', err.message, 'error')
   }
 }

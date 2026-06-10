@@ -1,125 +1,164 @@
 import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
-import { fmtMxn, fmtDate, paginationHtml } from '../ui.js'
+import { fmtMxn, fmtDate, fmtNum, paginationHtml, skeletonTable, toast, stateBadge } from '../ui.js'
+import { api } from '../api.js'
 
-const ESTADOS = [
-  {key:'posted',     lbl:'Publicada',  color:'emerald'},
-  {key:'draft',      lbl:'Borrador',   color:'gray'},
-  {key:'in_payment', lbl:'En cobro',   color:'violet'},
-  {key:'paid',       lbl:'Pagada',     color:'emerald'},
-  {key:'cancel',     lbl:'Cancelada',  color:'red'},
-]
+const ESTADO_MAP = {
+  posted:     { lbl: 'Publicada',  color: 'emerald' },
+  draft:      { lbl: 'Borrador',   color: 'gray'    },
+  in_payment: { lbl: 'En cobro',   color: 'violet'  },
+  paid:       { lbl: 'Pagada',     color: 'sky'     },
+  cancel:     { lbl: 'Cancelada',  color: 'red'     },
+}
 
-const CLIENTES = [
-  {nombre:'Constructora Azteca SA de CV', rfc:'CAAZ850101AAA'},
-  {nombre:'Farmacia San Rafael SA',       rfc:'FASA920605BBB'},
-  {nombre:'Hotel Gran Turismo',           rfc:'HOTG780312CCC'},
-  {nombre:'Tech Solutions México',        rfc:'TSMX930415DDD'},
-]
-
-const MOCK = Array.from({length:30}, (_,i) => {
-  const e = ESTADOS[i%5]
-  const c = CLIENTES[i%4]
-  const sub = Math.round(5000+Math.random()*250000)
-  const iva = Math.round(sub*0.16)
-  return {
-    folio: `NXTE-${String(1000+i).padStart(4,'0')}`,
-    uuid: `${Math.random().toString(36).slice(2,8).toUpperCase()}-${Math.random().toString(36).slice(2,6).toUpperCase()}-CFDI`,
-    cliente: c.nombre,
-    rfc: c.rfc,
-    fecha: new Date(Date.now()-i*86400000*1.1).toISOString().split('T')[0],
-    subtotal: sub,
-    iva: iva,
-    total: sub+iva,
-    estado: e.key,
-    estado_label: e.lbl,
-    estado_color: e.color,
-  }
-})
-
-let page = 1
-const PER = 10
+let _page = 1
 
 export async function renderFacturas() {
   ensureLayout()
-  setBreadcrumb([{label:'Dashboard',href:'dashboard'},{label:'Facturación'}])
-  page = 1
-  renderList()
+  setBreadcrumb([{ label: 'Dashboard', href: 'dashboard' }, { label: 'Facturación' }])
+  _page = 1
+  await loadFacturas()
 }
 
-function renderList() {
-  const items = MOCK.slice((page-1)*PER, page*PER)
-  const hasMore = page*PER < MOCK.length
-  const totalCobrar = MOCK.filter(f => f.estado==='posted'||f.estado==='in_payment').reduce((s,f)=>s+f.total,0)
-  const totalCobrado = MOCK.filter(f => f.estado==='paid').reduce((s,f)=>s+f.total,0)
-
+async function loadFacturas() {
   setPage(`
   <div class="page-header anim-1">
     <div>
       <h1 class="page-title">Facturación</h1>
-      <p class="page-subtitle">CFDI 4.0 · ${MOCK.length} facturas en el sistema</p>
+      <p class="page-subtitle" id="fact-sub">Cargando…</p>
     </div>
     <div class="page-actions">
-      <button class="btn btn-secondary">📥 Exportar XML</button>
-      <button class="btn btn-primary">🧾 Nueva Factura</button>
+      <input type="text" id="buscar-fact" class="search-input" placeholder="🔍 Buscar folio o cliente…" style="width:230px">
+      <button class="btn btn-primary" onclick="window._go('cfdi')">🧾 Nueva Factura CFDI</button>
     </div>
   </div>
 
-  <div class="kpi-grid anim-2" style="grid-template-columns:repeat(4,1fr)">
-    ${[
-      {label:'Emitidas (mes)', val:'127',              icon:'📄', color:'indigo'},
-      {label:'Por cobrar',     val:fmtMxn(totalCobrar), icon:'⏳', color:'amber'},
-      {label:'Cobradas',       val:fmtMxn(totalCobrado),icon:'✅', color:'emerald'},
-      {label:'Canceladas',     val:'3',                icon:'❌', color:'sky'},
-    ].map(k => `
-    <div class="kpi-card kpi-${k.color}">
-      <div class="kpi-label"><span>${k.label}</span><div class="kpi-icon-box">${k.icon}</div></div>
-      <div class="kpi-value">${k.val}</div>
-    </div>`).join('')}
+  <!-- KPIs -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px" id="kpi-row" class="anim-2">
+    ${[1,2,3,4].map(() => `<div class="data-card" style="padding:16px"><div class="skeleton" style="height:40px"></div></div>`).join('')}
   </div>
 
-  <div class="data-card anim-3">
-    <div class="data-card-header">
-      <div>
-        <div class="data-card-title">Facturas CFDI 4.0</div>
-        <div class="data-card-subtitle">Mostrando ${(page-1)*PER+1}–${Math.min(page*PER,MOCK.length)} de ${MOCK.length}</div>
-      </div>
-      <div class="filter-group">
-        <div class="input-search">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input type="text" placeholder="RFC, folio o cliente...">
-        </div>
-        <select class="form-control" style="width:auto;padding:6px 10px;font-size:13px">
-          <option>Todos los estados</option>
-          ${ESTADOS.map(e=>`<option>${e.lbl}</option>`).join('')}
+  <!-- Por cobrar widget -->
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px" class="anim-3">
+    <div class="data-card">
+      <div class="data-card-header">
+        <div class="data-card-title">Facturas</div>
+        <select id="filtro-estado" class="search-input" style="width:150px;font-size:12px">
+          <option value="">Todos los estados</option>
+          <option value="posted">Publicadas</option>
+          <option value="draft">Borradores</option>
+          <option value="cancel">Canceladas</option>
         </select>
       </div>
+      <div id="fact-tabla">${skeletonTable(8, 5)}</div>
     </div>
-    <table class="data-table">
-      <thead><tr>
-        <th>Folio</th><th>UUID CFDI</th><th>Cliente</th><th>RFC</th><th>Fecha</th>
-        <th>Subtotal</th><th>IVA</th><th>Total</th><th>Estado</th><th></th>
-      </tr></thead>
-      <tbody>
-        ${items.map(f => `
-        <tr>
-          <td class="td-mono td-primary">${f.folio}</td>
-          <td class="td-mono" style="font-size:10.5px;color:var(--text-400);max-width:100px;overflow:hidden;text-overflow:ellipsis">${f.uuid}</td>
-          <td class="td-primary" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.cliente}</td>
-          <td class="td-mono">${f.rfc}</td>
-          <td>${fmtDate(f.fecha)}</td>
-          <td>${fmtMxn(f.subtotal)}</td>
-          <td>${fmtMxn(f.iva)}</td>
-          <td class="td-amount">${fmtMxn(f.total)}</td>
-          <td><span class="badge badge-${f.estado_color} badge-dot">${f.estado_label}</span></td>
-          <td>
-            <div style="display:flex;gap:4px">
-              <button class="btn btn-secondary btn-sm">📄 PDF</button>
-              <button class="btn btn-secondary btn-sm">📦 XML</button>
-            </div>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-    ${paginationHtml(page, hasMore, (p) => { page=p; renderList() })}
+
+    <!-- Panel por cobrar -->
+    <div class="data-card" style="padding:16px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-400);margin-bottom:12px">📋 Por Cobrar</div>
+      <div id="por-cobrar-lista">${[1,2,3,4].map(() => `<div class="skeleton" style="height:38px;margin-bottom:8px;border-radius:8px"></div>`).join('')}</div>
+    </div>
   </div>`)
+
+  try {
+    const [kpisRes, listRes, cobrarRes] = await Promise.allSettled([
+      api.factKpis(),
+      api.facturas(_page),
+      api.porCobrar(),
+    ])
+
+    // ─── KPIs ────────────────────────────────────────────────────────────────
+    const kpis = kpisRes.status === 'fulfilled' ? kpisRes.value?.data : null
+    const kpiRow = document.getElementById('kpi-row')
+    if (kpiRow) {
+      kpiRow.innerHTML = [
+        { label: 'Total Facturas',      val: kpis?.total_facturas  || 0, tipo: 'num', color: 'indigo',  icon: '🧾' },
+        { label: 'Monto Facturado',     val: kpis?.monto_total     || 0, tipo: 'mxn', color: 'emerald', icon: '💰' },
+        { label: 'Por Cobrar',          val: kpis?.por_cobrar      || 0, tipo: 'mxn', color: 'amber',   icon: '📋' },
+        { label: 'Facturas Vencidas',   val: kpis?.facturas_vencidas || 0, tipo: 'num', color: 'red',   icon: '⚠️' },
+      ].map(k => `
+      <div class="data-card" style="padding:16px">
+        <div style="font-size:11px;color:var(--text-400);font-weight:600;margin-bottom:4px">${k.icon} ${k.label}</div>
+        <div style="font-size:22px;font-weight:800;color:var(--text-900)">
+          ${k.tipo === 'mxn' ? fmtMxn(parseFloat(k.val)) : fmtNum(parseInt(k.val))}
+        </div>
+      </div>`).join('')
+    }
+
+    // ─── Tabla ───────────────────────────────────────────────────────────────
+    const facturas = listRes.status === 'fulfilled' ? (listRes.value?.data || []) : []
+    const hasMore = facturas.length >= 20
+
+    const sub = document.getElementById('fact-sub')
+    if (sub) sub.textContent = `${facturas.length} registros · Página ${_page}`
+
+    const tablaEl = document.getElementById('fact-tabla')
+    if (tablaEl) {
+      if (facturas.length === 0) {
+        tablaEl.innerHTML = '<p style="text-align:center;padding:32px;color:var(--text-400)">Sin facturas registradas</p>'
+      } else {
+        tablaEl.innerHTML = `
+        <table class="data-table">
+          <thead><tr>
+            <th>Folio</th><th>Cliente</th><th>Fecha</th>
+            <th>Subtotal</th><th>Total</th><th>Estado</th>
+          </tr></thead>
+          <tbody>
+            ${facturas.map(f => {
+              const e = ESTADO_MAP[f.state] || { lbl: f.state || '—', color: 'gray' }
+              const fecha = f.invoice_date || f.date ? fmtDate(f.invoice_date || f.date) : '—'
+              return `
+              <tr data-estado="${f.state || ''}">
+                <td class="td-mono">${f.name || `#${f.id}`}</td>
+                <td class="td-primary">${f.partner_name || f.partner_id || '—'}</td>
+                <td>${fecha}</td>
+                <td class="td-amount">${fmtMxn(parseFloat(f.amount_untaxed || 0))}</td>
+                <td class="td-amount" style="font-weight:700">${fmtMxn(parseFloat(f.amount_total || 0))}</td>
+                <td>${stateBadge(f.state, e.lbl)}</td>
+              </tr>`
+            }).join('')}
+          </tbody>
+        </table>
+        ${paginationHtml(_page, hasMore, (p) => { _page = p; loadFacturas() })}`
+      }
+    }
+
+    // ─── Por cobrar ───────────────────────────────────────────────────────────
+    const cobrar = cobrarRes.status === 'fulfilled' ? (cobrarRes.value?.data || []) : []
+    const cobrarEl = document.getElementById('por-cobrar-lista')
+    if (cobrarEl) {
+      if (cobrar.length === 0) {
+        cobrarEl.innerHTML = '<p style="color:var(--emerald);font-size:13px;text-align:center;padding:20px">✅ Sin saldo pendiente</p>'
+      } else {
+        cobrarEl.innerHTML = cobrar.slice(0, 8).map(f => {
+          const vencida = f.invoice_date_due && new Date(f.invoice_date_due) < new Date()
+          return `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--text-700)">${(f.partner_name || f.name || '—').substring(0,22)}</div>
+              <div style="font-size:11px;color:${vencida ? 'var(--red)' : 'var(--text-400)'}">${vencida ? '🔴 Vencida' : '🟡 Pendiente'}</div>
+            </div>
+            <span class="badge badge-${vencida ? 'red' : 'amber'}">${fmtMxn(parseFloat(f.amount_residual || f.amount_total || 0))}</span>
+          </div>`
+        }).join('')
+      }
+    }
+
+    // Filtros cliente-side
+    document.getElementById('buscar-fact')?.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase()
+      document.querySelectorAll('#fact-tabla tbody tr').forEach(r => {
+        r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none'
+      })
+    })
+    document.getElementById('filtro-estado')?.addEventListener('change', (e) => {
+      const val = e.target.value
+      document.querySelectorAll('#fact-tabla tbody tr').forEach(r => {
+        r.style.display = !val || r.dataset.estado === val ? '' : 'none'
+      })
+    })
+
+  } catch (err) {
+    console.error(err)
+    toast('Error al cargar facturas', err.message, 'error')
+  }
 }

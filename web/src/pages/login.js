@@ -64,8 +64,8 @@ export function renderLogin() {
         <p class="login-sub">Accede a tu cuenta empresarial</p>
 
         <div class="form-group">
-          <label class="form-label" for="lu">Correo electrónico</label>
-          <input class="form-control" id="lu" type="email" placeholder="admin@empresa.mx" autocomplete="username">
+          <label class="form-label" for="lu">Usuario o correo electrónico</label>
+          <input class="form-control" id="lu" type="text" placeholder="admin  o  usuario@empresa.mx" autocomplete="username">
         </div>
         <div class="form-group">
           <label class="form-label" for="lp">Contraseña</label>
@@ -81,7 +81,7 @@ export function renderLogin() {
         </div>
 
         <div style="margin-top:16px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:10px 14px;font-size:12px;color:#166534">
-          <strong>Demo:</strong> Usa cualquier email y contraseña para acceder
+          <strong>Demo:</strong> usuario <code style="background:#DCFCE7;padding:1px 5px;border-radius:4px">admin</code> / contraseña <code style="background:#DCFCE7;padding:1px 5px;border-radius:4px">admin</code>
         </div>
       </div>
     </div>
@@ -94,37 +94,49 @@ export function renderLogin() {
 
   async function doLogin() {
     if (btn.disabled) return
+    const login = user.value.trim()
+    const password = pass.value
+
+    if (!login || !password) {
+      err.textContent = 'Ingresa usuario y contraseña'
+      err.classList.add('show')
+      return
+    }
+
     btn.disabled = true
     btn.textContent = 'Verificando...'
     err.classList.remove('show')
 
     try {
-      // Try real API first
-      const res = await api.login(user.value.trim(), pass.value)
-      if (res?.token || res?.access_token) {
-        auth.setSession(res.token || res.access_token, res.usuario || res.user || { nombre: user.value })
+      const res = await api.login(login, password)
+      // La API retorna { success: true, data: { access_token, refresh_token, user_id, email, ... } }
+      const data = res?.data || res
+      const token = data?.access_token || data?.token
+
+      if (token) {
+        auth.setSession(token, {
+          nombre: data.email || login,
+          email: data.email || login,
+          user_id: data.user_id,
+          company_id: data.company_id,
+        })
         document.getElementById('app').innerHTML = ''
         go('dashboard')
         return
       }
-    } catch {
-      // fallback: demo login
+
+      // Token no llegó en respuesta
+      err.textContent = 'Error inesperado del servidor. Intenta de nuevo.'
+      err.classList.add('show')
+    } catch (e) {
+      err.textContent = e?.status === 401
+        ? 'Credenciales incorrectas. Verifica tu usuario y contraseña.'
+        : `Error de conexión: ${e?.message || 'No se pudo contactar el servidor'}`
+      err.classList.add('show')
     }
 
-    // Demo mode: accept any credentials
-    if (user.value.trim()) {
-      const nombre = user.value.split('@')[0].replace('.', ' ')
-      auth.setSession('demo-token-' + Date.now(), {
-        nombre: nombre.charAt(0).toUpperCase() + nombre.slice(1),
-        email: user.value.trim()
-      })
-      document.getElementById('app').innerHTML = ''
-      go('dashboard')
-    } else {
-      err.classList.add('show')
-      btn.disabled = false
-      btn.textContent = 'Acceder al sistema'
-    }
+    btn.disabled = false
+    btn.textContent = 'Acceder al sistema'
   }
 
   btn.addEventListener('click', doLogin)

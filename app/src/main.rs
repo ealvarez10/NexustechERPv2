@@ -151,7 +151,11 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/health", get(handlers::health::health))
-        .nest("/api/v1", api_v1)
+        .nest("/api/v1", api_v1.merge(
+            Router::new()
+                .route("/health", get(handlers::health::health))
+                .with_state(state.clone())
+        ))
         .layer(
             tower_http::cors::CorsLayer::new()
                 .allow_origin(Any)

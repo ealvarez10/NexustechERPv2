@@ -25,10 +25,10 @@ pub async fn listar(
             id, name, email, phone, vat,
             is_company, customer_rank, supplier_rank, active, city, country_id
         FROM res_partner
-        WHERE company_id = $1
+        WHERE (company_id = $1 OR company_id IS NULL)
           AND active = true
           AND (parent_id IS NULL OR is_company = true)
-        ORDER BY name ASC
+        ORDER BY customer_rank DESC, supplier_rank DESC, name ASC
         LIMIT $2 OFFSET $3
         "#,
     )
@@ -44,7 +44,7 @@ pub async fn listar(
 /// Total de contactos activos para paginación
 pub async fn contar(pool: &PgPool, company_id: i32) -> Result<i64, CoreError> {
     let row: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM res_partner WHERE company_id = $1 AND active = true",
+        "SELECT COUNT(*) FROM res_partner WHERE (company_id = $1 OR company_id IS NULL) AND active = true",
     )
     .bind(company_id)
     .fetch_one(pool)
@@ -68,7 +68,7 @@ pub async fn buscar(
             id, name, email, phone, vat,
             is_company, customer_rank, supplier_rank, active, city, country_id
         FROM res_partner
-        WHERE company_id = $1
+        WHERE (company_id = $1 OR company_id IS NULL)
           AND active = true
           AND (
               LOWER(name) LIKE $2
@@ -123,7 +123,7 @@ pub async fn listar_clientes(
         SELECT id, name, email, phone, vat,
                is_company, customer_rank, supplier_rank, active, city, country_id
         FROM res_partner
-        WHERE company_id = $1 AND active = true AND customer_rank > 0
+        WHERE (company_id = $1 OR company_id IS NULL) AND active = true AND customer_rank > 0
         ORDER BY customer_rank DESC, name ASC
         LIMIT $2 OFFSET $3
         "#,
@@ -151,7 +151,7 @@ pub async fn listar_proveedores(
         SELECT id, name, email, phone, vat,
                is_company, customer_rank, supplier_rank, active, city, country_id
         FROM res_partner
-        WHERE company_id = $1 AND active = true AND supplier_rank > 0
+        WHERE (company_id = $1 OR company_id IS NULL) AND active = true AND supplier_rank > 0
         ORDER BY supplier_rank DESC, name ASC
         LIMIT $2 OFFSET $3
         "#,
