@@ -1,5 +1,6 @@
 import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
-import { fmtMxn, fmtDate, fmtNum, paginationHtml, skeletonTable, toast, stateBadge } from '../ui.js'
+import { fmtMxn, fmtDate, fmtNum, paginationHtml, skeletonTable, toast,
+         stateBadge, openDetailModal, detailRow, detailSection } from '../ui.js'
 import { api } from '../api.js'
 
 const ESTADO_MAP = {
@@ -106,10 +107,12 @@ async function loadFacturas() {
             ${facturas.map(f => {
               const e = ESTADO_MAP[f.state] || { lbl: f.state || '—', color: 'gray' }
               const fecha = f.invoice_date || f.date ? fmtDate(f.invoice_date || f.date) : '—'
+              // partner_name viene del JOIN; partner_id es el fallback numérico
+              const cliente = f.partner_name && isNaN(f.partner_name) ? f.partner_name : (f.customer_name || `Cliente #${f.partner_id}`)
               return `
-              <tr data-estado="${f.state || ''}">
+              <tr data-estado="${f.state || ''}" style="cursor:pointer" onclick="window._verFactura(${f.id})" title="Ver detalle">
                 <td class="td-mono">${f.name || `#${f.id}`}</td>
-                <td class="td-primary">${f.partner_name || f.partner_id || '—'}</td>
+                <td class="td-primary">${cliente}</td>
                 <td>${fecha}</td>
                 <td class="td-amount">${fmtMxn(parseFloat(f.amount_untaxed || 0))}</td>
                 <td class="td-amount" style="font-weight:700">${fmtMxn(parseFloat(f.amount_total || 0))}</td>
@@ -156,6 +159,38 @@ async function loadFacturas() {
         r.style.display = !val || r.dataset.estado === val ? '' : 'none'
       })
     })
+
+    // Ver detalle factura
+    window._verFactura = (id) => {
+      openDetailModal(
+        'Detalle de Factura',
+        () => api.factura(id),
+        (f) => {
+          const e = ESTADO_MAP[f.state] || { lbl: f.state, color: 'gray' }
+          const cliente = f.partner_name && isNaN(f.partner_name) ? f.partner_name : `Cliente #${f.partner_id}`
+          return `
+          ${detailSection('Comprobante', [
+            detailRow('Folio', f.name),
+            detailRow('Estado', stateBadge(f.state, e.lbl)),
+            detailRow('Cliente', cliente),
+            detailRow('Fecha emisión', fmtDate(f.invoice_date || f.date)),
+            detailRow('Vencimiento', fmtDate(f.invoice_date_due)),
+            detailRow('Referencia', f.ref || '—'),
+            detailRow('Diario', f.journal_name || '—'),
+          ].join(''))}
+          ${detailSection('Importes', [
+            detailRow('Subtotal', fmtMxn(parseFloat(f.amount_untaxed || 0))),
+            detailRow('IVA', fmtMxn(parseFloat(f.amount_tax || 0))),
+            detailRow('Total', `<strong>${fmtMxn(parseFloat(f.amount_total || 0))}</strong>`, {color:'var(--primary)'}),
+            detailRow('Saldo pendiente', fmtMxn(parseFloat(f.amount_residual || 0)), {color: f.amount_residual > 0 ? 'var(--warning)' : 'var(--success)'}),
+          ].join(''))}
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
+            <button class="btn btn-primary btn-sm" onclick="window._go('cfdi')">🔏 Timbrar CFDI</button>
+          </div>`
+        }
+      )
+    }
 
   } catch (err) {
     console.error(err)

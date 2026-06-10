@@ -1,5 +1,6 @@
 import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
-import { fmtMxn, fmtNum, paginationHtml, skeletonTable, toast } from '../ui.js'
+import { fmtMxn, fmtNum, paginationHtml, skeletonTable, toast,
+         openDetailModal, detailRow, detailSection } from '../ui.js'
 import { api } from '../api.js'
 
 let _page = 1
@@ -96,7 +97,7 @@ async function loadPartners() {
               const esProveedor = (p.supplier_rank || 0) > 0
               const esEmpresa   = p.is_company
               return `
-              <tr>
+              <tr style="cursor:pointer" onclick="window._verPartner(${p.id})" title="Ver detalle">
                 <td>
                   <div style="display:flex;align-items:center;gap:8px">
                     <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,hsl(${(p.id * 37) % 360},60%,55%),hsl(${(p.id * 71) % 360},70%,45%));display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">
@@ -131,6 +132,37 @@ async function loadPartners() {
         r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none'
       })
     })
+
+    // Ver detalle del contacto
+    window._verPartner = (id) => {
+      openDetailModal(
+        'Detalle de Contacto',
+        () => api.partner(id),
+        (p) => {
+          const esCliente   = (p.customer_rank || 0) > 0
+          const esProveedor = (p.supplier_rank || 0) > 0
+          return `
+          ${detailSection('Información General', [
+            detailRow('Nombre', p.name),
+            detailRow('Tipo', p.is_company ? 'Empresa' : 'Persona física'),
+            detailRow('Rol', [esCliente ? 'Cliente' : '', esProveedor ? 'Proveedor' : ''].filter(Boolean).join(', ') || 'Contacto'),
+            detailRow('RFC', p.vat || '—'),
+            detailRow('Website', p.website || '—'),
+          ].join(''))}
+          ${detailSection('Contacto', [
+            detailRow('Email', p.email ? `<a href="mailto:${p.email}" style="color:var(--primary)">${p.email}</a>` : '—'),
+            detailRow('Teléfono', p.phone || '—'),
+            detailRow('Móvil', p.mobile || '—'),
+            detailRow('Ciudad', p.city || '—'),
+            detailRow('País', p.country_name || '—'),
+          ].join(''))}
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
+            <button class="btn btn-primary btn-sm" onclick="alert('Editar contacto — próximamente')">✏️ Editar</button>
+          </div>`
+        }
+      )
+    }
 
   } catch (err) {
     console.error(err)

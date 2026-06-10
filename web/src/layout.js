@@ -11,6 +11,7 @@ const NAV = [
   { id:'stock',     icon:'🏭', label:'Inventario',      section:'Principal' },
   { id:'cfdi',      icon:'🔏', label:'CFDI 4.0',        section:'Fiscal', badge:'NUEVO' },
   { id:'nomina',    icon:'👔', label:'Nómina IMSS',     section:'Fiscal' },
+  { id:'compras',   icon:'🛒', label:'Compras',          section:'Operaciones' },
   { id:'search',    icon:'🔍', label:'NexusSearch',     section:'Sistema' },
   { id:'reportes',  icon:'📈', label:'Reportes',        section:'Sistema' },
 ]

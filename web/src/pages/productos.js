@@ -1,5 +1,6 @@
 import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
-import { fmtMxn, fmtNum, paginationHtml, skeletonTable, toast } from '../ui.js'
+import { fmtMxn, fmtNum, paginationHtml, skeletonTable, toast,
+         openDetailModal, detailRow, detailSection } from '../ui.js'
 import { api } from '../api.js'
 
 let _page = 1
@@ -62,11 +63,9 @@ async function loadProductos() {
           </tr></thead>
           <tbody>
             ${productos.map(p => {
-              // name viene como JSONB {es_MX: '...', en_US: '...'}
               const nombre = (p.name && typeof p.name === 'object')
                 ? (p.name.es_MX || p.name.en_US || Object.values(p.name)[0] || `Producto #${p.id}`)
                 : (p.name || p.nombre || `Producto #${p.id}`)
-              // Rust renombra 'type' (reservado) a 'type_'
               const tp = p.type_ || p.type || ''
               const tipo = tp === 'consu' ? 'Consumible' : tp === 'service' ? 'Servicio' : tp === 'product' ? 'Almacenable' : 'Consumible'
               const tipoColor = tp === 'service' ? 'violet' : tp === 'consu' ? 'sky' : 'indigo'
@@ -75,7 +74,7 @@ async function loadProductos() {
               const categRaw = p.categ_name || p.categoria || ''
               const categ = categRaw === 'Goods' ? 'Mercancía' : categRaw === 'Services' ? 'Servicios' : categRaw || '—'
               return `
-              <tr data-tipo="${tp}">
+              <tr data-tipo="${tp}" data-id="${p.id}" style="cursor:pointer" onclick="window._verProducto(${p.id})" title="Ver detalle">
                 <td class="td-mono">${p.default_code || '—'}</td>
                 <td class="td-primary">${nombre}</td>
                 <td><span class="badge badge-${tipoColor}">${tipo}</span></td>
@@ -108,6 +107,41 @@ async function loadProductos() {
         r.style.display = !val || r.dataset.tipo === val ? '' : 'none'
       })
     })
+
+    // Ver detalle del producto
+    window._verProducto = (id) => {
+      const p = productos.find(x => x.id === id)
+      if (!p) return
+      const nombre = (p.name && typeof p.name === 'object')
+        ? (p.name.es_MX || p.name.en_US || '')
+        : (p.name || '')
+      const tp = p.type_ || p.type || ''
+      const tipo = tp === 'consu' ? 'Consumible' : tp === 'service' ? 'Servicio' : 'Almacenable'
+      const categRaw = p.categ_name || ''
+      const categ = categRaw === 'Goods' ? 'Mercancía' : categRaw === 'Services' ? 'Servicios' : categRaw || '—'
+
+      openDetailModal(
+        'Detalle de Producto',
+        async () => p,
+        () => `
+        ${detailSection('Identificación', [
+          detailRow('Nombre', nombre),
+          detailRow('Código interno', p.default_code || '—'),
+          detailRow('Código de barras', p.barcode || '—'),
+          detailRow('Tipo', tipo),
+          detailRow('Categoría', categ),
+          detailRow('Estado', `<span class="badge badge-${p.active!==false?'emerald':'gray'}">${p.active!==false?'Activo':'Inactivo'}</span>`),
+        ].join(''))}
+        ${detailSection('Precios', [
+          detailRow('Precio de venta', fmtMxn(parseFloat(p.list_price || 0))),
+          detailRow('Costo estándar', fmtMxn(parseFloat(p.standard_price || 0))),
+        ].join(''))}
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
+          <button class="btn btn-primary btn-sm" onclick="alert('Editar producto — próximamente')">✏️ Editar</button>
+        </div>`
+      )
+    }
 
   } catch (err) {
     console.error(err)

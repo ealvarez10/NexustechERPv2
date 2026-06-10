@@ -28,8 +28,15 @@ async function req(method, path, body) {
 }
 
 export const api = {
+  // Generic
+  get:  (path)         => req('GET',  path),
+  post: (path, body)   => req('POST', path, body),
+  put:  (path, body)   => req('PUT',  path, body),
+  del:  (path)         => req('DELETE', path),
+
   // Auth
   login: (login, password) => req('POST', '/auth/login', { login, password }),
+  logout: ()               => req('POST', '/auth/logout', {}),
 
   // Dashboard
   dashboard: ()      => req('GET', '/dashboard'),
@@ -42,32 +49,45 @@ export const api = {
   venta:   (id)      => req('GET', `/ventas/${id}`),
 
   // Facturas
-  facturas: (p=1)    => req('GET', `/facturas?pagina=${p}`),
-  factura:  (id)     => req('GET', `/facturas/${id}`),
+  facturas:  (p=1)   => req('GET', `/facturas?pagina=${p}`),
+  factura:   (id)    => req('GET', `/facturas/${id}`),
   porCobrar: ()      => req('GET', '/facturas/por-cobrar'),
 
   // Productos
   productos: (p=1, q='') => req('GET', `/productos?pagina=${p}&q=${encodeURIComponent(q)}`),
-  producto:  (id)    => req('GET', `/productos/${id}`),
+  producto:  (id)        => req('GET', `/productos/${id}`),
 
   // Partners
-  partners:   (p=1)  => req('GET', `/partners?pagina=${p}`),
-  clientes:   (p=1)  => req('GET', `/clientes?pagina=${p}`),
-  proveedores:(p=1)  => req('GET', `/proveedores?pagina=${p}`),
+  partners:    (p=1) => req('GET', `/partners?pagina=${p}`),
+  partner:     (id)  => req('GET', `/partners/${id}`),
+  clientes:    (p=1) => req('GET', `/clientes?pagina=${p}`),
+  proveedores: (p=1) => req('GET', `/proveedores?pagina=${p}`),
 
-  // Stock
-  stock:     (p=1)   => req('GET', `/stock?pagina=${p}`),
-  stockBajo: ()      => req('GET', '/stock/bajo'),
-  stockProducto: (id) => req('GET', `/stock/producto/${id}`),
+  // Stock / Inventario
+  stock:        (p=1) => req('GET', `/stock?pagina=${p}`),
+  stockKpis:    ()    => req('GET', '/stock/kpis'),
+  stockBajo:    ()    => req('GET', '/stock/bajo'),
+  stockProducto:(id)  => req('GET', `/stock/producto/${id}`),
 
-  // CFDI
-  timbrar: (body)    => req('POST', '/cfdi/timbrar', body),
-  cancelar: (body)   => req('POST', '/cfdi/cancelar', body),
+  // CFDI 4.0
+  cfdiTimbrados: (p=1) => req('GET', `/cfdi/timbrados?pagina=${p}`),
+  cfdiTimbrado:  (uuid)=> req('GET', `/cfdi/timbrados/${uuid}`),
+  cfdiKpis:      ()    => req('GET', '/cfdi/kpis'),
+  timbrar:  (body)     => req('POST', '/cfdi/timbrar', body),
+  cancelarCfdi:(body)  => req('POST', '/cfdi/cancelar', body),
 
-  // Search
-  searchSync: ()     => req('POST', '/search/sync', {}),
-  searchStatus: ()   => req('GET', '/search/status'),
+  // Nómina
+  nomina:      (p=1)  => req('GET', `/nomina?pagina=${p}`),
+  nominaKpis:  ()     => req('GET', '/nomina/kpis'),
+
+  // Compras
+  compras:      (p=1) => req('GET', `/compras?pagina=${p}`),
+  comprasKpis:  ()    => req('GET', '/compras/kpis'),
+
+  // Búsqueda
+  searchSync:   ()    => req('POST', '/search/sync', {}),
+  searchStatus: ()    => req('GET', '/search/status'),
 
   // Health
-  health: ()         => req('GET', '/health'),
+  health: ()          => req('GET', '/health'),
 }

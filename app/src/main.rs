@@ -138,6 +138,15 @@ async fn main() -> anyhow::Result<()> {
         .route("/cfdi/timbrar",         post(handlers::cfdi::timbrar))
         .route("/cfdi/cancelar",        post(handlers::cfdi::cancelar))
         .route("/cfdi/{uuid}/pdf",      get(handlers::cfdi::pdf_por_uuid))
+        .route("/cfdi/timbrados",       get(handlers::cfdi_timbrados::listar_timbrados))
+        .route("/cfdi/timbrados/{uuid}", get(handlers::cfdi_timbrados::obtener_timbrado))
+        .route("/cfdi/kpis",            get(handlers::cfdi_timbrados::kpis_cfdi))
+        // ── Nómina ────────────────────────────────────────────────────────
+        .route("/nomina",               get(handlers::nomina::listar))
+        .route("/nomina/kpis",          get(handlers::nomina::kpis))
+        // ── Compras ───────────────────────────────────────────────────────
+        .route("/compras",              get(handlers::compras::listar))
+        .route("/compras/kpis",         get(handlers::compras::kpis))
         // ── Motor de búsqueda ──────────────────────────────────────────────
         .route("/search/sync",          post(handlers::search::sync))
         .route("/search/status",        get(handlers::search::status))

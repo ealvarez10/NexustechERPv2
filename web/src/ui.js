@@ -119,3 +119,83 @@ export function paginationHtml(page, hasMore, onNav) {
     </div>
   </div>`
 }
+
+// ─── MODAL / DRAWER ───────────────────────────────────────────────────────────
+
+let _modalEsc = null
+
+/** Abre el drawer lateral con HTML arbitrario */
+export function openModal(title, htmlContent, opts = {}) {
+  let overlay = document.getElementById('__modal-overlay')
+  if (!overlay) {
+    overlay = document.createElement('div')
+    overlay.id = '__modal-overlay'
+    overlay.innerHTML = `
+      <div id="__modal-drawer">
+        <div id="__modal-header">
+          <span id="__modal-title"></span>
+          <button id="__modal-close" onclick="window.__closeModal()">✕</button>
+        </div>
+        <div id="__modal-body"></div>
+      </div>`
+    document.body.appendChild(overlay)
+    overlay.addEventListener('click', e => { if (e.target === overlay) window.__closeModal() })
+  }
+  document.getElementById('__modal-title').textContent = title
+  document.getElementById('__modal-body').innerHTML = htmlContent
+  overlay.classList.add('open')
+  document.body.style.overflow = 'hidden'
+  if (_modalEsc) document.removeEventListener('keydown', _modalEsc)
+  _modalEsc = e => { if (e.key === 'Escape') window.__closeModal() }
+  document.addEventListener('keydown', _modalEsc)
+  if (opts.onMounted) setTimeout(opts.onMounted, 10)
+}
+
+export function closeModal() {
+  const o = document.getElementById('__modal-overlay')
+  if (o) o.classList.remove('open')
+  document.body.style.overflow = ''
+  if (_modalEsc) { document.removeEventListener('keydown', _modalEsc); _modalEsc = null }
+}
+window.__closeModal = closeModal
+
+/** Muestra el drawer con skeleton mientras carga, luego renderiza con fn(data) */
+export async function openDetailModal(title, fetchFn, renderFn) {
+  openModal(title, `
+    <div style="display:flex;flex-direction:column;gap:12px;padding:8px 0">
+      ${[1,2,3,4,5].map(() =>
+        `<div class="skeleton" style="height:52px;border-radius:10px"></div>`
+      ).join('')}
+    </div>`)
+  try {
+    const res = await fetchFn()
+    const data = res?.data ?? res
+    document.getElementById('__modal-body').innerHTML = renderFn(data)
+  } catch (err) {
+    document.getElementById('__modal-body').innerHTML =
+      `<p style="color:var(--red);padding:24px">Error: ${err.message}</p>`
+  }
+}
+
+/** Fila de detalle: etiqueta + valor */
+export function detailRow(label, value, opts = {}) {
+  const v = value ?? '—'
+  const color = opts.color ? `color:${opts.color}` : ''
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;
+    padding:10px 0;border-bottom:1px solid var(--border)">
+    <span style="font-size:12px;color:var(--text-400);font-weight:600;min-width:140px">${label}</span>
+    <span style="font-size:13px;font-weight:500;text-align:right;${color}">${v}</span>
+  </div>`
+}
+
+/** Sección dentro del modal */
+export function detailSection(title, rows) {
+  return `
+  <div style="margin-bottom:20px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+      color:var(--text-400);margin-bottom:8px;padding-bottom:6px;
+      border-bottom:2px solid var(--primary)">${title}</div>
+    ${rows}
+  </div>`
+}

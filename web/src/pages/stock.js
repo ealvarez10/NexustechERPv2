@@ -1,6 +1,10 @@
 import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
-import { fmt, fmtMxn, paginationHtml, skeletonTable, toast } from '../ui.js'
+import { fmt, fmtMxn, paginationHtml, skeletonTable, toast,
+         openDetailModal, detailRow, detailSection } from '../ui.js'
 import { api } from '../api.js'
+
+// Productos de sistema que no son del negocio — filtrar de la vista
+const SYSTEM_PRODUCTS = ['deposit', 'down payment', 'downpayment', 'pago inicial']
 
 let _page = 1
 
@@ -77,8 +81,13 @@ async function loadStock() {
     }
 
     // ─── Tabla principal ─────────────────────────────────────────────────────
-    const items = stockRes.status === 'fulfilled' ? (stockRes.value?.data || []) : []
-    const hasMore = items.length >= 20
+    const allItems = stockRes.status === 'fulfilled' ? (stockRes.value?.data || []) : []
+    // Filtrar productos del sistema (Deposit, Down Payment, etc.)
+    const items = allItems.filter(s => {
+      const name = (s.product_name || '').toLowerCase()
+      return !SYSTEM_PRODUCTS.some(sp => name.includes(sp))
+    })
+    const hasMore = allItems.length >= 20
 
     const sub = document.getElementById('stock-sub')
     if (sub) sub.textContent = `${items.length} productos · Página ${_page}`
@@ -94,7 +103,6 @@ async function loadStock() {
             <th>Producto</th>
             <th>Disponible</th>
             <th>Reservado</th>
-            <th>Unidad</th>
             <th>Ubicación</th>
             <th>Estado</th>
           </tr></thead>
@@ -105,11 +113,11 @@ async function loadStock() {
               const color = qty <= 0 ? 'red' : qty < 10 ? 'amber' : 'emerald'
               const estado = qty <= 0 ? '❌ Sin stock' : qty < 10 ? '⚠️ Stock bajo' : '✅ Normal'
               return `
-              <tr data-alerta="${qty < 10 ? 'bajo' : 'ok'}">
+              <tr data-alerta="${qty < 10 ? 'bajo' : 'ok'}" style="cursor:pointer" onclick="window._verStock(${s.product_id})" title="Ver detalle">
                 <td class="td-primary">${s.product_name || `Producto #${s.product_id}`}</td>
                 <td><span class="badge badge-${color}">${fmt(qty, 0)}</span></td>
                 <td style="color:var(--text-400)">${fmt(reservado, 0)}</td>
-                <td class="td-mono" style="font-size:11px" colspan="2">${s.ubicacion || '—'}</td>
+                <td class="td-mono" style="font-size:11px">${s.ubicacion || '—'}</td>
                 <td><span class="badge badge-${color}">${estado}</span></td>
               </tr>`
             }).join('')}
@@ -156,6 +164,37 @@ async function loadStock() {
         row.style.display = alerta === val ? '' : 'none'
       })
     })
+
+    // Ver detalle del stock por producto
+    window._verStock = (productId) => {
+      openDetailModal(
+        'Detalle de Stock',
+        () => api.stockProducto(productId),
+        (data) => {
+          const arr = Array.isArray(data) ? data : [data]
+          const main = arr[0] || {}
+          const qty = parseFloat(main.cantidad_disponible || 0)
+          const res = parseFloat(main.cantidad_reservada || 0)
+          const color = qty <= 0 ? 'var(--red)' : qty < 10 ? 'var(--warning)' : 'var(--success)'
+          return `
+          ${detailSection('Producto', [
+            detailRow('Nombre', main.product_name || `#${productId}`),
+            detailRow('Cantidad disponible', `<strong style="color:${color}">${fmt(qty, 2)}</strong>`),
+            detailRow('Cantidad reservada', fmt(res, 2)),
+            detailRow('Cantidad neta', fmt(qty - res, 2)),
+          ].join(''))}
+          ${arr.length > 1 ? detailSection('Por ubicación', arr.map(s =>
+            detailRow(s.ubicacion || 'Sin ubicación', fmt(parseFloat(s.cantidad_disponible || 0), 2))
+          ).join('')) : detailSection('Ubicación', [
+            detailRow('Almacén', main.ubicacion || 'Sin ubicación'),
+          ].join(''))}
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
+            <button class="btn btn-primary btn-sm" onclick="alert('Ajuste de inventario — próximamente')">📋 Ajustar</button>
+          </div>`
+        }
+      )
+    }
 
   } catch (err) {
     console.error(err)

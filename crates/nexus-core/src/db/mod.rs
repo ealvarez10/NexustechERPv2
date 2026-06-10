@@ -10,3 +10,6 @@ pub mod account_move;
 pub mod user;
 pub mod company;
 pub mod stock;
+pub mod cfdi;
+pub mod nomina;
+pub mod compras;
