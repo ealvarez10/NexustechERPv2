@@ -51,8 +51,7 @@ pub async fn obtener(
 ) -> impl IntoResponse {
     match db::obtener_por_id(&state.db, id).await {
         Ok(orden) => {
-            let lineas = db::obtener_lineas(&state.db, id).await.unwrap_or_default();
-            api::ok(serde_json::json!({ "orden": orden, "lineas": lineas })).into_response()
+            api::ok(orden).into_response()
         }
         Err(e) => from_core_error(e).into_response(),
     }

@@ -147,16 +147,37 @@ pub async fn timbrar(
         }
     };
 
-    // 6. Timbrar con PAC
     match state.pac.timbrar(&xml).await {
-        Ok(timbre) => Json(TimbrarResponse {
-            success: true,
-            uuid: Some(timbre.uuid),
-            xml_timbrado: Some(timbre.xml_timbrado),
-            fecha_timbrado: Some(timbre.fecha_timbrado),
-            error: None,
-        })
-        .into_response(),
+        Ok(timbre) => {
+            use nexus_core::db::cfdi::{insertar, NuevoCfdi};
+            let nuevo_cfdi = NuevoCfdi {
+                uuid: timbre.uuid.clone(),
+                folio: req.cfdi.folio.clone(),
+                serie: req.cfdi.serie.clone(),
+                fecha_emision: Some(req.cfdi.fecha.clone()),
+                rfc_emisor: req.cfdi.emisor.rfc.clone(),
+                rfc_receptor: req.cfdi.receptor.rfc.clone(),
+                nombre_emisor: Some(req.cfdi.emisor.nombre.clone()),
+                nombre_receptor: Some(req.cfdi.receptor.nombre.clone()),
+                total: Some(req.cfdi.total),
+                tipo_cfdi: Some(req.cfdi.tipo_de_comprobante.clone()),
+                xml_timbrado: Some(timbre.xml_timbrado.clone()),
+                fecha_timbrado: Some(timbre.fecha_timbrado.clone()),
+                account_move_id: None,
+            };
+            if let Err(e) = insertar(&state.db, &nuevo_cfdi).await {
+                tracing::error!("Error guardando CFDI timbrado en BD: {}", e);
+            }
+
+            Json(TimbrarResponse {
+                success: true,
+                uuid: Some(timbre.uuid),
+                xml_timbrado: Some(timbre.xml_timbrado),
+                fecha_timbrado: Some(timbre.fecha_timbrado),
+                error: None,
+            })
+            .into_response()
+        },
         Err(e) => Json(TimbrarResponse {
             success: false,
             uuid: None,

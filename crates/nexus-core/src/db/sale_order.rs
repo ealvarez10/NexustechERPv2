@@ -20,7 +20,7 @@ pub struct SaleOrder {
     pub amount_tax:         Option<Decimal>,
     pub amount_total:       Option<Decimal>,
     pub currency_rate:      Option<Decimal>,
-    pub picking_policy:     Option<String>,
+    pub note:               Option<String>,
     pub partner_name:       Option<String>,
 }
 
@@ -46,7 +46,7 @@ const SELECT_COLS: &str = r#"
     so.date_order::text AS date_order,
     so.amount_untaxed, so.amount_tax, so.amount_total,
     so.currency_rate,
-    so.picking_policy,
+    so.note,
     rp.name AS partner_name
 "#;
 

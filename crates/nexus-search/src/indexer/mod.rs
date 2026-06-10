@@ -152,17 +152,7 @@ pub async fn sincronizar_productos(
                 pt.categ_id,
                 pt.company_id,
                 pt.type,
-                COALESCE((
-                    SELECT SUM(sq.quantity)
-                    FROM stock_quant sq
-                    JOIN stock_location sl ON sq.location_id = sl.id
-                    WHERE sq.product_id IN (
-                        SELECT id FROM product_product
-                        WHERE product_tmpl_id = pt.id
-                    )
-                    AND sl.usage = 'internal'
-                    AND sq.company_id = $1
-                ), 0.0) AS qty_available
+                0.0::double precision AS "qty_available!"
             FROM product_template pt
             LEFT JOIN product_category pc ON pt.categ_id = pc.id
             WHERE pt.active = true
@@ -184,16 +174,7 @@ pub async fn sincronizar_productos(
                 let docs: Vec<Value> = rows
                     .iter()
                     .map(|r| {
-                        let qty: f64 = r
-                            .qty_available
-                            .as_ref()
-                            .map(|d| {
-                                use std::str::FromStr;
-                                Decimal::from_str(&d.to_string())
-                                    .map(|v| v.to_string().parse::<f64>().unwrap_or(0.0))
-                                    .unwrap_or(0.0)
-                            })
-                            .unwrap_or(0.0);
+                        let qty: f64 = r.qty_available;
                         json!({
                             "id":               r.id,
                             "name":             r.name,
