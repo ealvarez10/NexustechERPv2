@@ -12,13 +12,14 @@
 //!   erp_pos      → productos para autocompletado POS (<50ms)
 
 pub mod client;
+pub mod error;
 pub mod indexer;
 pub mod search;
 pub mod setup;
-pub mod error;
 
 pub use client::NexusSearchClient;
 pub use error::SearchError;
+pub use indexer::SyncStats;
 
 /// Nombres de índices ERP en NexusSearch
 pub mod indexes {

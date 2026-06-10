@@ -5,6 +5,8 @@
 //! - Redis (opcional)
 //! - Middleware JWT
 //! - Router REST v1
+//! - PAC timbrado CFDI
+//! - Motor de búsqueda integrado
 
 mod api;
 mod handlers;
@@ -17,6 +19,7 @@ use axum::{
     Router,
 };
 use sqlx::postgres::PgPoolOptions;
+use std::sync::Arc;
 use std::time::Duration;
 use tower_http::{
     compression::CompressionLayer,
@@ -72,8 +75,36 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
+    // ── PAC — Proveedor de Certificación (timbrado CFDI) ──────────────────
+    let pac_mode = std::env::var("PAC_MODE").unwrap_or_else(|_| "sandbox".to_string());
+    let pac_user = std::env::var("PAC_USER").unwrap_or_default();
+    let pac_password = std::env::var("PAC_PASSWORD").unwrap_or_default();
+
+    let pac: Arc<dyn nexus_cfdi::Pac> = if pac_mode == "produccion" {
+        tracing::info!("PAC: modo producción");
+        Arc::new(nexus_cfdi::FacturamaPac::produccion(pac_user, pac_password))
+    } else {
+        tracing::info!("PAC: modo sandbox (pruebas)");
+        Arc::new(nexus_cfdi::FacturamaPac::sandbox(pac_user, pac_password))
+    };
+
+    // ── Motor de búsqueda integrado ────────────────────────────────────────
+    let search_client = match nexus_search::NexusSearchClient::from_env() {
+        Ok(client) => {
+            tracing::info!("Motor de búsqueda conectado ✓");
+            Arc::new(client)
+        }
+        Err(e) => {
+            tracing::warn!("Motor de búsqueda no disponible: {}", e);
+            // Crear cliente con valores por defecto — fallará en runtime pero no bloquea el arranque
+            Arc::new(nexus_search::NexusSearchClient::from_env().unwrap_or_else(|_| {
+                nexus_search::NexusSearchClient::fallback()
+            }))
+        }
+    };
+
     // ── AppState ────────────────────────────────────────────────────────────
-    let state = AppState::nueva(db, config.clone(), redis_conn);
+    let state = AppState::nueva(db, config.clone(), redis_conn, pac, search_client);
 
     // ── Router ─────────────────────────────────────────────────────────────
     // Rutas de autenticación — sin middleware JWT
@@ -103,6 +134,13 @@ async fn main() -> anyhow::Result<()> {
         .route("/stock/kpis",           get(handlers::stock::kpis))
         .route("/stock/bajo",           get(handlers::stock::bajo))
         .route("/stock/producto/{id}",  get(handlers::stock::por_producto))
+        // ── CFDI ──────────────────────────────────────────────────────────
+        .route("/cfdi/timbrar",         post(handlers::cfdi::timbrar))
+        .route("/cfdi/cancelar",        post(handlers::cfdi::cancelar))
+        .route("/cfdi/{uuid}/pdf",      get(handlers::cfdi::pdf_por_uuid))
+        // ── Motor de búsqueda ──────────────────────────────────────────────
+        .route("/search/sync",          post(handlers::search::sync))
+        .route("/search/status",        get(handlers::search::status))
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::auth_middleware,
