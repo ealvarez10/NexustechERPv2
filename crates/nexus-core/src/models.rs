@@ -1,8 +1,8 @@
-//! Modelos Rust mapeados 1:1 al schema PostgreSQL de NexusTech ERP
+//! Modelos Rust del schema PostgreSQL de NexusTech ERP
 //!
 //! Convenciones:
-//! - Nombres de struct = PascalCase del nombre de tabla Odoo
-//! - Nombres de campo = snake_case idéntico al nombre de columna Odoo
+//! - Nombres de struct = PascalCase del nombre de tabla
+//! - Nombres de campo = snake_case idéntico al nombre de columna
 //! - Option<T> para columnas IS NULLABLE = YES
 //! - Compatible con SQLx (derive FromRow)
 
@@ -64,7 +64,7 @@ pub struct ResPartner {
     pub website_id: Option<i32>,
     pub is_published: Option<bool>,
     pub message_bounce: Option<i32>,
-    // Campos JSONB de Odoo (propiedades por empresa)
+    // Campos JSONB de propiedades por empresa
     // Se mantienen como serde_json::Value para compatibilidad total
     pub properties: Option<serde_json::Value>,
     pub specific_property_product_pricelist: Option<serde_json::Value>,
@@ -260,7 +260,7 @@ pub struct ProductTemplate {
     pub write_date: Option<NaiveDateTime>,
     pub rating_last_value: Option<f64>,
     pub base_unit_count: f64,
-    // JSONB (multilang en Odoo 19)
+    // JSONB (campos multiidioma)
     pub name: serde_json::Value,
     pub description: Option<serde_json::Value>,
     pub description_purchase: Option<serde_json::Value>,

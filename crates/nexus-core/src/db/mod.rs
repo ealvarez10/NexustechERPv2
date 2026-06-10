@@ -1,7 +1,7 @@
-//! nexus-core::db — Queries SQLx sobre el schema Odoo 19
+//! nexus-core::db — Acceso a datos del schema PostgreSQL de NexusTech ERP
 //!
 //! Cada submódulo implementa CRUD para una tabla core.
-//! Compatible DROP-IN con bases de datos NexusTech.
+//! Compatible DROP-IN con bases de datos NexusTech ERP.
 
 pub mod partner;
 pub mod product;

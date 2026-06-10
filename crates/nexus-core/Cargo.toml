@@ -3,7 +3,7 @@ name = "nexus-core"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-description = "Tipos y structs DB compatibles con schema Odoo 19 (NexusTech ERP)"
+description = "Tipos y structs del schema de base de datos NexusTech ERP"
 
 [dependencies]
 serde        = { workspace = true }
