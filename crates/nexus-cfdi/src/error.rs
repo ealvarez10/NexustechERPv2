@@ -36,4 +36,10 @@ pub enum CfdiError {
 
     #[error("Error HTTP: {0}")]
     Http(#[from] reqwest::Error),
+
+    #[error("Validación CFDI fallida: {0}")]
+    ValidacionFallida(String),
+
+    #[error("Catálogo SAT inválido: {0}")]
+    CatalogoInvalido(String),
 }

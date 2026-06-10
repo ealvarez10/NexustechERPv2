@@ -5,15 +5,21 @@
 
 pub mod builder;
 pub mod cadena_original;
-pub mod sellado;
-pub mod pac;
+pub mod catalogs;
 pub mod error;
+pub mod pac;
+pub mod rfc;
+pub mod sellado;
+pub mod validacion;
+pub mod xml;
 
-pub use builder::{CfdiBuilder, CfdiData, Emisor, Receptor, Concepto, Impuestos, Traslado, Retencion};
+pub use builder::{CfdiBuilder, CfdiData, Concepto, Emisor, Impuestos, Receptor, Retencion, Traslado};
 pub use error::CfdiError;
-pub use pac::{Pac, TimbreResponse, CancelacionResponse};
+pub use pac::{CancelacionResponse, Pac, TimbreResponse};
 pub use pac::facturama::FacturamaPac;
 pub use pac::sw_sapien::SwSapienPac;
+pub use rfc::{Rfc, RFC_PUBLICO_GENERAL, RFC_EXTRANJERO};
+pub use validacion::validar;
 
 /// Versión CFDI soportada
 pub const CFDI_VERSION: &str = "4.0";
