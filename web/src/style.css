@@ -1300,3 +1300,307 @@ body {
 .text-right { text-align: right; }
 .text-center { text-align: center; }
 .o-lines-table-wrapper { overflow-x: auto; }
+
+/* ========================================================
+   NEXUSTECH — Odoo-Style Module Views (Productos, Stock, etc.)
+   ======================================================== */
+
+/* ----- Control Panel (o-cp) ----- */
+.o-cp {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  min-height: 56px;
+  position: sticky;
+  top: var(--topbar-h, 60px);
+  z-index: 30;
+}
+.o-cp-left  { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.o-cp-center { flex: 1; display: flex; align-items: center; }
+.o-cp-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+/* Search bar inside CP */
+.o-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-app);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius, 10px);
+  padding: 6px 12px;
+  width: 100%;
+  max-width: 680px;
+  transition: var(--t2);
+}
+.o-search-bar:focus-within {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(79,70,229,.08);
+}
+.o-search-icon { color: var(--text-400); flex-shrink: 0; }
+.o-search-input {
+  border: none; background: none; outline: none;
+  font-size: 13px; color: var(--text-600);
+  font-family: 'Inter', sans-serif;
+  flex: 1; min-width: 0;
+}
+.o-search-input::placeholder { color: var(--text-400); }
+.o-search-filters { display: flex; gap: 4px; flex-shrink: 0; }
+.o-filter-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-500);
+  cursor: pointer;
+  transition: var(--t1);
+  white-space: nowrap;
+}
+.o-filter-btn:hover,
+.o-filter-btn[data-active] {
+  background: var(--primary-light, #EEF2FF);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* View switcher */
+.o-view-switcher { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.o-view-btn {
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  color: var(--text-400);
+  transition: var(--t1);
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.o-view-btn:last-child { border-right: none; }
+.o-view-btn.o-active,
+.o-view-btn:hover { background: var(--primary-light, #EEF2FF); color: var(--primary); }
+
+/* Content area */
+.o-view-content { flex: 1; overflow: auto; }
+
+/* Primary action button (CP) */
+.o-btn-primary {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 7px 16px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: var(--t2);
+  white-space: nowrap;
+}
+.o-btn-primary:hover { background: var(--primary-hover, #4338CA); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(79,70,229,.3); }
+.o-btn-secondary {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fff;
+  color: var(--text-600);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: var(--t1);
+  white-space: nowrap;
+}
+.o-btn-secondary:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light, #EEF2FF); }
+
+/* ----- List View ----- */
+.o-list-view { background: var(--bg-card); }
+.o-list-table { width: 100%; border-collapse: collapse; }
+.o-list-table thead th {
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-400);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border-bottom: 2px solid var(--border);
+  background: var(--bg-table-head, #F8FAFC);
+  white-space: nowrap;
+  user-select: none;
+}
+.o-col-sortable { cursor: pointer; }
+.o-col-sortable:hover { color: var(--primary); }
+.o-col-right { text-align: right !important; }
+.o-list-chk { width: 40px; text-align: center !important; }
+.o-list-table tbody tr.o-list-row {
+  border-bottom: 1px solid var(--border);
+  transition: background var(--t1);
+  cursor: pointer;
+}
+.o-list-table tbody tr.o-list-row:hover { background: #EEF2FF; }
+.o-list-table tbody td { padding: 10px 14px; font-size: 13px; color: var(--text-600); vertical-align: middle; }
+.o-td-primary { font-weight: 600; color: var(--text-900, #0F172A); }
+.o-td-mono { font-family: 'SF Mono', 'Consolas', monospace; font-size: 12px; color: var(--text-600); }
+.o-td-amount { text-align: right; font-weight: 700; color: var(--text-800, #1E1B4B); font-family: 'Plus Jakarta Sans', sans-serif; }
+.o-td-muted { color: var(--text-400) !important; font-weight: 400 !important; }
+.o-chk { width: 14px; height: 14px; accent-color: var(--primary); cursor: pointer; }
+.o-list-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg-table-head, #F8FAFC);
+  border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text-400);
+}
+.o-list-count { font-size: 12px; color: var(--text-400); }
+
+/* ----- Badges ----- */
+.o-badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600;
+  white-space: nowrap; line-height: 1.4;
+}
+.o-badge-success { background: #D1FAE5; color: #065F46; }
+.o-badge-warn    { background: #FEF3C7; color: #92400E; }
+.o-badge-info    { background: #E0F2FE; color: #0C4A6E; }
+.o-badge-gray    { background: #F1F5F9; color: #475569; }
+.o-badge-danger  { background: #FEE2E2; color: #991B1B; }
+.o-badge-violet  { background: #F5F3FF; color: #5B21B6; }
+
+/* ----- Producto thumbnail ----- */
+.o-prod-thumb {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; color: rgba(255,255,255,.85);
+  flex-shrink: 0;
+}
+.o-prod-thumb-lg { width: 64px; height: 64px; border-radius: 14px; font-size: 28px; }
+
+/* ----- Kanban Grid (productos) ----- */
+.o-kanban-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 20px 24px;
+}
+.o-kanban-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 14px);
+  overflow: hidden;
+  cursor: pointer;
+  transition: var(--t2);
+  box-shadow: var(--shadow-sm);
+}
+.o-kanban-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: rgba(79,70,229,.3); }
+.o-kanban-img {
+  height: 120px;
+  display: flex; align-items: center; justify-content: center;
+}
+.o-kanban-body { padding: 12px 14px; }
+.o-kanban-title { font-size: 13px; font-weight: 700; color: var(--text-900); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.o-kanban-sub { font-size: 11px; color: var(--text-400); margin-bottom: 6px; }
+.o-kanban-price { font-size: 14px; font-weight: 800; color: var(--primary); font-family: 'Plus Jakarta Sans', sans-serif; }
+
+/* ----- Form Topbar & Sheet ----- */
+.o-form-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: var(--topbar-h, 60px);
+  z-index: 20;
+  gap: 12px;
+}
+.o-back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 6px 14px;
+  font-size: 13px; font-weight: 600; color: var(--text-600);
+  cursor: pointer; transition: var(--t1);
+}
+.o-back-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light, #EEF2FF); }
+.o-form-actions { display: flex; gap: 8px; }
+
+/* Smart buttons */
+.o-smart-buttons {
+  display: flex; gap: 12px;
+  padding: 12px 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.o-smart-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 14px);
+  background: var(--bg-card);
+  cursor: pointer; transition: var(--t2);
+  min-width: 80px;
+}
+.o-smart-btn:hover { border-color: var(--primary); background: var(--primary-light, #EEF2FF); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.o-smart-count { font-size: 22px; font-weight: 800; color: var(--primary); font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1; }
+.o-smart-label { font-size: 11px; color: var(--text-500); font-weight: 500; white-space: nowrap; }
+
+/* Form sheet */
+.o-form-sheet {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg, 14px);
+  margin: 20px 24px 0;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.o-sheet-header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.o-sheet-title-block { flex: 1; }
+.o-form-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 22px; font-weight: 800; color: var(--text-900); margin: 0;
+}
+.o-form-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0 32px;
+  padding: 16px 28px;
+}
+.o-form-col { padding: 4px 0; }
+.o-field-group { display: grid; grid-template-columns: 140px 1fr; align-items: start; padding: 6px 0; min-height: 34px; }
+.o-field-label { font-size: 12px; font-weight: 600; color: var(--text-400); padding-top: 3px; }
+.o-field-value { font-size: 13px; color: var(--text-900); }
+.o-field-mono { font-family: 'SF Mono', 'Consolas', monospace; font-size: 12px; }
+.o-field-price { font-weight: 700; color: var(--primary); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; }
+
+/* Notebook/Tabs */
+.o-notebook { border-top: 1px solid var(--border); }
+.o-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-app); padding: 0 24px; overflow-x: auto; }
+.o-tab {
+  padding: 12px 20px; border: none; background: transparent;
+  font-size: 13px; font-weight: 600; color: var(--text-400);
+  cursor: pointer; border-bottom: 3px solid transparent;
+  margin-bottom: -1px; transition: var(--t1); white-space: nowrap;
+}
+.o-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.o-tab:hover:not(.active) { color: var(--text-900); background: rgba(79,70,229,.04); }
+.o-tab-pane { padding: 20px 28px; }
+
+/* Empty state */
+.o-empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 12px;
+  padding: 64px 32px; color: var(--text-400);
+  font-size: 13px; text-align: center;
+}
+
+/* Form loading skeleton */
+.o-form-loading { padding: 40px; }
+
