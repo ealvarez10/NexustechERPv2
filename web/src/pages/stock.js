@@ -1,209 +1,244 @@
 import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
-import { fmt, fmtMxn, paginationHtml, skeletonTable, toast,
-         openDetailModal, detailRow, detailSection } from '../ui.js'
+import { fmtMxn, fmtDate, fmtNum, paginationHtml, skeletonTable, toast } from '../ui.js'
 import { api } from '../api.js'
 import { ajustarStock } from './forms/edit_forms.js'
 
-// Productos de sistema que no son del negocio — filtrar de la vista
-const SYSTEM_PRODUCTS = ['deposit', 'down payment', 'downpayment', 'pago inicial']
+/* ─── Estado ─── */
+let _currentPage = 1
+let _records     = []
+let _searchQuery = ''
 
-let _page = 1
-
+/* ═══════════════════════════════════════════════
+   ENTRY POINT
+   ═══════════════════════════════════════════════ */
 export async function renderStock() {
   ensureLayout()
-  setBreadcrumb([{label:'Dashboard',href:'dashboard'},{label:'Inventario'}])
-  _page = 1
-  await loadStock()
+  _currentPage = 1
+  _searchQuery = ''
+  setBreadcrumb([{ label: 'Inventario' }])
+  _renderControlPanel()
+  await _loadAndRender()
 }
 
-async function loadStock() {
+/* ═══════════════════════════════════════════════
+   CONTROL PANEL
+   ═══════════════════════════════════════════════ */
+function _renderControlPanel() {
   setPage(`
-  <div class="page-header anim-1">
-    <div>
-      <h1 class="page-title">Inventario</h1>
-      <p class="page-subtitle" id="stock-sub">Cargando…</p>
+  <div class="o-cp" id="stock-cp">
+    <div class="o-cp-left">
+      <button class="o-btn-primary" onclick="window._stockAjustarGlobal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ajustar Cantidad
+      </button>
     </div>
-    <div class="page-actions">
-      <input type="text" id="buscar-stock" class="search-input" placeholder="🔍 Buscar producto…" style="width:220px">
-      <button class="btn btn-secondary" id="btn-ajuste">📋 Ajuste</button>
-      <button class="btn btn-primary">+ Recepción</button>
-    </div>
-  </div>
-
-  <!-- KPI row -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px" id="kpi-row" class="anim-2">
-    ${[1,2,3,4].map(() => `<div class="data-card" style="padding:16px"><div class="skeleton" style="height:40px"></div></div>`).join('')}
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 340px;gap:16px" class="anim-3">
-    <!-- Tabla principal -->
-    <div class="data-card">
-      <div class="data-card-header">
-        <div class="data-card-title">Stock por Producto</div>
-        <select id="filtro-stock" class="search-input" style="width:160px;font-size:12px">
-          <option value="todos">Todos</option>
-          <option value="bajo">⚠️ Stock bajo</option>
-          <option value="ok">✅ Stock normal</option>
-        </select>
+    <div class="o-cp-center">
+      <div class="o-search-bar">
+        <svg class="o-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="o-search-stock" class="o-search-input" type="text" placeholder="Buscar producto o ubicación…" value="${_searchQuery}">
+        <div class="o-search-filters">
+          <button class="o-filter-btn" onclick="window._stockFiltro('bajo')" id="sf-bajo">Stock Bajo</button>
+          <button class="o-filter-btn" onclick="window._stockFiltro('cero')" id="sf-cero">En Cero</button>
+        </div>
       </div>
-      <div id="stock-tabla">${skeletonTable(8, 5)}</div>
     </div>
-
-    <!-- Panel stock bajo -->
-    <div class="data-card" style="padding:16px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-400);margin-bottom:12px">⚠️ Alertas de Stock Bajo</div>
-      <div id="stock-bajo-lista">${[1,2,3,4,5].map(() => `<div class="skeleton" style="height:36px;margin-bottom:8px;border-radius:8px"></div>`).join('')}</div>
+    <div class="o-cp-right">
+      <div class="o-view-switcher">
+        <button class="o-view-btn o-active" title="Vista Lista">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </button>
+      </div>
     </div>
+  </div>
+  <div id="stock-content" class="o-view-content">
+    ${skeletonTable(10, 5)}
   </div>`)
 
+  setTimeout(() => {
+    document.getElementById('o-search-stock')?.addEventListener('input', (e) => {
+      _searchQuery = e.target.value.toLowerCase()
+      _filterTableLocal()
+    })
+  }, 100)
+}
+
+function _filterTableLocal() {
+  document.querySelectorAll('#stock-content tbody tr').forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(_searchQuery) ? '' : 'none'
+  })
+}
+
+/* ═══════════════════════════════════════════════
+   LOAD & RENDER
+   ═══════════════════════════════════════════════ */
+async function _loadAndRender() {
   try {
-    const [kpisRes, stockRes, bajoRes] = await Promise.allSettled([
-      api.stockKpis(),
-      api.stock(_page),
-      api.stockBajo(),
-    ])
+    const res  = await api.stock(_currentPage)
+    _records   = res?.data || []
+    const hasMore = _records.length >= 20
 
-    // ─── KPIs ────────────────────────────────────────────────────────────────
-    const kpis = kpisRes.status === 'fulfilled' ? kpisRes.value?.data : null
-    const kpiRow = document.getElementById('kpi-row')
-    if (kpiRow && kpis) {
-      kpiRow.innerHTML = [
-        { label: 'Con stock',     val: kpis.total_productos_con_stock || 0, tipo:'num', color:'emerald', icon:'✅' },
-        { label: 'Sin stock',     val: kpis.total_sin_stock            || 0, tipo:'num', color:'red',     icon:'❌' },
-        { label: 'Valor Inventario', val: kpis.valor_inventario        || 0, tipo:'mxn', color:'indigo',  icon:'💰' },
-        { label: 'Alertas Bajo', val: kpis.alertas_stock_bajo          || 0, tipo:'num', color:'amber',   icon:'⚠️' },
-      ].map(k => `
-      <div class="data-card" style="padding:16px">
-        <div style="font-size:11px;color:var(--text-400);font-weight:600;margin-bottom:4px">${k.icon} ${k.label}</div>
-        <div style="font-size:22px;font-weight:800;color:var(--text-900)">
-          ${k.tipo === 'mxn' ? fmtMxn(parseFloat(k.val)) : Number(k.val).toLocaleString('es-MX')}
+    const el = document.getElementById('stock-content')
+    if (!el) return
+    el.innerHTML = _renderList(_records, hasMore)
+  } catch (err) {
+    console.error(err)
+    toast('Error', err.message, 'error')
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   VISTA LISTA
+   ═══════════════════════════════════════════════ */
+function _renderList(records, hasMore) {
+  if (!records.length) return `
+    <div class="o-empty-state">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity=".3"><path d="M5 8h14M5 8a2 2 0 1 0 0-4h14a2 2 0 1 0 0 4M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8m-9 4h4"/></svg>
+      <p>Sin registros de inventario</p>
+    </div>`
+
+  return `
+  <div class="o-list-view">
+    <table class="o-list-table">
+      <thead>
+        <tr>
+          <th class="o-list-chk"><input type="checkbox" class="o-chk" onclick="window._chkAllStock(this)"></th>
+          <th class="o-col-sortable">Producto</th>
+          <th>Ubicación</th>
+          <th class="o-col-right o-col-sortable">Disponible</th>
+          <th class="o-col-right">Reservado</th>
+          <th>Unidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${records.map(s => {
+          const qty     = parseFloat(s.cantidad_disponible ?? s.qty_available ?? 0)
+          const res     = parseFloat(s.cantidad_reservada  ?? s.reserved_qty  ?? 0)
+          const qtyColor= qty <= 0 ? '#ef4444' : qty < 10 ? '#f59e0b' : '#10b981'
+          const nombre  = s.product_name || s.nombre || `Producto #${s.product_id || s.id}`
+          const loc     = s.ubicacion || s.location || 'WH/Stock'
+          const uom     = s.uom_name  || s.unidad  || 'Unidades'
+          return `
+          <tr class="o-list-row" onclick="window._verStockItem(${s.product_id || s.id})">
+            <td class="o-list-chk"><input type="checkbox" class="o-chk" onclick="event.stopPropagation()"></td>
+            <td class="o-td-primary">${nombre}</td>
+            <td class="o-td-muted">${loc}</td>
+            <td class="o-td-amount" style="color:${qtyColor};font-weight:700">${fmtNum(qty)}</td>
+            <td class="o-td-amount o-td-muted">${fmtNum(res)}</td>
+            <td class="o-td-muted">${uom}</td>
+          </tr>`
+        }).join('')}
+      </tbody>
+    </table>
+    <div class="o-list-footer">
+      <span class="o-list-count">${records.length} producto${records.length !== 1 ? 's' : ''}</span>
+      ${paginationHtml(_currentPage, hasMore, (p) => { _currentPage = p; _loadAndRender() })}
+    </div>
+  </div>`
+}
+
+/* ═══════════════════════════════════════════════
+   VISTA FORMULARIO  (detalle de stock)
+   ═══════════════════════════════════════════════ */
+window._verStockItem = async (productId) => {
+  setBreadcrumb([
+    { label: 'Inventario', onclick: () => renderStock() },
+    { label: 'Detalle de stock', id: 'bc-stock-name' }
+  ])
+  setPage(`<div class="o-form-loading">${skeletonTable(3, 3)}</div>`)
+
+  try {
+    const res   = await api.stockProducto(productId)
+    const arr   = Array.isArray(res?.data) ? res.data : (res?.data ? [res.data] : [])
+    const main  = arr[0] || {}
+    const qty   = parseFloat(main.cantidad_disponible ?? 0)
+    const res2  = parseFloat(main.cantidad_reservada  ?? 0)
+    const total_val = qty * parseFloat(main.valor_unitario || 0)
+    const nombre = main.product_name || `Producto #${productId}`
+
+    const bcEl = document.getElementById('bc-stock-name')
+    if (bcEl) bcEl.textContent = nombre
+
+    const qtyColor = qty <= 0 ? '#ef4444' : qty < 10 ? '#f59e0b' : '#10b981'
+
+    setPage(`
+    <div class="o-form-topbar">
+      <button class="o-back-btn" onclick="window._stockBack()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Inventario
+      </button>
+      <div class="o-form-actions">
+        <button class="o-btn-primary" onclick="window._ajustarStockForm(${productId})">Ajustar Cantidad</button>
+      </div>
+    </div>
+
+    <div class="o-smart-buttons">
+      <button class="o-smart-btn">
+        <span class="o-smart-count" style="color:${qtyColor}">${fmtNum(qty)}</span>
+        <span class="o-smart-label">Disponible</span>
+      </button>
+      <button class="o-smart-btn">
+        <span class="o-smart-count">${fmtNum(res2)}</span>
+        <span class="o-smart-label">Reservado</span>
+      </button>
+    </div>
+
+    <div class="o-form-sheet">
+      <div class="o-sheet-header">
+        <div class="o-sheet-title-block">
+          <h1 class="o-form-title">${nombre}</h1>
         </div>
-      </div>`).join('')
-    }
+      </div>
 
-    // ─── Tabla principal ─────────────────────────────────────────────────────
-    const allItems = stockRes.status === 'fulfilled' ? (stockRes.value?.data || []) : []
-    // Filtrar productos del sistema (Deposit, Down Payment, etc.)
-    const items = allItems.filter(s => {
-      const name = (s.product_name || '').toLowerCase()
-      return !SYSTEM_PRODUCTS.some(sp => name.includes(sp))
-    })
-    const hasMore = allItems.length >= 20
+      <div class="o-form-grid">
+        <div class="o-form-col">
+          <div class="o-field-group"><label class="o-field-label">Producto</label><div class="o-field-value">${nombre}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Ubicación</label><div class="o-field-value">${main.ubicacion || 'WH/Stock'}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Cantidad Disponible</label><div class="o-field-value" style="color:${qtyColor};font-weight:700;font-size:20px">${fmtNum(qty)}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Cantidad Reservada</label><div class="o-field-value">${fmtNum(res2)}</div></div>
+        </div>
+        <div class="o-form-col">
+          <div class="o-field-group"><label class="o-field-label">Unidad de Medida</label><div class="o-field-value">${main.uom_name || main.unidad || 'Unidades'}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Valor Unitario</label><div class="o-field-value">${fmtMxn(parseFloat(main.valor_unitario || 0))}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Valor Total</label><div class="o-field-value o-field-price">${fmtMxn(total_val)}</div></div>
+        </div>
+      </div>
 
-    const sub = document.getElementById('stock-sub')
-    if (sub) sub.textContent = `${items.length} productos · Página ${_page}`
+      <div class="o-notebook">
+        <div class="o-tabs">
+          <button class="o-tab active">Movimientos</button>
+        </div>
+        <div class="o-tab-pane">
+          <div class="o-empty-state" style="padding:32px 0">
+            <p style="color:var(--o-text-secondary)">Historial de movimientos de inventario — próximamente</p>
+          </div>
+        </div>
+      </div>
+    </div>`)
 
-    const tablaEl = document.getElementById('stock-tabla')
-    if (tablaEl) {
-      if (items.length === 0) {
-        tablaEl.innerHTML = '<p style="text-align:center;padding:32px;color:var(--text-400)">Sin datos de stock</p>'
-      } else {
-        tablaEl.innerHTML = `
-        <table class="data-table">
-          <thead><tr>
-            <th>Producto</th>
-            <th>Disponible</th>
-            <th>Reservado</th>
-            <th>Ubicación</th>
-            <th>Estado</th>
-          </tr></thead>
-          <tbody>
-            ${items.map(s => {
-              const qty = parseFloat(s.cantidad_disponible || 0)
-              const reservado = parseFloat(s.cantidad_reservada || 0)
-              const color = qty <= 0 ? 'red' : qty < 10 ? 'amber' : 'emerald'
-              const estado = qty <= 0 ? '❌ Sin stock' : qty < 10 ? '⚠️ Stock bajo' : '✅ Normal'
-              return `
-              <tr data-alerta="${qty < 10 ? 'bajo' : 'ok'}" style="cursor:pointer" onclick="window._verStock(${s.product_id})" title="Ver detalle">
-                <td class="td-primary">${s.product_name || `Producto #${s.product_id}`}</td>
-                <td><span class="badge badge-${color}">${fmt(qty, 0)}</span></td>
-                <td style="color:var(--text-400)">${fmt(reservado, 0)}</td>
-                <td class="td-mono" style="font-size:11px">${s.ubicacion || '—'}</td>
-                <td><span class="badge badge-${color}">${estado}</span></td>
-              </tr>`
-            }).join('')}
-          </tbody>
-        </table>
-        ${paginationHtml(_page, hasMore, (p) => { _page = p; loadStock() })}`
-      }
-    }
-
-    // ─── Panel stock bajo ─────────────────────────────────────────────────────
-    const bajo = bajoRes.status === 'fulfilled' ? (bajoRes.value?.data || []) : []
-    const bajoEl = document.getElementById('stock-bajo-lista')
-    if (bajoEl) {
-      if (bajo.length === 0) {
-        bajoEl.innerHTML = '<p style="color:var(--emerald);font-size:13px;text-align:center;padding:16px">✅ Todo en niveles normales</p>'
-      } else {
-        bajoEl.innerHTML = bajo.map(s => {
-          const qty = parseFloat(s.cantidad_disponible || 0)
-          const color = qty <= 0 ? 'red' : 'amber'
-          return `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-            <div>
-              <div style="font-size:12.5px;font-weight:600;color:var(--text-700)">${(s.product_name || `#${s.product_id}`).substring(0,28)}</div>
-            </div>
-            <span class="badge badge-${color}">${qty}</span>
-          </div>`
-        }).join('')
-      }
-    }
-
-    // Filtros
-    document.getElementById('buscar-stock')?.addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase()
-      document.querySelectorAll('#stock-tabla tbody tr').forEach(row => {
-        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none'
-      })
-    })
-
-    document.getElementById('filtro-stock')?.addEventListener('change', (e) => {
-      const val = e.target.value
-      document.querySelectorAll('#stock-tabla tbody tr').forEach(row => {
-        if (val === 'todos') { row.style.display = ''; return }
-        const alerta = row.dataset.alerta
-        row.style.display = alerta === val ? '' : 'none'
-      })
-    })
-
-    // Ver detalle del stock por producto
-    window._verStock = (productId) => {
-      openDetailModal(
-        'Detalle de Stock',
-        () => api.stockProducto(productId),
-        (data) => {
-          const arr = Array.isArray(data) ? data : [data]
-          const main = arr[0] || {}
-          const qty = parseFloat(main.cantidad_disponible || 0)
-          const res = parseFloat(main.cantidad_reservada || 0)
-          const color = qty <= 0 ? 'var(--red)' : qty < 10 ? 'var(--warning)' : 'var(--success)'
-          return `
-          ${detailSection('Producto', [
-            detailRow('Nombre', main.product_name || `#${productId}`),
-            detailRow('Cantidad disponible', `<strong style="color:${color}">${fmt(qty, 2)}</strong>`),
-            detailRow('Cantidad reservada', fmt(res, 2)),
-            detailRow('Cantidad neta', fmt(qty - res, 2)),
-          ].join(''))}
-          ${arr.length > 1 ? detailSection('Por ubicación', arr.map(s =>
-            detailRow(s.ubicacion || 'Sin ubicación', fmt(parseFloat(s.cantidad_disponible || 0), 2))
-          ).join('')) : detailSection('Ubicación', [
-            detailRow('Almacén', main.ubicacion || 'Sin ubicación'),
-          ].join(''))}
-          <div style="display:flex;gap:10px;margin-top:16px">
-            <button class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cerrar</button>
-            <button class="btn btn-primary btn-sm" onclick="window._ajustarStockFn(${main.product_id ?? productId})">📋 Ajustar</button>
-          </div>`
-        }
-      )
-    }
-
-    window._ajustarStockFn = (productId) => {
-      const s = items.find(x => x.product_id === productId)
-      if (s) ajustarStock(s, () => loadStock())
+    window._ajustarStockForm = (pid) => {
+      const s = _records.find(x => (x.product_id || x.id) === pid)
+      if (s) ajustarStock(s, () => window._verStockItem(pid))
+      else ajustarStock({ product_id: pid, product_name: nombre }, () => window._verStockItem(pid))
     }
 
   } catch (err) {
     console.error(err)
-    toast('Error al cargar inventario', err.message, 'error')
+    toast('Error', err.message, 'error')
   }
 }
+
+/* ═══════════════════════════════════════════════
+   GLOBAL HANDLERS
+   ═══════════════════════════════════════════════ */
+window._stockBack          = () => renderStock()
+window._stockAjustarGlobal = () => alert('Selecciona un producto para ajustar')
+window._stockFiltro        = (f) => {
+  // local filter
+  document.querySelectorAll('#stock-content tbody tr').forEach(r => {
+    const qty = parseFloat(r.querySelector('td:nth-child(4)')?.textContent || '0')
+    if      (f === 'bajo') r.style.display = qty < 10 ? '' : 'none'
+    else if (f === 'cero') r.style.display = qty <= 0 ? '' : 'none'
+    else                   r.style.display = ''
+  })
+}
+window._chkAllStock = (master) => document.querySelectorAll('#stock-content .o-chk').forEach(c => c.checked = master.checked)
