@@ -7,6 +7,7 @@
 use sqlx::PgPool;
 use crate::models::{ResPartner, ResPartnerSummary};
 use crate::error::CoreError;
+use serde::{Deserialize, Serialize};
 
 // ─── Listado y búsqueda ──────────────────────────────────────────────────────
 
@@ -22,8 +23,10 @@ pub async fn listar(
     let registros = sqlx::query_as::<_, ResPartnerSummary>(
         r#"
         SELECT
-            id, name, email, phone, vat,
-            is_company, customer_rank, supplier_rank, active, city, country_id
+            id, name, email, phone, vat, is_company, company_name,
+            customer_rank, supplier_rank, active, city, zip, street, street2,
+            website, country_id, user_id,
+            property_payment_term_id
         FROM res_partner
         WHERE (company_id = $1 OR company_id IS NULL)
           AND active = true
@@ -65,8 +68,10 @@ pub async fn buscar(
     let registros = sqlx::query_as::<_, ResPartnerSummary>(
         r#"
         SELECT
-            id, name, email, phone, vat,
-            is_company, customer_rank, supplier_rank, active, city, country_id
+            id, name, email, phone, vat, is_company, company_name,
+            customer_rank, supplier_rank, active, city, zip, street, street2,
+            website, country_id, user_id,
+            property_payment_term_id
         FROM res_partner
         WHERE (company_id = $1 OR company_id IS NULL)
           AND active = true
@@ -95,8 +100,10 @@ pub async fn buscar(
 pub async fn obtener_resumen(pool: &PgPool, id: i32) -> Result<ResPartnerSummary, CoreError> {
     let partner = sqlx::query_as::<_, ResPartnerSummary>(
         r#"
-        SELECT id, name, email, phone, vat,
-               is_company, customer_rank, supplier_rank, active, city, country_id
+        SELECT id, name, email, phone, vat, is_company, company_name,
+               customer_rank, supplier_rank, active, city, zip, street, street2,
+               website, country_id, user_id,
+               property_payment_term_id
         FROM res_partner
         WHERE id = $1
         "#,
@@ -120,8 +127,10 @@ pub async fn listar_clientes(
 
     let registros = sqlx::query_as::<_, ResPartnerSummary>(
         r#"
-        SELECT id, name, email, phone, vat,
-               is_company, customer_rank, supplier_rank, active, city, country_id
+        SELECT id, name, email, phone, vat, is_company, company_name,
+               customer_rank, supplier_rank, active, city, zip, street, street2,
+               website, country_id, user_id,
+               property_payment_term_id
         FROM res_partner
         WHERE (company_id = $1 OR company_id IS NULL) AND active = true AND customer_rank > 0
         ORDER BY customer_rank DESC, name ASC
@@ -148,8 +157,10 @@ pub async fn listar_proveedores(
 
     let registros = sqlx::query_as::<_, ResPartnerSummary>(
         r#"
-        SELECT id, name, email, phone, vat,
-               is_company, customer_rank, supplier_rank, active, city, country_id
+        SELECT id, name, email, phone, vat, is_company, company_name,
+               customer_rank, supplier_rank, active, city, zip, street, street2,
+               website, country_id, user_id,
+               property_payment_term_id
         FROM res_partner
         WHERE (company_id = $1 OR company_id IS NULL) AND active = true AND supplier_rank > 0
         ORDER BY supplier_rank DESC, name ASC
@@ -173,8 +184,10 @@ pub async fn obtener_por_rfc(
 ) -> Result<Option<ResPartnerSummary>, CoreError> {
     let partner = sqlx::query_as::<_, ResPartnerSummary>(
         r#"
-        SELECT id, name, email, phone, vat,
-               is_company, customer_rank, supplier_rank, active, city, country_id
+        SELECT id, name, email, phone, vat, is_company, company_name,
+               customer_rank, supplier_rank, active, city, zip, street, street2,
+               website, country_id, user_id,
+               property_payment_term_id
         FROM res_partner
         WHERE company_id = $1 AND active = true AND UPPER(vat) = UPPER($2)
         LIMIT 1
@@ -191,7 +204,7 @@ pub async fn obtener_por_rfc(
 // ─── Escritura ───────────────────────────────────────────────────────────────
 
 /// Datos para crear un nuevo contacto
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NuevoPartner {
     pub company_id: i32,
     pub name: String,

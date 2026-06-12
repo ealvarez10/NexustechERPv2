@@ -52,7 +52,7 @@ pub struct ResPartner {
     pub property_supplier_payment_term_id: Option<serde_json::Value>,
 }
 
-/// Vista simplificada para listados (evita cargar los 77 campos)
+/// Vista de contacto — campos suficientes para listados Y formularios
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ResPartnerSummary {
     pub id: i32,
@@ -61,11 +61,19 @@ pub struct ResPartnerSummary {
     pub phone: Option<String>,
     pub vat: Option<String>,
     pub is_company: Option<bool>,
+    pub company_name: Option<String>,
     pub customer_rank: Option<i32>,
     pub supplier_rank: Option<i32>,
     pub active: Option<bool>,
     pub city: Option<String>,
+    pub zip: Option<String>,
+    pub street: Option<String>,
+    pub street2: Option<String>,
+    pub website: Option<String>,
     pub country_id: Option<i32>,
+    pub user_id: Option<i32>,
+    // property_payment_term_id es JSONB en la DB (almacena [id, name] de Odoo)
+    pub property_payment_term_id: Option<serde_json::Value>,
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -252,7 +260,7 @@ pub struct AccountMove {
     pub amount_total_signed:    Option<Decimal>,
     pub amount_residual_signed: Option<Decimal>,
     /// Tasa de cambio — nombre real en la tabla es `invoice_currency_rate`
-    pub invoice_currency_rate:  Option<f64>,
+    pub invoice_currency_rate:  Option<rust_decimal::Decimal>,
     // Booleanos
     pub always_tax_exigible: Option<bool>,
     pub checked:             Option<bool>,
