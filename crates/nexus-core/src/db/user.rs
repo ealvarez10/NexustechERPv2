@@ -58,14 +58,14 @@ pub async fn autenticar(
 ) -> Result<DatosUsuario, CoreError> {
     // Query simple: buscar usuario por login
     // Evitamos alias de tabla para compatibilidad con prepared statements
-    let row: Option<(i32, i32, i32, Option<String>)> = sqlx::query_as(
-        "SELECT id, company_id, partner_id, password FROM res_users WHERE active = true AND login = $1 LIMIT 1"
+    let row: Option<(i32, i32, i32, Option<String>, Option<Vec<String>>)> = sqlx::query_as(
+        "SELECT id, company_id, partner_id, password, nexus_roles FROM res_users WHERE active = true AND login = $1 LIMIT 1"
     )
     .bind(login_input)
     .fetch_optional(pool)
     .await?;
 
-    let (user_id, company_id, partner_id, hash_opt) = row
+    let (user_id, company_id, partner_id, hash_opt, roles_opt) = row
         .ok_or_else(|| CoreError::Auth("Credenciales incorrectas".into()))?;
 
     let hash = hash_opt.as_deref().unwrap_or("");
@@ -87,11 +87,16 @@ pub async fn autenticar(
     .await?
     .flatten();
 
+    let mut roles = roles_opt.unwrap_or_default();
+    if roles.is_empty() {
+        roles.push("nexus.user".into());
+    }
+
     Ok(DatosUsuario {
         user_id,
         company_id,
         email: email.unwrap_or_else(|| login_input.to_string()),
-        roles: vec!["nexus.user".into()],
+        roles,
     })
 }
 

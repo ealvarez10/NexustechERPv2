@@ -15,6 +15,9 @@ nexus-inventory = { path = "../crates/nexus-inventory" }
 nexus-ledger    = { path = "../crates/nexus-ledger" }
 nexus-sale      = { path = "../crates/nexus-sale" }
 nexus-search    = { path = "../crates/nexus-search" }
+nexus-orm       = { path = "../crates/nexus-orm" }
+nexus-py        = { path = "../crates/nexus-py" }
+nexus-mercadily = { path = "../crates/nexus-mercadily" }
 
 axum            = { workspace = true }
 tokio           = { workspace = true }

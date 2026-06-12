@@ -111,4 +111,14 @@ export const api = {
   putCompra:   (id, data) => req('PUT', `/compras/${id}`,   data),
   putEmpleado: (id, data) => req('PUT', `/nomina/${id}`,    data),
   ajusteStock: (productId, data) => req('PUT', `/stock/${productId}/ajuste`, data),
+
+  // Account Moves — Contabilidad
+  accountMoves:       (params = {}) => req('GET', `/account-moves?${new URLSearchParams(params)}`),
+  accountMovesKpis:   ()           => req('GET', '/account-moves/kpis'),
+  accountMove:        (id)         => req('GET', `/account-moves/${id}`),
+  accountMoveLineas:  (id)         => req('GET', `/account-moves/${id}/lineas`),
+  accountConfirmar:   (id)         => req('PUT', `/account-moves/${id}/confirmar`, {}),
+  accountBorrador:    (id)         => req('PUT', `/account-moves/${id}/borrador`, {}),
+  accountCancelar:    (id)         => req('PUT', `/account-moves/${id}/cancelar`, {}),
+  accountCrear:       (data)       => req('POST', '/account-moves', data),
 }

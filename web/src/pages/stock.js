@@ -242,3 +242,146 @@ window._stockFiltro        = (f) => {
   })
 }
 window._chkAllStock = (master) => document.querySelectorAll('#stock-content .o-chk').forEach(c => c.checked = master.checked)
+
+/* ═══════════════════════════════════════════════
+   VISTA ORDEN DE ENTREGA (stock.picking)
+   Igual que Odoo: formulario completo con cabecera, líneas y botón Validar
+   ═══════════════════════════════════════════════ */
+export async function _renderPicking(pickingId, saleId) {
+  ensureLayout()
+  setBreadcrumb([
+    { label: 'Ventas', onclick: () => window._go(saleId ? `ventas?id=${saleId}` : 'ventas') },
+    { label: 'Entrega' }
+  ])
+  setPage(`<div class="o-form-loading">${skeletonTable(5, 4)}</div>`)
+
+  try {
+    const res = await api.get(`/picking/${pickingId}`)
+    const d = res?.data
+    if (!d) { setPage(`<div class="o-empty-state"><p>Entrega no encontrada</p></div>`); return }
+
+    const p     = d.picking
+    const moves = d.moves || []
+
+    const STATE_LABEL = { draft:'Borrador', ready:'Listo', done:'Hecho', cancel:'Cancelado' }
+    const STATE_BADGE = { draft:'o-badge-gray', ready:'o-badge-info', done:'o-badge-success', cancel:'o-badge-danger' }
+    const isDone = p.state === 'done'
+
+    setPage(`<div class="nx-module-page" style="background:var(--bg-app)">
+
+    <!-- Control Panel -->
+    <div class="o-cp">
+      <div class="o-cp-left">
+        <button class="o-back-btn" onclick="window._go('${saleId ? `ventas?id=${saleId}` : 'ventas'}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          ${saleId ? 'Volver al Pedido' : 'Inventario'}
+        </button>
+      </div>
+      <div class="o-cp-center"></div>
+      <div class="o-cp-right">
+        ${!isDone ? `
+        <button class="o-btn-primary" id="btn-validar-picking" onclick="window._validarPicking(${pickingId})" style="background:#10B981">
+          ✓ Validar Entrega
+        </button>` : ''}
+        ${saleId ? `<button class="o-btn-secondary" onclick="window._go('ventas?id=${saleId}')">Volver al Pedido</button>` : ''}
+      </div>
+    </div>
+
+    <!-- Barra de estado -->
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 24px;background:var(--bg-card);border-bottom:1px solid var(--border)">
+      ${['Listo','En proceso','Hecho'].map((s, i) => {
+        const currentIdx = p.state === 'done' ? 2 : 0
+        const isDoneStep = i < currentIdx
+        const isActive   = i === currentIdx
+        return `
+        ${i > 0 ? '<span style="color:var(--text-300);font-size:14px;margin:0 2px">›</span>' : ''}
+        <button style="padding:6px 16px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:default;
+          ${isActive ? 'background:var(--primary);color:#fff;' : ''}
+          ${isDoneStep ? 'color:var(--primary);opacity:.6;background:transparent;' : ''}
+          ${!isActive && !isDoneStep ? 'color:var(--text-400);background:transparent;' : ''}
+        ">${isDoneStep ? '✓ ' : ''}${s}</button>`
+      }).join('')}
+    </div>
+
+    <!-- Smart Buttons -->
+    <div style="display:flex;gap:10px;padding:10px 24px;background:var(--bg-card);border-bottom:1px solid var(--border)">
+      <button style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 18px;border:1px solid var(--border);border-radius:10px;background:var(--bg-card);min-width:80px;cursor:default">
+        <span style="font-size:20px;font-weight:800;color:var(--primary)">${moves.length}</span>
+        <span style="font-size:11px;color:var(--text-500)">Productos</span>
+      </button>
+    </div>
+
+    <!-- Formulario -->
+    <div style="background:var(--bg-card);border-radius:12px;margin:16px 20px 0;border:1px solid var(--border);overflow:hidden">
+      <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border)">
+        <h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:var(--text-900);margin:0 0 6px">${p.name}</h1>
+        <span class="o-badge ${STATE_BADGE[p.state]||'o-badge-gray'}">${STATE_LABEL[p.state]||p.state}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 32px;padding:16px 24px">
+        <div>
+          <div class="o-field-group"><label class="o-field-label">Contacto</label><div class="o-field-value">${p.partner_name||'—'}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Origen</label><div class="o-field-value">${p.origin||'—'}</div></div>
+        </div>
+        <div>
+          <div class="o-field-group"><label class="o-field-label">Fecha Programada</label><div class="o-field-value">${fmtDate(p.scheduled_date)}</div></div>
+          ${p.date_done ? `<div class="o-field-group"><label class="o-field-label">Fecha de Validación</label><div class="o-field-value">${fmtDate(p.date_done)}</div></div>` : ''}
+        </div>
+      </div>
+
+      <div style="padding:0 24px 20px">
+        <h3 style="font-size:13px;font-weight:700;color:var(--text-600);text-transform:uppercase;letter-spacing:.06em;margin:0 0 12px">Operaciones Detalladas</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:var(--bg-app)">
+              <th style="padding:8px 12px;text-align:left;font-weight:600;color:var(--text-600);border-bottom:1px solid var(--border)">PRODUCTO</th>
+              <th style="padding:8px 12px;text-align:center;font-weight:600;color:var(--text-600);border-bottom:1px solid var(--border)">DEMANDA</th>
+              <th style="padding:8px 12px;text-align:center;font-weight:600;color:var(--text-600);border-bottom:1px solid var(--border)">HECHO</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${moves.map(m => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:10px 12px;font-weight:500">${m.product_name||m.name||'—'}</td>
+              <td style="padding:10px 12px;text-align:center">${parseFloat(m.product_uom_qty||0)}</td>
+              <td style="padding:10px 12px;text-align:center">
+                ${isDone
+                  ? `<span style="color:#10B981;font-weight:700">${parseFloat(m.quantity_done||0)}</span>`
+                  : `<input type="number" id="move-qty-${m.id}" value="${parseFloat(m.product_uom_qty||0)}" min="0" max="${parseFloat(m.product_uom_qty||0)}"
+                       style="width:80px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;text-align:center;font-size:13px">`
+                }
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="height:40px"></div>
+  </div>`)
+
+    window._validarPicking = async (pid) => {
+      const btn = document.getElementById('btn-validar-picking')
+      if (btn) btn.disabled = true
+      const moves_payload = moves.map(m => {
+        const inp = document.getElementById(`move-qty-${m.id}`)
+        const qty = parseFloat(inp?.value ?? m.product_uom_qty ?? 0)
+        return [m.id, qty]
+      })
+      try {
+        await api.put(`/picking/${pid}/validar`, { moves: moves_payload })
+        toast('Entrega validada', '✅ Los productos han sido entregados y el stock actualizado', 'success')
+        setTimeout(() => {
+          if (saleId) window._go(`ventas?id=${saleId}`)
+          else renderStock()
+        }, 1200)
+      } catch (e) {
+        if (btn) btn.disabled = false
+        toast('Error', e.message, 'error')
+      }
+    }
+
+  } catch (err) {
+    console.error(err)
+    toast('Error', err.message, 'error')
+  }
+}

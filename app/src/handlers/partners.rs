@@ -72,3 +72,14 @@ pub async fn proveedores(
         Err(e) => from_core_error(e).into_response(),
     }
 }
+
+pub async fn crear(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<JwtClaims>,
+    axum::extract::Json(payload): axum::extract::Json<nexus_core::db::partner::NuevoPartner>,
+) -> impl IntoResponse {
+    match db::crear(&state.db, &payload).await {
+        Ok(id) => api::ok(id).into_response(),
+        Err(e) => from_core_error(e).into_response(),
+    }
+}

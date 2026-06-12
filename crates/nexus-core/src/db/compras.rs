@@ -1,9 +1,15 @@
 //! Compras — Órdenes de compra (purchase_order)
 
 use sqlx::PgPool;
-use serde::Serialize;
 use rust_decimal::Decimal;
 use crate::error::CoreError;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct NuevaCompra {
+    pub partner_id: i32,
+    pub date_order: Option<String>,
+}
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct PurchaseOrderLine {
@@ -154,4 +160,44 @@ pub async fn obtener_lineas(pool: &PgPool, order_id: i32) -> Result<Vec<Purchase
     .fetch_all(pool)
     .await?;
     Ok(lineas)
+}
+
+/// Crea una nueva orden de compra
+pub async fn crear(pool: &PgPool, company_id: i32, datos: NuevaCompra) -> Result<i32, CoreError> {
+    let row: (i32,) = sqlx::query_as(
+        r#"
+        INSERT INTO purchase_order (
+            company_id, partner_id, name, state, date_order,
+            create_date, write_date, currency_id
+        ) VALUES (
+            $1, $2, 'PO-NUEVA', 'draft', COALESCE($3::timestamp, NOW()),
+            NOW(), NOW(), 1
+        )
+        RETURNING id
+        "#,
+    )
+    .bind(company_id)
+    .bind(datos.partner_id)
+    .bind(datos.date_order)
+    .fetch_one(pool)
+    .await?;
+    Ok(row.0)
+}
+
+/// Cambia el estado de la compra a confirmado
+pub async fn confirmar(pool: &PgPool, id: i32) -> Result<(), CoreError> {
+    sqlx::query("UPDATE purchase_order SET state = 'purchase', write_date = NOW() WHERE id = $1")
+        .bind(id)
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
+/// Cambia el estado de la compra a pagado (done)
+pub async fn pagar(pool: &PgPool, id: i32) -> Result<(), CoreError> {
+    sqlx::query("UPDATE purchase_order SET state = 'done', write_date = NOW() WHERE id = $1")
+        .bind(id)
+        .execute(pool)
+        .await?;
+    Ok(())
 }

@@ -3,85 +3,93 @@ import { auth } from '../auth.js'
 import { go } from '../router.js'
 
 export function renderLogin() {
-  // Remove existing shell if present
   const shell = document.getElementById('__shell')
   if (shell) shell.remove()
 
   document.getElementById('app').innerHTML = `
-  <div class="login-bg">
-    <!-- Panel izquierdo: branding -->
+  <div class="login-bg odoo-login">
+    <!-- Panel Izquierdo -->
     <div class="login-left">
-      <div class="login-left-content">
-        <div style="font-size:52px;margin-bottom:16px">⚡</div>
-        <div class="login-product-name">NexusTech ERP</div>
-        <div class="login-product-tagline">Sistema de gestión empresarial de ultra alta velocidad. Construido en Rust.</div>
+      <div class="login-brand">
+        <span class="brand-n">NexusTech</span>
+      </div>
+      <h1 class="login-hero-title">Gestión empresarial<br><span class="highlight">sin fricciones</span></h1>
+      <p class="login-hero-desc">
+        Inventario, ventas, facturación y más — todo desde<br>
+        una interfaz ultra rápida construida en Rust.
+      </p>
 
-        <div class="login-features">
-          <div class="login-feature">
-            <div class="feature-icon" style="background:rgba(129,140,248,0.15)">🧾</div>
-            <div>
-              <div style="color:white;font-weight:600;margin-bottom:2px">CFDI 4.0 nativo</div>
-              <div>Timbrado, cancelación y representación impresa</div>
-            </div>
+      <div class="login-features-list">
+        <div class="feat-item">
+          <div class="feat-icon" style="color: #A78BFA; background: rgba(167, 139, 250, 0.1);">🛡️</div>
+          <div>
+            <strong>Acceso seguro</strong>
+            <p>Sesión cifrada extremo a extremo</p>
           </div>
-          <div class="login-feature">
-            <div class="feature-icon" style="background:rgba(16,185,129,0.15)">📦</div>
-            <div>
-              <div style="color:white;font-weight:600;margin-bottom:2px">Inventario en tiempo real</div>
-              <div>Stock, ubicaciones y alertas automáticas</div>
-            </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon" style="color: #60A5FA; background: rgba(96, 165, 250, 0.1);">⚡</div>
+          <div>
+            <strong>Velocidad nativa</strong>
+            <p>Respuestas en < 50 ms con Rust</p>
           </div>
-          <div class="login-feature">
-            <div class="feature-icon" style="background:rgba(245,158,11,0.15)">👔</div>
-            <div>
-              <div style="color:white;font-weight:600;margin-bottom:2px">Nómina mexicana</div>
-              <div>IMSS, Infonavit e ISR 2024 calculados automáticamente</div>
-            </div>
-          </div>
-          <div class="login-feature">
-            <div class="feature-icon" style="background:rgba(6,182,212,0.15)">🔍</div>
-            <div>
-              <div style="color:white;font-weight:600;margin-bottom:2px">NexusSearch</div>
-              <div>Búsqueda instantánea en millones de productos</div>
-            </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon" style="color: #A78BFA; background: rgba(167, 139, 250, 0.1);">⊞</div>
+          <div>
+            <strong>ERP completo</strong>
+            <p>Todos los módulos integrados</p>
           </div>
         </div>
       </div>
+
+      <div class="login-stats">
+        <div class="stat-box"><strong>40k+</strong><p>Productos</p></div>
+        <div class="stat-box"><strong>100</strong><p>PageSpeed</p></div>
+        <div class="stat-box"><strong><50ms</strong><p>Respuesta</p></div>
+      </div>
     </div>
 
-    <!-- Panel derecho: formulario -->
+    <!-- Panel Derecho -->
     <div class="login-right">
-      <div class="login-form-wrap">
-        <div class="login-logo">
-          <div class="login-logo-icon">N</div>
-          <div>
-            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;color:#1E1B4B">NexusTech</div>
-            <div style="font-size:11px;color:#9CA3AF;font-weight:500">ERP v2.0</div>
+      <div class="login-card">
+        <div class="tag-portal">● PORTAL DE CLIENTES</div>
+        <h2>Bienvenido</h2>
+        <p class="subtitle">Ingresa tus credenciales para continuar</p>
+
+        <div class="form-group">
+          <label>Correo electrónico</label>
+          <div class="input-wrap">
+            <span class="input-icon">✉️</span>
+            <input type="text" id="lu" placeholder="ealvarez@nexustechnologies.com.mx">
+            <span class="input-icon-right" style="color:#A78BFA;">◈</span>
           </div>
         </div>
 
-        <h1 class="login-title">Iniciar sesión</h1>
-        <p class="login-sub">Accede a tu cuenta empresarial</p>
-
         <div class="form-group">
-          <label class="form-label" for="lu">Usuario o correo electrónico</label>
-          <input class="form-control" id="lu" type="text" placeholder="admin  o  usuario@empresa.mx" autocomplete="username">
+          <label>Contraseña</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="lp" placeholder="•••••••••••••">
+            <span class="input-icon-right">👁️</span>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="lp">Contraseña</label>
-          <input class="form-control" id="lp" type="password" placeholder="••••••••" autocomplete="current-password">
+
+        <div class="form-check">
+          <input type="checkbox" id="remember">
+          <label for="remember">Recordarme</label>
         </div>
 
         <div class="login-error" id="lerr">Credenciales incorrectas. Verifica tu usuario y contraseña.</div>
 
-        <button class="login-btn" id="lbtn">Acceder al sistema</button>
+        <button class="btn-primary-login" id="lbtn">Iniciar sesión</button>
 
-        <div style="margin-top:20px;font-size:12px;color:#9CA3AF;text-align:center">
-          🔒 Conexión cifrada · ISO 27001
+        <div class="divider"></div>
+        <div class="login-footer-links">
+          <a href="#">← Volver al sitio</a>
         </div>
-
-        <div style="margin-top:16px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:10px 14px;font-size:12px;color:#166534">
-          <strong>Demo:</strong> usuario <code style="background:#DCFCE7;padding:1px 5px;border-radius:4px">admin</code> / contraseña <code style="background:#DCFCE7;padding:1px 5px;border-radius:4px">admin</code>
+        <div class="ssl-badge">
+          🛡️ Conexión segura · SSL/TLS cifrado
         </div>
       </div>
     </div>
@@ -104,12 +112,11 @@ export function renderLogin() {
     }
 
     btn.disabled = true
-    btn.textContent = 'Verificando...'
+    btn.textContent = 'Iniciando...'
     err.classList.remove('show')
 
     try {
       const res = await api.login(login, password)
-      // La API retorna { success: true, data: { access_token, refresh_token, user_id, email, ... } }
       const data = res?.data || res
       const token = data?.access_token || data?.token
 
@@ -125,18 +132,17 @@ export function renderLogin() {
         return
       }
 
-      // Token no llegó en respuesta
-      err.textContent = 'Error inesperado del servidor. Intenta de nuevo.'
+      err.textContent = 'Error inesperado. Intenta de nuevo.'
       err.classList.add('show')
     } catch (e) {
       err.textContent = e?.status === 401
-        ? 'Credenciales incorrectas. Verifica tu usuario y contraseña.'
-        : `Error de conexión: ${e?.message || 'No se pudo contactar el servidor'}`
+        ? 'Credenciales incorrectas.'
+        : `Error de conexión: ${e?.message || 'Fallo de red'}`
       err.classList.add('show')
     }
 
     btn.disabled = false
-    btn.textContent = 'Acceder al sistema'
+    btn.textContent = 'Iniciar sesión'
   }
 
   btn.addEventListener('click', doLogin)

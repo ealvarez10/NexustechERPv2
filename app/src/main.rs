@@ -96,15 +96,60 @@ async fn main() -> anyhow::Result<()> {
         }
         Err(e) => {
             tracing::warn!("Motor de búsqueda no disponible: {}", e);
-            // Crear cliente con valores por defecto — fallará en runtime pero no bloquea el arranque
             Arc::new(nexus_search::NexusSearchClient::from_env().unwrap_or_else(|_| {
                 nexus_search::NexusSearchClient::fallback()
             }))
         }
     };
 
+    // ── Fase 3: ORM Dinámico & RustPython ──────────────────────────────────
+    tracing::info!("Inicializando entorno Python (Seguro de Vida)...");
+    let py_runtime = nexus_py::PyRuntime::new().ok();
+    
+    let mut registry_opt = None;
+    if let Some(py) = &py_runtime {
+        tracing::info!("Registrando fragmentos Odoo2Rs...");
+        
+        // 1. Cargamos el fragmento Python con el método "intraducible"
+        let py_frag = py.register_fragment(nexus_py::PyModelSpec {
+            model: "mercadily.backend".into(),
+            module: "mercadily_connector".into(),
+            extension: true,
+            methods: vec![nexus_py::PyMethod::new("action_test_connection", r#"
+def action_test_connection(self):
+    return {"type": "ir.actions.client", "tag": "display_notification", "params": {"title": "Éxito", "message": "¡Conexión a Mercadily establecida desde Python!", "type": "success"}}
+"#)],
+        }).await?;
+
+        // 3. Construimos el ORM Registry
+        let reg = nexus_orm::registry::RegistryBuilder::new()
+            .module("base", &[])
+            .module("crm", &[])
+            .module("sale", &[])
+            .module("mercadily_connector", &["base", "crm", "sale"])
+            .register_ir_json(r#"[
+                {"model": "crm.lead", "module": "crm", "inherit": false},
+                {"model": "sale.order", "module": "sale", "inherit": false},
+                {"model": "res.partner", "module": "base", "inherit": false}
+            ]"#)?
+            .module("mail", &["base"])
+            .register_ir_json(include_str!("../../crates/odoo2rs/generated_mail/mail.models.json"))?
+            .module("account", &["base", "mail"])
+            .register_ir_json(include_str!("../../crates/odoo2rs/generated_account/account.models.json"))?
+            .register(Arc::new(nexus_mercadily::CrmLeadExtFragment))
+            .register(Arc::new(nexus_mercadily::MercadilyBackendFragment))
+            .register(Arc::new(nexus_mercadily::SaleOrderExtFragment))
+            .register(Arc::new(nexus_mercadily::ResPartnerExtFragment))
+            .register(Arc::new(nexus_mercadily::MercadilySyncLogFragment))
+            .register(py_frag)
+            .build()?;
+            
+        registry_opt = Some(Arc::new(reg));
+        tracing::info!("Kernel ORM inicializado con Mercadily ✓");
+    }
+
     // ── AppState ────────────────────────────────────────────────────────────
-    let state = AppState::nueva(db, config.clone(), redis_conn, pac, search_client);
+    let state = AppState::nueva(db, config.clone(), redis_conn, pac, search_client, registry_opt, py_runtime);
 
     // ── Router ─────────────────────────────────────────────────────────────
     // Rutas de autenticación — sin middleware JWT
@@ -116,18 +161,33 @@ async fn main() -> anyhow::Result<()> {
 
     // Rutas protegidas — requieren Bearer token JWT
     let rutas_protegidas = Router::new()
-        .route("/partners",             get(handlers::partners::listar))
+        .route("/partners",             get(handlers::partners::listar).post(handlers::partners::crear))
         .route("/partners/{id}",        get(handlers::partners::obtener))
         .route("/clientes",             get(handlers::partners::clientes))
         .route("/proveedores",          get(handlers::partners::proveedores))
-        .route("/productos",            get(handlers::products::listar))
+        .route("/productos",            get(handlers::products::listar).post(handlers::products::crear))
         .route("/productos/{id}",       get(handlers::products::obtener))
-        .route("/ventas",               get(handlers::ventas::listar).post(handlers::ventas::crear))
-        .route("/ventas/kpis",          get(handlers::ventas::kpis))
-        .route("/ventas/{id}",          get(handlers::ventas::obtener))
-        .route("/ventas/{id}/lineas",   get(handlers::ventas::lineas))
-        .route("/ventas/{id}/confirmar", put(handlers::ventas::confirmar))
-        .route("/ventas/{id}/cancelar",  put(handlers::ventas::cancelar))
+        .route("/ventas",                          get(handlers::ventas::listar).post(handlers::ventas::crear))
+        .route("/ventas/kpis",                     get(handlers::ventas::kpis))
+        .route("/ventas/buscar-clientes",          get(handlers::ventas::buscar_clientes))
+        .route("/ventas/buscar-productos",         get(handlers::ventas::buscar_productos))
+        .route("/ventas/{id}",                     get(handlers::ventas::obtener).put(handlers::ventas::actualizar))
+        .route("/ventas/{id}/lineas",              get(handlers::ventas::lineas).post(handlers::ventas::agregar_linea))
+        .route("/ventas/{id}/lineas/{lid}",        put(handlers::ventas::actualizar_linea).delete(handlers::ventas::eliminar_linea))
+        .route("/ventas/{id}/confirmar",           put(handlers::ventas::confirmar))
+        .route("/ventas/{id}/cancelar",            put(handlers::ventas::cancelar))
+        .route("/ventas/{id}/enviar",              put(handlers::ventas::enviar))
+        .route("/ventas/{id}/bloquear",            put(handlers::ventas::bloquear))
+        .route("/ventas/{id}/borrador",            put(handlers::ventas::restaurar_borrador))
+        // Flujo Ventas → Facturación
+        .route("/ventas/{id}/crear-factura",        post(handlers::ventas::crear_factura))
+        .route("/ventas/{id}/facturas",             get(handlers::ventas::facturas_de_venta))
+        // Flujo Ventas → Almacén
+        .route("/ventas/{id}/picking",              get(handlers::ventas::picking_de_venta))
+        .route("/ventas/{id}/entrega",              get(handlers::ventas::entrega_de_venta))
+        .route("/ventas/{id}/validar-entrega",      put(handlers::ventas::validar_entrega))
+        // Duplicar orden
+        .route("/ventas/{id}/duplicar",             post(handlers::ventas::duplicar))
         // ── Facturas ─────────────────────────────────────────────────────────
         .route("/facturas",             get(handlers::facturas::listar).post(handlers::facturas::crear))
         .route("/facturas/kpis",        get(handlers::facturas::kpis))
@@ -144,6 +204,9 @@ async fn main() -> anyhow::Result<()> {
         .route("/stock/kpis",           get(handlers::stock::kpis))
         .route("/stock/bajo",           get(handlers::stock::bajo))
         .route("/stock/producto/{id}",  get(handlers::stock::por_producto))
+        .route("/picking",              get(handlers::stock::listar_pickings))
+        .route("/picking/{id}",         get(handlers::stock::obtener_picking))
+        .route("/picking/{id}/validar", put(handlers::stock::validar_picking))
         // ── CFDI ─────────────────────────────────────────────────────────────
         .route("/cfdi/timbrar",         post(handlers::cfdi::timbrar))
         .route("/cfdi/cancelar",        post(handlers::cfdi::cancelar))
@@ -153,12 +216,15 @@ async fn main() -> anyhow::Result<()> {
         .route("/cfdi/kpis",            get(handlers::cfdi_timbrados::kpis_cfdi))
         .route("/nomina",               get(handlers::nomina::listar))
         .route("/nomina/kpis",          get(handlers::nomina::kpis))
+        .route("/nomina/calcular",      post(handlers::nomina::calcular))
         .route("/nomina/{id}",          get(handlers::nomina::obtener))
         // ── Compras ──────────────────────────────────────────────────────────
-        .route("/compras",              get(handlers::compras::listar))
+        .route("/compras",              get(handlers::compras::listar).post(handlers::compras::crear))
         .route("/compras/kpis",         get(handlers::compras::kpis))
         .route("/compras/{id}",         get(handlers::compras::obtener))
         .route("/compras/{id}/lineas",  get(handlers::compras::lineas))
+        .route("/compras/{id}/confirmar", post(handlers::compras::confirmar))
+        .route("/compras/{id}/pagar",   post(handlers::compras::pagar))
         // ── Cotizaciones / Sale ───────────────────────────────────────────────
         .route("/cotizaciones",          get(handlers::sale::listar_cotizaciones).post(handlers::sale::crear_cotizacion))
         .route("/cotizaciones/kpis",     get(handlers::sale::kpis_cotizaciones))
@@ -167,9 +233,24 @@ async fn main() -> anyhow::Result<()> {
         .route("/cotizaciones/{id}/cancelar",  put(handlers::sale::cancelar_cotizacion))
         .route("/cotizaciones/{id}/lineas",    post(handlers::sale::agregar_linea))
         .route("/cotizaciones/{id}/lineas/{linea_id}", delete(handlers::sale::eliminar_linea))
+        // ── Contabilidad — Asientos ────────────────────────────────────────────
+        .route("/account-moves",                   get(handlers::account::listar).post(handlers::account::crear))
+        .route("/account-moves/kpis",              get(handlers::account::kpis))
+        .route("/account-moves/{id}",              get(handlers::account::obtener))
+        .route("/account-moves/{id}/lineas",       get(handlers::account::lineas))
+        .route("/account-moves/{id}/confirmar",    put(handlers::account::confirmar))
+        .route("/account-moves/{id}/borrador",     put(handlers::account::borrador))
+        .route("/account-moves/{id}/cancelar",     put(handlers::account::cancelar))
         // ── Motor de búsqueda ──────────────────────────────────────────────
         .route("/search/sync",          post(handlers::search::sync))
         .route("/search/status",        get(handlers::search::status))
+        // ── Fase 3: ORM Dinámico Universal ──────────────────────────────────
+        .route("/orm/{model}/{method}",   post(handlers::orm::call_kw))
+        // ── App Store ────────────────────────────────────────────────────────
+        .route("/apps",                 get(handlers::apps::listar_apps))
+        .route("/apps/{id}/install",    post(handlers::apps::instalar_app))
+        .route("/apps/{id}/uninstall",  post(handlers::apps::desinstalar_app))
+        .route("/ir-views",             get(handlers::ir_views::list_views))
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::auth_middleware,

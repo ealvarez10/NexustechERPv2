@@ -9,6 +9,12 @@ use crate::error::CoreError;
 
 // ─── Structs ─────────────────────────────────────────────────────────────────
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct AjusteStock {
+    pub product_id: i32,
+    pub cantidad: Decimal,
+}
+
 /// KPIs de inventario
 #[derive(Debug, Serialize, Deserialize)]
 pub struct KpisInventario {
@@ -188,4 +194,37 @@ pub async fn kpis(pool: &PgPool, _company_id: i32) -> Result<KpisInventario, Cor
         valor_inventario:          row.valor.unwrap_or(Decimal::ZERO),
         alertas_stock_bajo:        row.stock_bajo,
     })
+}
+
+/// Realiza un ajuste de inventario manual
+pub async fn ajustar(pool: &PgPool, company_id: i32, datos: AjusteStock) -> Result<(), CoreError> {
+    let mut tx = pool.begin().await?;
+
+    let row = sqlx::query("SELECT id, quantity FROM stock_quant WHERE product_id = $1 LIMIT 1")
+        .bind(datos.product_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+
+    if let Some(r) = row {
+        let q: Decimal = sqlx::Row::try_get(&r, "quantity").unwrap_or(Decimal::ZERO);
+        let new_q = q + datos.cantidad;
+        let id: i32 = sqlx::Row::get(&r, "id");
+        sqlx::query("UPDATE stock_quant SET quantity = $1 WHERE id = $2")
+            .bind(new_q)
+            .bind(id)
+            .execute(&mut *tx)
+            .await?;
+    } else {
+        sqlx::query(
+            "INSERT INTO stock_quant (product_id, location_id, company_id, quantity, reserved_quantity) VALUES ($1, 1, $2, $3, 0)"
+        )
+        .bind(datos.product_id)
+        .bind(company_id)
+        .bind(datos.cantidad)
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    tx.commit().await?;
+    Ok(())
 }

@@ -77,7 +77,7 @@ pub async fn obtener_cotizacion(
     let cid = claims.0.company_id;
     match ordenes::por_id(&state.db, id, cid).await {
         Ok(orden) => {
-            let lineas = lineas::por_orden(&state.db, id).await.unwrap_or_default();
+            let lineas = lineas::por_orden(&state.db, id, cid).await.unwrap_or_default();
             api::ok(serde_json::json!({ "orden": orden, "lineas": lineas })).into_response()
         }
         Err(e) => sale_error(e).into_response(),
@@ -143,11 +143,12 @@ pub async fn actualizar_cotizacion(
 /// POST /api/v1/cotizaciones/:id/lineas
 pub async fn agregar_linea(
     State(state): State<AppState>,
-    Extension(_claims): Extension<JwtClaims>,
+    Extension(claims): Extension<JwtClaims>,
     Path(id): Path<i32>,
     Json(body): Json<NuevaLinea>,
 ) -> impl IntoResponse {
-    match lineas::agregar(&state.db, &body, id).await {
+    let cid = claims.0.company_id;
+    match lineas::agregar(&state.db, &body, id, cid).await {
         Ok(linea_id) => api::creado(serde_json::json!({ "id": linea_id })).into_response(),
         Err(e) => sale_error(e).into_response(),
     }
@@ -156,10 +157,11 @@ pub async fn agregar_linea(
 /// DELETE /api/v1/cotizaciones/:id/lineas/:linea_id
 pub async fn eliminar_linea(
     State(state): State<AppState>,
-    Extension(_claims): Extension<JwtClaims>,
+    Extension(claims): Extension<JwtClaims>,
     Path((id, linea_id)): Path<(i32, i32)>,
 ) -> impl IntoResponse {
-    match lineas::eliminar(&state.db, linea_id, id).await {
+    let cid = claims.0.company_id;
+    match lineas::eliminar(&state.db, linea_id, id, cid).await {
         Ok(()) => api::ok(serde_json::json!({ "eliminado": true })).into_response(),
         Err(e) => sale_error(e).into_response(),
     }

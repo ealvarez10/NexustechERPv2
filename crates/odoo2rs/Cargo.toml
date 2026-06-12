@@ -1,0 +1,22 @@
+[package]
+name = "odoo2rs"
+description = "Transpilador Odoo → NexusTech ERP v2: extrae modelos (.py) y vistas (.xml) a OdooIR y genera Rust (nexus-orm) y JS (web/src)"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "odoo2rs"
+path = "src/main.rs"
+
+[dependencies]
+rustpython-parser = { workspace = true }
+roxmltree = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+
+[dev-dependencies]
+nexus-orm = { path = "../nexus-orm" }

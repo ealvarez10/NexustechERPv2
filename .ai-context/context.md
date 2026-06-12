@@ -1,5 +1,5 @@
 # Proyecto: NexusTech ERP v2
-**Última actualización:** 2026-06-09
+**Última actualización:** 2026-06-10
 **Stack:** Rust, Axum 0.8, SQLx, PostgreSQL (schema Odoo 19), Redis, Meilisearch, ring (criptografía), async-trait, quick-xml, CFDI 4.0
 **Ruta raíz:** /home/ealvarez/workspace/NexustechERPv2
 
@@ -118,3 +118,39 @@ Uso en ERP v2:
 Sincronización:
   - Al crear/modificar un registro en PostgreSQL → indexar en NexusSearch
   - Usar tareas Tokio en background para no bloquear la respuesta HTTP
+
+
+## Instrucciones de Subagentes y MCP
+Para ahorrar tokens (~38-57% menos) al llamar a Fable 5, usar SIEMPRE el patrón de CLI en MCP. 
+
+Patrón exacto (Tool = Bash de claude-fable5):
+```python
+call_mcp_tool(
+    ServerName='claude-fable5',
+    ToolName='Bash',
+    Arguments={
+        'command': 'cd /ruta/del/proyecto && ANTHROPIC_API_KEY=sk-ant-api03-... /home/ealvarez/.local/bin/claude -p --model claude-fable-5 --allowedTools "Bash,Read,Edit,Write" --dangerously-skip-permissions "TU PROMPT AQUÍ. Usa codegraph_explore(\'...\') para entender el código ANTES de leer archivos directamente." 2>&1',
+        'timeout': 300000
+    }
+)
+```
+
+## Transpilador odoo2rs (Fase 2 — andamiaje completado)
+Plan completo en docs/transpilador-odoo-a-rust.md. Estado:
+  - Fase 1 (kernel): crates/nexus-orm — ORM compatible-Odoo (Registry, Recordset, FieldDef, dominios, IR JSON).
+  - Fase 2 (transpilador): crates/odoo2rs — CLI que lee .py (rustpython-parser) y .xml (roxmltree) de addons Odoo.
+
+Comandos:
+  odoo2rs models  models/*.py --module sale     # → IR JSON (lo consume nexus_orm::ir::parse_ir / register_ir_json)
+  odoo2rs views   views/*.xml                   # → IR JSON de vistas/acciones/menús
+  odoo2rs gen-rust models/*.py -o out/          # → fragmentos ModelFragment (campos completos, métodos como stubs TODO)
+  odoo2rs gen-js  views/*.xml -o out/           # → páginas JS sobre form_view.js/kanban_view.js existentes
+  odoo2rs addon   /ruta/addon -o generated/     # → pipeline completo (manifiesto + modelos + vistas)
+
+Contrato clave: odoo2rs::ir es el lado Serialize del Deserialize en nexus_orm::ir — el JSON emitido
+se registra en caliente con RegistryBuilder::register_ir_json sin recompilar el kernel.
+El test tests/codegen_compiles.rs compila el Rust generado contra el kernel real (guardia de drift incluida).
+
+Pendiente (Fase 3): traducción de cuerpos de métodos Python a Rust (3a) y nexus-pyvm/RustPython
+como vía de escape (3b); _inherits (delegación), selections dinámicas y defaults callables se
+reportan como avisos y quedan para esa fase.

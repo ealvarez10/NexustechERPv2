@@ -68,3 +68,36 @@ pub async fn lineas(
         Err(e) => from_core_error(e).into_response(),
     }
 }
+
+pub async fn crear(
+    State(state): State<AppState>,
+    Extension(claims): Extension<JwtClaims>,
+    axum::extract::Json(payload): axum::extract::Json<nexus_core::db::compras::NuevaCompra>,
+) -> impl IntoResponse {
+    match db::crear(&state.db, claims.0.company_id, payload).await {
+        Ok(id) => api::ok(id).into_response(),
+        Err(e) => from_core_error(e).into_response(),
+    }
+}
+
+pub async fn confirmar(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<JwtClaims>,
+    Path(id): Path<i32>,
+) -> impl IntoResponse {
+    match db::confirmar(&state.db, id).await {
+        Ok(_) => api::ok("Confirmado exitosamente").into_response(),
+        Err(e) => from_core_error(e).into_response(),
+    }
+}
+
+pub async fn pagar(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<JwtClaims>,
+    Path(id): Path<i32>,
+) -> impl IntoResponse {
+    match db::pagar(&state.db, id).await {
+        Ok(_) => api::ok("Pagado exitosamente").into_response(),
+        Err(e) => from_core_error(e).into_response(),
+    }
+}

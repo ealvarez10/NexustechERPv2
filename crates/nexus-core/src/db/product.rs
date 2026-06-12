@@ -3,6 +3,17 @@
 use sqlx::PgPool;
 use crate::models::{ProductTemplate, ProductProduct, ProductSummary};
 use crate::error::CoreError;
+use serde::{Deserialize, Serialize};
+use rust_decimal::Decimal;
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct NuevoProducto {
+    pub name: String,
+    pub type_: String, // product, service, consu
+    pub list_price: Option<Decimal>,
+    pub default_code: Option<String>,
+    pub barcode: Option<String>,
+}
 
 // ─── SELECT compartido para ProductSummary ────────────────────────────────────
 // Solo columnas que existen en el schema real de esta instancia
@@ -127,4 +138,40 @@ pub async fn obtener_variantes(pool: &PgPool, tmpl_id: i32) -> Result<Vec<Produc
     .fetch_all(pool)
     .await?;
     Ok(vars)
+}
+
+/// Crea un nuevo producto (product_template y product_product)
+pub async fn crear(pool: &PgPool, company_id: i32, datos: NuevoProducto) -> Result<ProductTemplate, CoreError> {
+    let mut tx = pool.begin().await?;
+    let uom_id = 1; // Unidades por defecto
+
+    let name_json = serde_json::json!({ "es_MX": datos.name });
+
+    let tmpl: ProductTemplate = sqlx::query_as(
+        r#"INSERT INTO product_template (name, type, list_price, default_code, company_id, active, uom_id, service_tracking, create_date, write_date)
+           VALUES ($1, $2, $3, $4, $5, true, $6, 'no', NOW(), NOW())
+           RETURNING * "#
+    )
+    .bind(&name_json)
+    .bind(&datos.type_)
+    .bind(datos.list_price)
+    .bind(&datos.default_code)
+    .bind(company_id)
+    .bind(uom_id)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    let _prod: ProductProduct = sqlx::query_as(
+        r#"INSERT INTO product_product (product_tmpl_id, default_code, barcode, active, create_date, write_date)
+           VALUES ($1, $2, $3, true, NOW(), NOW())
+           RETURNING * "#
+    )
+    .bind(tmpl.id)
+    .bind(&datos.default_code)
+    .bind(serde_json::json!(datos.barcode))
+    .fetch_one(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+    Ok(tmpl)
 }

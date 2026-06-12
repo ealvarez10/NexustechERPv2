@@ -1,0 +1,377 @@
+[
+  {
+    "model": "crm.lead",
+    "module": "mercadily_connector",
+    "inherit": true,
+    "inherits": [
+      "crm.lead"
+    ],
+    "fields": [
+      {
+        "name": "mercadily_backend_id",
+        "type": "many2one",
+        "comodel": "mercadily.backend",
+        "string": "Backend Mercadily"
+      },
+      {
+        "name": "mercadily_id",
+        "type": "char",
+        "string": "ID Mercadily",
+        "help": "Identificador único del lead en Mercadily"
+      },
+      {
+        "name": "mercadily_status",
+        "type": "char",
+        "string": "Estatus Mercadily"
+      },
+      {
+        "name": "mercadily_source",
+        "type": "char",
+        "string": "Fuente Mercadily"
+      }
+    ]
+  },
+  {
+    "model": "mercadily.backend",
+    "module": "mercadily_connector",
+    "inherits": [
+      "mail.thread",
+      "mail.activity.mixin"
+    ],
+    "description": "Mercadily Backend Configuration",
+    "fields": [
+      {
+        "name": "name",
+        "type": "char",
+        "string": "Nombre de la Tienda",
+        "required": true
+      },
+      {
+        "name": "api_url",
+        "type": "char",
+        "string": "URL de la API",
+        "required": true,
+        "help": "URL base de tu tienda Mercadily, ej: https://tudominio.com"
+      },
+      {
+        "name": "api_key",
+        "type": "char",
+        "string": "API Key",
+        "required": true,
+        "help": "Token secreto (Bearer) generado desde el panel de Mercadily."
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "default": true
+      },
+      {
+        "name": "company_id",
+        "type": "many2one",
+        "comodel": "res.company",
+        "string": "Compañía",
+        "required": true
+      },
+      {
+        "name": "last_lead_sync",
+        "type": "datetime",
+        "string": "Última Sincronización de Leads",
+        "readonly": true
+      },
+      {
+        "name": "last_order_sync",
+        "type": "datetime",
+        "string": "Última Sincronización de Pedidos",
+        "readonly": true
+      },
+      {
+        "name": "last_customer_sync",
+        "type": "datetime",
+        "string": "Última Sincronización de Clientes",
+        "readonly": true
+      },
+      {
+        "name": "lead_count",
+        "type": "integer",
+        "string": "Leads",
+        "compute": "_compute_lead_count"
+      },
+      {
+        "name": "order_count",
+        "type": "integer",
+        "string": "Pedidos",
+        "compute": "_compute_order_count"
+      },
+      {
+        "name": "customer_count",
+        "type": "integer",
+        "string": "Clientes",
+        "compute": "_compute_customer_count"
+      },
+      {
+        "name": "sync_log_ids",
+        "type": "one2many",
+        "comodel": "mercadily.sync.log",
+        "inverse": "backend_id",
+        "string": "Logs de Sincronización"
+      }
+    ],
+    "methods": [
+      {
+        "name": "_compute_lead_count",
+        "line": 28
+      },
+      {
+        "name": "_compute_order_count",
+        "line": 34
+      },
+      {
+        "name": "_compute_customer_count",
+        "line": 40
+      },
+      {
+        "name": "_get_headers",
+        "line": 46
+      },
+      {
+        "name": "_api_get",
+        "args": [
+          "endpoint",
+          "params"
+        ],
+        "line": 50
+      },
+      {
+        "name": "_api_get_all_pages",
+        "args": [
+          "endpoint",
+          "params"
+        ],
+        "line": 61
+      },
+      {
+        "name": "action_test_connection",
+        "line": 78
+      },
+      {
+        "name": "action_sync_leads",
+        "line": 89
+      },
+      {
+        "name": "_sync_leads",
+        "line": 93
+      },
+      {
+        "name": "_prepare_lead_vals",
+        "args": [
+          "data"
+        ],
+        "line": 119
+      },
+      {
+        "name": "action_sync_customers",
+        "line": 123
+      },
+      {
+        "name": "_sync_customers",
+        "line": 127
+      },
+      {
+        "name": "_prepare_customer_vals",
+        "args": [
+          "data"
+        ],
+        "line": 152
+      },
+      {
+        "name": "_prepare_address_vals",
+        "args": [
+          "addr_data"
+        ],
+        "line": 163
+      },
+      {
+        "name": "action_sync_orders",
+        "line": 177
+      },
+      {
+        "name": "_sync_orders",
+        "line": 181
+      },
+      {
+        "name": "_prepare_order_vals",
+        "args": [
+          "data"
+        ],
+        "line": 208
+      },
+      {
+        "name": "_prepare_order_line_vals",
+        "args": [
+          "item_data"
+        ],
+        "line": 231
+      },
+      {
+        "name": "_get_or_create_partner_from_order",
+        "args": [
+          "order_data"
+        ],
+        "line": 240
+      },
+      {
+        "name": "action_sync_all",
+        "line": 263
+      },
+      {
+        "name": "_cron_sync_all",
+        "decorators": [
+          "api.model"
+        ],
+        "line": 271
+      },
+      {
+        "name": "_create_sync_log",
+        "args": [
+          "sync_type",
+          "created",
+          "updated",
+          "errors"
+        ],
+        "line": 281
+      },
+      {
+        "name": "action_view_leads",
+        "line": 285
+      },
+      {
+        "name": "action_view_orders",
+        "line": 289
+      },
+      {
+        "name": "action_view_customers",
+        "line": 293
+      }
+    ]
+  },
+  {
+    "model": "mercadily.sync.log",
+    "module": "mercadily_connector",
+    "description": "Mercadily Sync Log",
+    "order": "create_date desc",
+    "fields": [
+      {
+        "name": "backend_id",
+        "type": "many2one",
+        "comodel": "mercadily.backend",
+        "string": "Backend",
+        "required": true
+      },
+      {
+        "name": "sync_type",
+        "type": "selection",
+        "string": "Tipo",
+        "required": true,
+        "selection": [
+          [
+            "leads",
+            "Leads"
+          ],
+          [
+            "customers",
+            "Clientes"
+          ],
+          [
+            "orders",
+            "Pedidos"
+          ]
+        ]
+      },
+      {
+        "name": "created_count",
+        "type": "integer",
+        "string": "Creados"
+      },
+      {
+        "name": "updated_count",
+        "type": "integer",
+        "string": "Actualizados"
+      },
+      {
+        "name": "error_count",
+        "type": "integer",
+        "string": "Errores"
+      },
+      {
+        "name": "error_details",
+        "type": "text",
+        "string": "Detalle de Errores"
+      },
+      {
+        "name": "create_date",
+        "type": "datetime",
+        "string": "Fecha",
+        "readonly": true
+      }
+    ]
+  },
+  {
+    "model": "res.partner",
+    "module": "mercadily_connector",
+    "inherit": true,
+    "inherits": [
+      "res.partner"
+    ],
+    "fields": [
+      {
+        "name": "mercadily_backend_id",
+        "type": "many2one",
+        "comodel": "mercadily.backend",
+        "string": "Backend Mercadily"
+      },
+      {
+        "name": "mercadily_id",
+        "type": "char",
+        "string": "ID Mercadily",
+        "help": "Identificador único del cliente en Mercadily"
+      }
+    ]
+  },
+  {
+    "model": "sale.order",
+    "module": "mercadily_connector",
+    "inherit": true,
+    "inherits": [
+      "sale.order"
+    ],
+    "fields": [
+      {
+        "name": "mercadily_backend_id",
+        "type": "many2one",
+        "comodel": "mercadily.backend",
+        "string": "Backend Mercadily"
+      },
+      {
+        "name": "mercadily_id",
+        "type": "char",
+        "string": "ID Mercadily",
+        "help": "Identificador único del pedido en Mercadily"
+      },
+      {
+        "name": "mercadily_status",
+        "type": "char",
+        "string": "Estatus Mercadily"
+      },
+      {
+        "name": "mercadily_payment_method",
+        "type": "char",
+        "string": "Método de Pago Mercadily"
+      },
+      {
+        "name": "mercadily_shipping_address",
+        "type": "text",
+        "string": "Dirección de Envío Mercadily"
+      }
+    ]
+  }
+]

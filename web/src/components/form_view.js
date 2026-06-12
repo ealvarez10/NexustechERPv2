@@ -81,12 +81,12 @@ export function renderFormPage(opts) {
 
   // Smart buttons
   const sbHtml = smartButtons.length ? `
-    <div class="o-smart-buttons">
+    <div class="o-smart-buttons" style="border:none; padding:0; background:transparent; justify-content:flex-end;">
       ${smartButtons.map(b => `
-        <button class="o-smart-btn" onclick="${b.onClick || 'void 0'}">
-          <span class="o-count">${b.count ?? 0}</span>
-          <span class="o-label">${b.icon || ''} ${b.label}</span>
-        </button>
+        <div class="o-smart-btn" onclick="${b.onClick || 'void 0'}" style="min-width:100px;">
+          <span class="o-smart-count">${b.count ?? 0}</span>
+          <span class="o-smart-label" style="margin-top:4px;">${b.icon || ''} ${b.label}</span>
+        </div>
       `).join('')}
     </div>
   ` : ''
@@ -160,11 +160,13 @@ export function renderFormPage(opts) {
   const html = `
     <div class="o-form-view ${editing ? 'editing' : ''}" id="form-view-root">
       ${statusHtml}
-      ${sbHtml}
       <div class="o-form-sheet">
-        <div class="o-form-title-row">
-          <h1 class="o-form-record-title">${title}</h1>
-          ${subtitle ? `<span class="o-form-subtitle">${subtitle}</span>` : ''}
+        <div class="o-form-title-row" style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div class="o-form-title-block">
+            <h1 class="o-form-record-title">${title}</h1>
+            ${subtitle ? `<span class="o-form-subtitle">${subtitle}</span>` : ''}
+          </div>
+          ${sbHtml}
         </div>
         ${fieldsHtml}
         ${tabsHtml}
@@ -254,6 +256,7 @@ export function fieldGroupHtml({ title, cols = 2, fields = [] }) {
       case 'phone': return `<a href="tel:${f.value}" class="o-field-link">${f.value}</a>`
       case 'date': return `<span>${f.value}</span>`
       case 'boolean': return f.value ? '✅ Sí' : '❌ No'
+      case 'html': return f.value
       default: return `<span>${f.value}</span>`
     }
   }
@@ -433,8 +436,8 @@ export function renderFormView(containerEl, opts = {}) {
           ${statusBtns}
         </div>
       </div>
-      ${smartButtonsHtml(smartButtons)}
       <div class="o-form-sheet">
+        ${smartButtonsHtml(smartButtons)}
         <div class="o-form-header">
           ${title ? `<h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;color:var(--text-900);margin-bottom:16px">${title}</h2>` : ''}
         </div>

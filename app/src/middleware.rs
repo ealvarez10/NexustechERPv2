@@ -54,3 +54,38 @@ fn extraer_bearer(request: &Request) -> Option<&str> {
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.strip_prefix("Bearer "))
 }
+
+use axum::extract::FromRequestParts;
+use axum::http::request::Parts;
+
+pub struct RequireAdmin;
+
+impl<S: Send + Sync> FromRequestParts<S> for RequireAdmin {
+    type Rejection = (StatusCode, Json<ApiError>);
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        let claims = parts.extensions.get::<JwtClaims>().ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiError {
+                    success: false,
+                    error: "Se requiere autenticación".into(),
+                    codigo: Some("AUTH_REQUIRED".into()),
+                }),
+            )
+        })?;
+
+        if !claims.0.roles.iter().any(|r| r == nexus_core::auth::roles::ADMIN) {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ApiError {
+                    success: false,
+                    error: "Acceso denegado: requiere rol de Administrador".into(),
+                    codigo: Some("FORBIDDEN".into()),
+                }),
+            ));
+        }
+
+        Ok(RequireAdmin)
+    }
+}

@@ -2,97 +2,97 @@ import { auth } from './auth.js'
 import { go } from './router.js'
 import { toast } from './ui.js'
 
-const NAV = [
-  { id:'home',      icon:'⊞',  label:'Inicio',          section:'Principal' },
-  { id:'dashboard', icon:'📊', label:'Dashboard',      section:'Principal' },
-  { id:'ventas',    icon:'💰', label:'Ventas',          section:'Principal' },
-  { id:'cotizaciones', icon:'📝', label:'Cotizaciones', section:'Principal' },
-  { id:'facturas',  icon:'🧾', label:'Facturación',     section:'Principal' },
-  { id:'productos', icon:'📦', label:'Productos',       section:'Principal' },
-  { id:'partners',  icon:'👥', label:'Clientes',        section:'Principal' },
-  { id:'stock',     icon:'🏭', label:'Inventario',      section:'Principal' },
-  { id:'cfdi',      icon:'🔏', label:'CFDI 4.0',        section:'Fiscal', badge:'NUEVO' },
-  { id:'nomina',    icon:'👔', label:'Nómina IMSS',     section:'Fiscal' },
-  { id:'compras',   icon:'🛒', label:'Compras',         section:'Operaciones' },
-  { id:'search',    icon:'🔍', label:'NexusSearch',     section:'Sistema' },
-  { id:'reportes',  icon:'📈', label:'Reportes',        section:'Sistema' },
-]
+// Submenús específicos por app
+const SUB_NAV = {
+  ventas: [
+    { id: 'ventas', label: 'Órdenes' },
+    { id: 'precios', label: 'Precios Especiales' },
+    { id: 'productos', label: 'Productos' },
+    { id: 'reportes_ventas', label: 'Reportes' },
+    { id: 'config_ventas', label: 'Configuración' }
+  ],
+  compras: [
+    { id: 'compras', label: 'Órdenes' },
+    { id: 'productos_compra', label: 'Productos' },
+    { id: 'reportes_compras', label: 'Reportes' },
+    { id: 'config_compras', label: 'Configuración' }
+  ],
+  nomina: [
+    { id: 'nomina', label: 'Empleados' },
+    { id: 'config_nomina', label: 'Configuración' }
+  ],
+  contabilidad: [
+    { id: 'contabilidad', label: 'Asientos' },
+    { id: 'config_contabilidad', label: 'Configuración' }
+  ],
+  crm: [
+    { id: 'crm', label: 'Mi flujo' },
+    { id: 'ventas', label: 'Ventas' },
+    { id: 'reportes_crm', label: 'Reportes' },
+    { id: 'config_crm', label: 'Configuración' }
+  ],
+  facturacion: [
+    { id: 'facturas', label: 'Facturas' },
+    { id: 'pagos', label: 'Pagos' },
+    { id: 'reportes_facturacion', label: 'Reportes' },
+    { id: 'config_facturacion', label: 'Configuración' }
+  ],
+  inventario: [
+    { id: 'stock', label: 'Tablero' },
+    { id: 'operaciones', label: 'Operaciones' },
+    { id: 'productos', label: 'Productos' },
+    { id: 'reportes_inventario', label: 'Reportes' },
+    { id: 'config_inventario', label: 'Configuración' }
+  ],
+  contactos: [
+    { id: 'partners', label: 'Contactos' },
+    { id: 'etiquetas', label: 'Etiquetas' },
+    { id: 'config_contactos', label: 'Configuración' }
+  ],
+  mercadily: [
+    { id: 'mercadily', label: 'Configuración Tienda' }
+  ]
+}
 
 export function ensureLayout() {
   if (document.getElementById('__shell')) return
   const user = auth.getUser()
   const initials = (user.nombre || user.name || 'AD').substring(0,2).toUpperCase()
-  const sections = [...new Set(NAV.map(n => n.section))]
 
   document.getElementById('app').innerHTML = `
-  <div class="app-shell" id="__shell">
-    <!-- SIDEBAR -->
-    <nav class="sidebar" id="__sidebar">
-      <div class="sidebar-brand" style="cursor:pointer" onclick="window._go('home')" title="Ir al inicio">
-        <div class="brand-logo">N</div>
-        <div class="sidebar-brand-text">
-          <div class="brand-name">NexusTech</div>
-          <div class="brand-version">ERP v2.0</div>
-        </div>
-      </div>
-
-      <div class="sidebar-nav">
-        ${sections.map(sec => `
-        <div class="nav-section">
-          <div class="nav-section-title">${sec}</div>
-          ${NAV.filter(n => n.section === sec).map(n => `
-          <a class="nav-link" id="nl-${n.id}" href="#${n.id}" onclick="event.preventDefault();window._go('${n.id}')">
-            <span style="font-size:16px">${n.icon}</span>
-            <span>${n.label}</span>
-            ${n.badge ? `<span class="nav-badge">${n.badge}</span>` : ''}
-          </a>`).join('')}
-        </div>`).join('')}
-      </div>
-
-      <div class="sidebar-user">
-        <div class="user-pill">
-          <div class="avatar">${initials}</div>
-          <div class="user-info">
-            <div class="user-name">${user.nombre || user.name || 'Administrador'}</div>
-            <div class="user-role">${user.email || 'admin@nexustech.mx'}</div>
-          </div>
-        </div>
-        <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:8px;justify-content:center" onclick="window._logout()">
-          🚪 Cerrar sesión
+  <div class="app-shell odoo-layout" id="__shell">
+    <!-- ODOO TOPBAR -->
+    <header class="odoo-topbar">
+      <div class="odoo-topbar-left">
+        <button class="app-drawer-btn" title="Aplicaciones" onclick="window._go('home')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+            <path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"/>
+          </svg>
         </button>
+        <div class="app-title" id="odoo-app-title">NexusTech ERP</div>
+        <nav class="app-nav" id="odoo-app-nav"></nav>
       </div>
-      <!-- Sidebar collapse toggle -->
-      <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Colapsar panel" onclick="window._toggleSidebar()">
-        ◀
-      </button>
-    </nav>
-
-    <!-- MAIN -->
-    <div class="main-area">
-      <!-- TOPBAR -->
-      <header class="topbar">
-        <nav class="breadcrumb" id="__breadcrumb">
-          <span class="breadcrumb-item">Inicio</span>
-        </nav>
-        <div class="topbar-spacer"></div>
+      
+      <div class="odoo-topbar-right">
         <div class="topbar-search">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
-          <input type="text" placeholder="Búsqueda global..." id="global-search">
-          <span class="topbar-kbd">⌘K</span>
+          <input type="text" placeholder="Search..." id="global-search">
         </div>
         <button class="topbar-action" title="Notificaciones">
-          🔔
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
           <span class="notif-dot"></span>
         </button>
-        <button class="topbar-action" title="Configuración">⚙️</button>
-        <div class="avatar-sm">${initials}</div>
-      </header>
+        <div class="company-name" style="cursor:pointer" onclick="window._logout()" title="Cerrar sesión">
+          NEXUSTECH
+        </div>
+        <div class="avatar-sm" style="cursor:pointer" onclick="window._logout()">${initials}</div>
+      </div>
+    </header>
 
-      <!-- CONTENT -->
-      <main class="page" id="__page"></main>
-    </div>
+    <!-- CONTENT -->
+    <main class="page full-width" id="__page"></main>
   </div>`
 
   // Global helpers
@@ -103,24 +103,6 @@ export function ensureLayout() {
     if (shell) shell.remove()
     go('login')
     toast('Sesión cerrada', 'Hasta pronto', 'info')
-  }
-
-  // Sidebar collapse
-  window._toggleSidebar = () => {
-    const sb = document.getElementById('__sidebar')
-    const btn = document.getElementById('sidebar-toggle')
-    if (!sb) return
-    const collapsed = sb.classList.toggle('collapsed')
-    localStorage.setItem('nx_sidebar_collapsed', collapsed ? '1' : '0')
-    if (btn) btn.textContent = collapsed ? '▶' : '◀'
-  }
-
-  // Restore sidebar state
-  if (localStorage.getItem('nx_sidebar_collapsed') === '1') {
-    const sb = document.getElementById('__sidebar')
-    const btn = document.getElementById('sidebar-toggle')
-    if (sb) sb.classList.add('collapsed')
-    if (btn) btn.textContent = '▶'
   }
 
   // Update active nav on hash change
@@ -134,18 +116,70 @@ export function setPage(html) {
 }
 
 export function setBreadcrumb(items) {
-  const bc = document.getElementById('__breadcrumb')
-  if (!bc) return
-  bc.innerHTML = items.map((it, i) => `
-    <span class="breadcrumb-item"${i < items.length-1 && it.href ? ` onclick="window._go('${it.href}')"` : ''}>
-      ${it.label}
-      ${i < items.length-1 ? '<span class="breadcrumb-sep">/</span>' : ''}
-    </span>`).join('')
+  // Ya no usamos breadcrumb, la navegación se maneja en el submenú superior
 }
 
 function updateNav() {
   const hash = window.location.hash.replace('#','') || 'home'
-  document.querySelectorAll('.nav-link').forEach(el => {
-    el.classList.toggle('active', el.id === `nl-${hash}`)
-  })
+  
+  // Determinar App actual basado en el hash
+  let currentApp = 'NexusTech ERP'
+  let subMenu = []
+
+  if (hash.startsWith('ventas') || hash === 'precios' || hash.startsWith('reportes_ventas') || hash.startsWith('config_ventas')) {
+    currentApp = 'VENTAS'
+    subMenu = SUB_NAV.ventas
+  } else if (hash.startsWith('compras') || hash.startsWith('config_compras') || hash.startsWith('productos_compra') || hash.startsWith('reportes_compras')) {
+    currentApp = 'COMPRAS'
+    subMenu = SUB_NAV.compras
+  } else if (hash.startsWith('crm') || hash.startsWith('config_crm') || hash.startsWith('reportes_crm')) {
+    currentApp = 'CRM'
+    subMenu = SUB_NAV.crm
+  } else if (hash.startsWith('facturas') || hash.startsWith('pagos') || hash.startsWith('config_facturacion') || hash.startsWith('reportes_facturacion')) {
+    currentApp = 'FACTURACIÓN'
+    subMenu = SUB_NAV.facturacion
+  } else if (hash.startsWith('stock') || hash.startsWith('productos') || hash.startsWith('operaciones') || hash.startsWith('reportes_inventario') || hash.startsWith('config_inventario')) {
+    currentApp = 'INVENTARIO'
+    subMenu = SUB_NAV.inventario
+  } else if (hash.startsWith('partners') || hash.startsWith('etiquetas') || hash.startsWith('config_contactos')) {
+    currentApp = 'CONTACTOS'
+    subMenu = SUB_NAV.contactos
+  } else if (hash.startsWith('account') || hash.startsWith('contabilidad') || hash.startsWith('config_contabilidad')) {
+    currentApp = 'CONTABILIDAD'
+    subMenu = [
+      { id: 'account', label: 'Asientos (Odoo2Rs)' },
+      { id: 'contabilidad', label: 'Asientos (Mock)' },
+      { id: 'config_contabilidad', label: 'Configuración' }
+    ]
+  } else if (hash.startsWith('nomina') || hash.startsWith('config_nomina')) {
+    currentApp = 'NÓMINA'
+    subMenu = SUB_NAV.nomina
+  } else if (hash.startsWith('mercadily')) {
+    currentApp = 'MERCADILY'
+    subMenu = SUB_NAV.mercadily
+  } else if (hash.startsWith('mail')) {
+    currentApp = 'MENSAJERÍA'
+    subMenu = [{ id: 'mail', label: 'Bandeja de Entrada' }]
+  } else if (hash.startsWith('apps')) {
+    currentApp = 'APLICACIONES'
+    subMenu = []
+  }
+
+  // Actualizar Título
+  const titleEl = document.getElementById('odoo-app-title')
+  if (titleEl) titleEl.textContent = currentApp
+
+  // Actualizar Navegación
+  const navEl = document.getElementById('odoo-app-nav')
+  if (navEl) {
+    if (subMenu.length > 0) {
+      navEl.innerHTML = subMenu.map(n => `
+        <a class="app-nav-link ${n.id === hash ? 'active' : ''}" href="#${n.id}" onclick="event.preventDefault();window._go('${n.id}')">
+          ${n.label}
+        </a>
+      `).join('')
+    } else {
+      navEl.innerHTML = ''
+    }
+  }
 }

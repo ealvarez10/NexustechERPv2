@@ -22,6 +22,10 @@ pub struct AppState {
     pub pac: Arc<dyn nexus_cfdi::Pac>,
     /// Cliente del motor de búsqueda integrado
     pub search_client: Arc<nexus_search::NexusSearchClient>,
+    /// ORM Registry (kernel de la migración)
+    pub registry: Option<Arc<nexus_orm::registry::Registry>>,
+    /// Intérprete Python (el seguro de vida)
+    pub py_runtime: Option<nexus_py::PyRuntime>,
 }
 
 impl AppState {
@@ -31,7 +35,9 @@ impl AppState {
         redis: Option<redis::aio::MultiplexedConnection>,
         pac: Arc<dyn nexus_cfdi::Pac>,
         search_client: Arc<nexus_search::NexusSearchClient>,
+        registry: Option<Arc<nexus_orm::registry::Registry>>,
+        py_runtime: Option<nexus_py::PyRuntime>,
     ) -> Self {
-        Self { db, config, redis, pac, search_client }
+        Self { db, config, redis, pac, search_client, registry, py_runtime }
     }
 }

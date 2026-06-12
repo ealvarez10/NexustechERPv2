@@ -185,7 +185,7 @@ window._verEmpleado = async (id) => {
       </button>
       <div class="o-form-actions">
         <button class="o-btn-secondary" onclick="window._editarEmpleadoForm(${emp.id})">💾 Actualizar</button>
-        <button class="o-btn-primary"   onclick="alert('Calcular nómina — próximamente')">Calcular Nómina</button>
+        <button class="o-btn-primary" id="btn-calcular-nomina" data-sdi="${emp.sdi || emp.salario_diario_integrado || 0}" onclick="window._nominaCalcular(this.dataset.sdi)">Calcular Nómina</button>
       </div>
     </div>
 
@@ -253,15 +253,11 @@ window._verEmpleado = async (id) => {
         </div>
 
         <div class="o-tab-pane" id="tab-resumen" style="display:none">
-          <table class="o-list-table">
-            <thead><tr><th>Concepto</th><th class="o-col-right">Importe</th><th>Tipo</th></tr></thead>
-            <tbody>
-              <tr><td>Salario Mensual</td><td class="o-td-amount">${salario}</td><td><span class="o-badge o-badge-success">Percepción</span></td></tr>
-              <tr><td>IMSS Obrero (cuota)</td><td class="o-td-amount">—</td><td><span class="o-badge o-badge-danger">Deducción</span></td></tr>
-              <tr><td>ISR Estimado</td><td class="o-td-amount">—</td><td><span class="o-badge o-badge-danger">Deducción</span></td></tr>
-              <tr class="o-total-row" style="font-weight:700"><td>Neto a Pagar (est.)</td><td class="o-td-amount">—</td><td></td></tr>
-            </tbody>
-          </table>
+          <div id="resumen-calc-result">
+            <div style="padding:24px 0;text-align:center;color:var(--o-text-secondary)">
+              Haz clic en <strong>Calcular Nómina</strong> para ver el desglose completo (ISR 2024 + IMSS 2024).
+            </div>
+          </div>
         </div>
 
         <div class="o-tab-pane" id="tab-historial" style="display:none">
@@ -311,6 +307,54 @@ window._verEmpleado = async (id) => {
    ═══════════════════════════════════════════════ */
 window._nominaBack = () => renderNomina()
 window._nominaNuevoEmpleado = () => alert('Nuevo empleado — próximamente')
+
+window._nominaCalcular = async (sdiRaw) => {
+  const sdi = parseFloat(sdiRaw) || 0
+  // Si no hay SDI guardado, pedir al usuario
+  const sdiInput = sdi > 0 ? sdi : parseFloat(prompt('Ingresa el SDI (Salario Diario Integrado):', '300') || '0')
+  if (!sdiInput || sdiInput <= 0) return
+
+  try {
+    const token = localStorage.getItem('nexus_token')
+    const res = await fetch('/api/v1/nomina/calcular', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ sdi: sdiInput, dias_periodo: 30, tipo: 'mensual' })
+    })
+    const json = await res.json()
+    const d = json.data || json
+    if (!d || !d.salario_bruto) { toast('Error', 'No se pudo calcular la nómina', 'error'); return }
+
+    // Activar tab Resumen
+    document.querySelectorAll('#nom-tabs .o-tab').forEach((b,i) => { b.classList.toggle('active', i===1) })
+    document.querySelectorAll('.o-tab-pane').forEach((p,i) => p.style.display = i===1 ? '' : 'none')
+
+    const el = document.getElementById('resumen-calc-result')
+    if (el) el.innerHTML = `
+      <table class="o-list-table">
+        <thead><tr><th>Concepto</th><th class="o-col-right" style="text-align:right">Importe</th><th>Tipo</th></tr></thead>
+        <tbody>
+          <tr><td>Salario Bruto (${30} días)</td><td class="o-td-amount">${fmtMxn(d.salario_bruto)}</td><td><span class="o-badge o-badge-success">Percepción</span></td></tr>
+          <tr style="color:var(--o-danger)"><td>ISR Retenido (SAT 2024)</td><td class="o-td-amount">–${fmtMxn(d.isr_retenido)}</td><td><span class="o-badge o-badge-danger">Deducción</span></td></tr>
+          <tr style="color:var(--o-success)"><td>Subsidio al Empleo</td><td class="o-td-amount">+${fmtMxn(d.subsidio_empleo)}</td><td><span class="o-badge o-badge-success">A favor</span></td></tr>
+          <tr style="color:var(--o-danger)"><td>IMSS Obrero (cuotas 2024)</td><td class="o-td-amount">–${fmtMxn(d.imss_obrero)}</td><td><span class="o-badge o-badge-danger">Deducción</span></td></tr>
+          <tr style="border-top:2px solid var(--o-border);font-weight:700"><td>Total Deducciones</td><td class="o-td-amount">–${fmtMxn(d.total_deducciones)}</td><td></td></tr>
+          <tr style="font-weight:800;font-size:1.05em;background:var(--o-bg-hover)"><td>💰 NETO A PAGAR</td><td class="o-td-amount" style="color:var(--o-success)">${fmtMxn(d.salario_neto)}</td><td></td></tr>
+          <tr style="border-top:2px solid var(--o-border);color:var(--o-text-secondary);font-style:italic"><td colspan="3" style="padding-top:8px"><strong>Costo Total Patrón</strong></td></tr>
+          <tr><td>IMSS Patronal</td><td class="o-td-amount">${fmtMxn(d.imss_patron)}</td><td><span class="o-badge o-badge-info">Costo empresa</span></td></tr>
+          <tr><td>Cuota Fija IMSS</td><td class="o-td-amount">${fmtMxn(d.cuota_fija_patron)}</td><td><span class="o-badge o-badge-info">Costo empresa</span></td></tr>
+          <tr style="font-weight:700"><td>Costo Total Empresa</td><td class="o-td-amount">${fmtMxn(d.costo_total_patron)}</td><td></td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;padding:8px 12px;background:var(--o-bg-hover);border-radius:6px;font-size:0.78em;color:var(--o-text-secondary)">
+        Cálculo con tablas oficiales ISR 2024 (Art.152 LISR) + cuotas IMSS 2024 (DOF). SDI: ${fmtMxn(sdiInput)}/día.
+      </div>
+    `
+    toast('Nómina calculada', 'Desglose ISR 2024 + IMSS actualizado', 'success')
+  } catch(e) {
+    toast('Error', e.message, 'error')
+  }
+}
 
 window._nominaFiltro = (f) => {
   const filtered = f === 'activos'

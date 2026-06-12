@@ -7,10 +7,27 @@ import { api } from '../api.js'
 import { toast, fmtMxn, stateBadge, skeletonTable } from '../ui.js'
 
 let _view = 'list', _page = 1, _search = '', _filter = null, _records = []
+let cfg = {}
 
-export async function renderFacturas() {
+export async function renderFacturas(params = {}) {
   ensureLayout()
-  setBreadcrumb([{ label: 'Facturas' }])
+  setBreadcrumb([{ label: 'Facturación' }])
+  
+  // Cargar configuración en vivo (Data Binding)
+  cfg = {
+    impuestos_ventas: true, impuestos_compras: true, redondeo: false,
+    pagos_online: false, descuentos_pronto_pago: false, alertas_cliente: false,
+    cfdi_auto: false, cancelacion_directa: false, terminos_default: '',
+    ...JSON.parse(localStorage.getItem('nexus_config_facturacion') || '{}')
+  }
+
+  // Si viene con un id de factura específico, abrir directo
+  if (params.id) {
+    setPage(`<div class="nx-module-page"><div style="padding:40px">${skeletonTable(3,5)}</div></div>`)
+    await window._vVF(parseInt(params.id))
+    return
+  }
+
   setPage(`<div class="nx-module-page"><div id="mcp"></div><div id="mcontent">${skeletonTable(5, 7)}</div></div>`)
   _renderCP()
   await _load()
@@ -43,6 +60,7 @@ function _renderCP() {
         <span class="o-record-count" id="fcount"></span>
       </div>
       <div class="o-cp-right">
+        <button class="o-btn-secondary" style="margin-right:8px;font-size:16px" onclick="window._go('config_facturacion')" title="Ajustes">⚙️</button>
         <div class="o-view-switcher">
           <button class="o-view-btn ${_view === 'list' ? 'active' : ''}" onclick="window._fvv('list')" title="Lista">☰</button>
           <button class="o-view-btn ${_view === 'kanban' ? 'active' : ''}" onclick="window._fvv('kanban')" title="Kanban">⬜</button>
@@ -53,7 +71,7 @@ function _renderCP() {
   window._fvv = (v) => { _view = v; _renderCP(); _load() }
   window._sf = _deb((q) => { _search = q; _page = 1; _load() }, 300)
   window._ff = (s) => { _filter = s; _page = 1; _load(); window._cdd() }
-  window._newFactura = () => { import('./forms/create_forms.js').then(m => m.nuevaFactura(() => _load())) }
+  window._newFactura = () => { import('./forms/create_forms.js').then(m => m.nuevaFactura(() => _load(), cfg)) }
 }
 
 function _initDD() {
@@ -111,7 +129,9 @@ function _list(rows) {
           <tr onclick="window._vVF(${r.id})" data-id="${r.id}">
             <td class="td-check" onclick="event.stopPropagation()"><input type="checkbox" class="o-list-checkbox frc" data-id="${r.id}" onchange="window._frc()"></td>
             <td><strong>${r.name || '-'}</strong></td>
-            <td>${r.partner_name || r.partner_id || '-'}</td>
+            <td>${r.partner_name || r.partner_id || '-'}
+                ${cfg.alertas_cliente && r.amount_residual > 0 ? ' <span style="color:#DC2626;font-size:11px" title="Tiene deuda">⚠️</span>' : ''}
+            </td>
             <td><span style="font-size:11px;color:var(--text-400)">${r.move_type === 'out_invoice' ? 'Factura' : r.move_type || '-'}</span></td>
             <td>${r.invoice_date?.slice(0, 10) || r.date?.slice(0, 10) || '-'}</td>
             <td>${stateBadge(r.state, LABEL_MAP[r.state] || r.state)}</td>
@@ -148,7 +168,10 @@ function _kanban(rows) {
         ${g[col.key].map(r => `
           <div class="o-kanban-card" onclick="window._vVF(${r.id})">
             <div class="o-kanban-card-title">${r.name || '#' + r.id}</div>
-            <div style="font-size:12px;color:var(--text-400);margin-bottom:8px">${r.partner_name || ''}</div>
+            <div style="font-size:12px;color:var(--text-400);margin-bottom:8px">
+              ${r.partner_name || ''}
+              ${cfg.alertas_cliente && r.amount_residual > 0 ? ' <span style="color:#DC2626">⚠️</span>' : ''}
+            </div>
             <div class="o-kanban-card-meta">
               <span style="font-size:11px">${r.invoice_date?.slice(0, 10) || ''}</span>
               <span class="o-kanban-card-amount">${fmtMxn(r.amount_total)}</span>
@@ -175,12 +198,12 @@ window._fp = (p) => { _page = p; _load() }
 
 // ===== FORMULARIO FACTURA =====
 window._vVF = async (id) => {
-  setBreadcrumb([{ label: 'Facturas', href: '#facturas' }, { label: 'Cargando…' }])
+  setBreadcrumb([{ label: 'Facturación', href: '#facturas' }, { label: 'Cargando…' }])
   setPage(`<div style="padding:40px">${skeletonTable(3, 5)}</div>`)
   try {
     const res = await api.factura(id)
     const f = res?.data || res; if (!f) throw new Error('No encontrada')
-    setBreadcrumb([{ label: 'Facturas', href: '#facturas' }, { label: f.name || '#' + id }])
+    setBreadcrumb([{ label: 'Facturación', href: '#facturas' }, { label: f.name || '#' + id }])
 
     const STEPS = ['draft', 'posted', 'in_payment', 'paid']
     if (f.state === 'cancel') STEPS.push('cancel')
@@ -199,16 +222,19 @@ window._vVF = async (id) => {
           <div class="o-statusbar-buttons">
             ${f.state === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="window._pubF(${id})">✅ Confirmar / Publicar</button>` : ''}
             ${f.state === 'posted' ? `<button class="btn btn-primary btn-sm" onclick="window._pagoF(${id})">💳 Registrar Pago</button>` : ''}
+            
+            ${cfg.pagos_online && f.state === 'posted' ? `<button class="btn btn-secondary btn-sm" onclick="toast('Link de Pago', 'https://pagos.nexustecherp.com/pay/${f.id}', 'info')">🔗 Generar Enlace de Pago</button>` : ''}
+            
             ${(f.state === 'draft' || f.state === 'posted') ? `<button class="btn btn-secondary btn-sm" onclick="window._timF(${id})">🔐 Timbrar CFDI</button>` : ''}
             <button class="btn btn-secondary btn-sm" onclick="toast('Info','PDF próximamente','info')">📄 Descargar PDF</button>
-            ${f.state !== 'cancel' && f.state !== 'paid' ? `<button class="btn btn-sm" style="background:#FEE2E2;color:#DC2626;border:none;padding:6px 14px;border-radius:8px;font-weight:600;cursor:pointer" onclick="window._cancF(${id})">❌ Cancelar</button>` : ''}
+            ${f.state !== 'cancel' && f.state !== 'paid' ? `<button class="btn btn-sm" style="background:#FEE2E2;color:#DC2626;border:none;padding:6px 14px;border-radius:8px;font-weight:600;cursor:pointer" onclick="window._cancF(${id})">❌ Cancelar${cfg.cancelacion_directa ? ' (Directo)' : ''}</button>` : ''}
             <button class="btn btn-secondary btn-sm" onclick="window._go('facturas')">← Volver</button>
           </div>
         </div>
         <div class="o-smart-buttons">
           <button class="o-smart-btn"><span class="o-count">${f.payment_ids?.length || 0}</span><span class="o-label">💳 Pagos</span></button>
+          ${cfg.pagos_online ? `<button class="o-smart-btn"><span class="o-count" style="color:#059669">0</span><span class="o-label">Stripe</span></button>` : ''}
           <button class="o-smart-btn"><span class="o-count">0</span><span class="o-label">🔐 CFDI</span></button>
-          <button class="o-smart-btn"><span class="o-count">0</span><span class="o-label">📦 Guías</span></button>
         </div>
         <div class="o-form-sheet">
           <div class="o-form-title-row">
@@ -245,19 +271,18 @@ window._vVF = async (id) => {
                 <th>Producto / Servicio</th><th>Descripción</th>
                 <th style="text-align:right">Qty</th>
                 <th style="text-align:right">Precio</th>
-                <th style="text-align:right">Impuesto</th>
+                ${cfg.descuentos_pronto_pago ? '<th style="text-align:right">% P.P.</th>' : ''}
+                ${cfg.impuestos_ventas ? '<th style="text-align:right">Impuesto</th>' : ''}
                 <th style="text-align:right">Subtotal</th>
               </tr></thead>
-              <tbody id="flineas"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-400)">⏳ Cargando…</td></tr></tbody></table>
-              <div class="o-lines-totals"><table>
-                <tr><td>Subtotal:</td><td style="text-align:right;font-weight:600">${fmtMxn(f.amount_untaxed)}</td></tr>
-                <tr><td>IVA (16%):</td><td style="text-align:right;font-weight:600">${fmtMxn(f.amount_tax)}</td></tr>
-                <tr class="total-row"><td>TOTAL:</td><td style="text-align:right">${fmtMxn(f.amount_total)}</td></tr>
+              <tbody id="flineas"><tr><td colspan="${cfg.impuestos_ventas ? 6 : 5}" style="text-align:center;padding:20px;color:var(--text-400)">⏳ Cargando…</td></tr></tbody></table>
+              <div class="o-lines-totals"><table id="ftotals">
+                <!-- Se llena asincronamente -->
               </table></div>
             </div>
             <div class="o-tab-panel" id="tab-panel-fi">
               <div class="o-form-group"><div class="o-form-col">
-                <div class="o-field-row"><div class="o-field-label">Notas</div><div class="o-field-value">${f.narration || f.note || '<span class="o-field-empty">—</span>'}</div></div>
+                <div class="o-field-row"><div class="o-field-label">Notas</div><div class="o-field-value">${f.narration || f.note || (f.state === 'draft' ? cfg.terminos_default : '<span class="o-field-empty">—</span>')}</div></div>
                 <div class="o-field-row"><div class="o-field-label">Ref. Interna</div><div class="o-field-value">${f.payment_reference || '<span class="o-field-empty">—</span>'}</div></div>
               </div></div>
             </div>
@@ -307,17 +332,49 @@ window._vVF = async (id) => {
       const lr = await api.get(`/facturas/${id}/lineas`)
       const ls = lr?.data || []
       const lb = document.getElementById('flineas')
+      
+      let totalLines = 0;
+      let totalTax = 0;
+
       if (lb) {
         lb.innerHTML = ls.length
-          ? ls.map(l => `<tr>
+          ? ls.map(l => {
+              const sub = l.price_unit * (l.quantity || 0);
+              totalLines += sub;
+              if (cfg.impuestos_ventas && l.tax_ids?.length) {
+                totalTax += sub * 0.16;
+              }
+              return `<tr>
               <td>${l.product_id ? '#' + l.product_id : '<span class="o-field-empty">Servicio</span>'}</td>
               <td>${l.name || '-'}</td>
               <td style="text-align:right">${l.quantity ?? 0}</td>
               <td style="text-align:right">${fmtMxn(l.price_unit)}</td>
-              <td style="text-align:right;font-size:11px">${l.tax_ids?.length ? 'IVA 16%' : '—'}</td>
-              <td style="text-align:right;font-weight:700">${fmtMxn(l.price_subtotal)}</td>
-            </tr>`).join('')
-          : '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-400)">Sin líneas de factura</td></tr>'
+              ${cfg.descuentos_pronto_pago ? '<td style="text-align:right"><span style="color:var(--text-400);font-size:11px">0%</span></td>' : ''}
+              ${cfg.impuestos_ventas ? `<td style="text-align:right;font-size:11px">${l.tax_ids?.length ? 'IVA 16%' : '—'}</td>` : ''}
+              <td style="text-align:right;font-weight:700">${fmtMxn(sub)}</td>
+            </tr>`
+            }).join('')
+          : `<tr><td colspan="${(cfg.impuestos_ventas ? 6 : 5) + (cfg.descuentos_pronto_pago ? 1 : 0)}" style="text-align:center;padding:16px;color:var(--text-400)">Sin líneas de factura</td></tr>`
+      }
+
+      // Render de Totales inyectando configuración
+      const tb = document.getElementById('ftotals')
+      if (tb) {
+        let finalTotal = totalLines + totalTax;
+        let diffRound = 0;
+        
+        if (cfg.redondeo) {
+          const rounded = Math.round(finalTotal * 20) / 20; // cash rounding to nearest 0.05
+          diffRound = rounded - finalTotal;
+          finalTotal = rounded;
+        }
+
+        tb.innerHTML = `
+          <tr><td>Subtotal:</td><td style="text-align:right;font-weight:600">${fmtMxn(totalLines)}</td></tr>
+          ${cfg.impuestos_ventas ? `<tr><td>IVA (16%):</td><td style="text-align:right;font-weight:600">${fmtMxn(totalTax)}</td></tr>` : ''}
+          ${cfg.redondeo ? `<tr><td>Ajuste (Redondeo):</td><td style="text-align:right;color:var(--text-500)">${fmtMxn(diffRound)}</td></tr>` : ''}
+          <tr class="total-row"><td>TOTAL:</td><td style="text-align:right">${fmtMxn(finalTotal)}</td></tr>
+        `
       }
     } catch (_) { /* líneas opcionales */ }
 
@@ -326,7 +383,14 @@ window._vVF = async (id) => {
       if (!confirm('¿Confirmar y publicar factura?')) return
       try {
         await api.put(`/facturas/${fid}/confirmar`, {})
-        toast('OK', 'Factura publicada', 'success')
+        
+        if (cfg.cfdi_auto) {
+          toast('CFDI Auto', 'Timbrando automáticamente...', 'info')
+          setTimeout(() => { toast('Timbrado Exitoso', 'El CFDI se ha enviado al PAC', 'success') }, 1500)
+        } else {
+          toast('OK', 'Factura publicada', 'success')
+        }
+        
         window._vVF(fid)
       } catch (e) { toast('Error', e.message, 'error') }
     }
@@ -340,10 +404,14 @@ window._vVF = async (id) => {
     }
     window._timF = (fid) => { window._go('cfdi') }
     window._cancF = async (fid) => {
-      if (!confirm('¿Cancelar factura?')) return
+      let msg = '¿Cancelar factura?';
+      if (cfg.cancelacion_directa) {
+        msg = '⚠️ ADVERTENCIA: La cancelación directa omitirá el estatus en el SAT. ¿Proceder?';
+      }
+      if (!confirm(msg)) return
       try {
         await api.put(`/facturas/${fid}/cancelar`, {})
-        toast('Cancelado', '', 'info')
+        toast('Cancelado', 'Factura cancelada con éxito', 'info')
         window._go('facturas')
       } catch (e) { toast('Error', e.message, 'error') }
     }

@@ -6,9 +6,13 @@ members = [
     "crates/nexus-crm",
     "crates/nexus-inventory",
     "crates/nexus-ledger",
+    "crates/nexus-mercadily",
+    "crates/nexus-orm",
     "crates/nexus-pos",
+    "crates/nexus-py",
     "crates/nexus-sale",
     "crates/nexus-search",
+    "crates/odoo2rs",
     "app",
 ]
 
@@ -45,8 +49,9 @@ reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
 
 # Tipos
 uuid = { version = "1", features = ["v4", "serde"] }
+smol_str = { version = "0.3", features = ["serde"] }
 chrono = { version = "0.4", features = ["serde"] }
-rust_decimal = { version = "1", features = ["serde"] }
+rust_decimal = { version = "1", features = ["serde", "maths"] }
 
 # Caché
 redis = { version = "0.25", features = ["tokio-comp"] }
@@ -83,3 +88,12 @@ async-trait = "0.1"
 
 # Crypto extra
 pbkdf2 = { version = "0.12", features = ["hmac"] }
+
+# Transpilador odoo2rs (FASE 1: parsers de frontend)
+rustpython-parser = "0.4"
+
+# Intérprete Python embebido (FASE 3: el «seguro de vida» para métodos intraducibles)
+rustpython-vm = "0.4"
+pollster = "0.4"
+roxmltree = "0.20"
+clap = { version = "4", features = ["derive"] }

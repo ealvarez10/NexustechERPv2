@@ -1,23 +1,29 @@
 import { ensureLayout, setPage, setBreadcrumb } from '../layout.js'
 import { api } from '../api.js'
 
-const APPS = [
-  { id: 'ventas',       icon: '📊', grad: '#4F46E5,#7C3AED', nombre: 'Ventas',          desc: 'Órdenes y Cotizaciones',    kpi: '/ventas/kpis',        field: 'total_ordenes' },
-  { id: 'facturas',     icon: '🧾', grad: '#059669,#0EA5E9', nombre: 'Facturación',     desc: 'Facturas y Pagos',          kpi: '/facturas/kpis',      field: 'total_facturas' },
-  { id: 'partners',     icon: '👥', grad: '#7C3AED,#EC4899', nombre: 'Clientes',        desc: 'Contactos y Partners',      kpi: '/partners',           field: null },
-  { id: 'stock',        icon: '🏭', grad: '#D97706,#EA580C', nombre: 'Inventario',      desc: 'Control de Stock',          kpi: '/stock/kpis',         field: 'total_productos_con_stock' },
-  { id: 'compras',      icon: '🛒', grad: '#2563EB,#4F46E5', nombre: 'Compras',         desc: 'Órdenes de Compra',         kpi: '/compras/kpis',       field: 'total_ordenes' },
-  { id: 'productos',    icon: '📦', grad: '#0D9488,#059669', nombre: 'Productos',       desc: 'Catálogo de Artículos',     kpi: '/productos',          field: null },
-  { id: 'cfdi',         icon: '🔐', grad: '#E11D48,#DC2626', nombre: 'CFDI 4.0',        desc: 'Timbrado Fiscal Digital',   kpi: '/cfdi/historial',     field: null },
-  { id: 'nomina',       icon: '👔', grad: '#0EA5E9,#2563EB', nombre: 'Nómina IMSS',    desc: 'Nóminas y Seguridad Social', kpi: '/nomina/kpis',        field: 'total_empleados' },
-  { id: 'reportes',     icon: '📈', grad: '#475569,#1E293B', nombre: 'Reportes',        desc: 'Análisis y BI',             kpi: null,                  field: null },
-  { id: 'cotizaciones', icon: '📝', grad: '#8B5CF6,#4F46E5', nombre: 'Cotizaciones',    desc: 'Borradores y Propuestas',   kpi: '/cotizaciones/kpis',  field: 'total_borradores' },
-  { id: 'dashboard',    icon: '📊', grad: '#0F172A,#1E293B', nombre: 'Dashboard',       desc: 'Vista general del sistema', kpi: null,                  field: null },
-]
 
 export async function renderHome() {
   ensureLayout()
   setBreadcrumb([{ label: 'Inicio' }])
+
+  // Obtener todas las apps desde la BD
+  let serverApps = []
+  try {
+    const res = await api.get('/apps')
+    serverApps = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : [])
+  } catch(e) {
+    console.error('Error cargando apps', e)
+  }
+
+  // Filtrar las apps instaladas
+  // El App Store se llama "apps" y siempre debe estar visible (o estar preinstalado en la DB)
+  let installedApps = serverApps.filter(a => a.estado === 'installed' || a.id === 'apps')
+
+  // Si por alguna razón la BD está vacía, mostrar solo App Store
+  if (installedApps.length === 0) {
+    installedApps = [{ id: 'apps', nombre: 'Aplicaciones', descripcion: 'Catálogo de Módulos', icono: '🛍️', gradiente: '#1E293B,#0F172A', estado: 'installed' }]
+  }
+
   setPage(`
     <div class="nx-home">
       <div class="nx-home-header">
@@ -27,12 +33,12 @@ export async function renderHome() {
         </div>
       </div>
       <div class="nx-app-grid" id="home-app-grid">
-        ${APPS.map((a, i) => `
+        ${installedApps.map((a, i) => `
           <div class="nx-app-card" data-id="${a.id}" onclick="window._go('${a.id}')" style="animation-delay:${i * 50}ms">
-            <div class="nx-app-icon" style="background:linear-gradient(135deg,${a.grad})">${a.icon}</div>
-            <div class="nx-app-badge" id="app-badge-${a.id}">…</div>
+            <div class="nx-app-icon" style="background:linear-gradient(135deg,${a.gradiente || '#475569,#1E293B'})">${a.icono || '📦'}</div>
+            ${a.kpi_url ? `<div class="nx-app-badge" id="app-badge-${a.id}">…</div>` : ''}
             <div class="nx-app-name">${a.nombre}</div>
-            <div class="nx-app-desc">${a.desc}</div>
+            <div class="nx-app-desc">${a.descripcion || ''}</div>
           </div>
         `).join('')}
       </div>
@@ -41,11 +47,11 @@ export async function renderHome() {
 
   // Cargar KPIs en paralelo
   await Promise.allSettled(
-    APPS.filter(a => a.kpi).map(async (app) => {
+    installedApps.filter(a => a.kpi_url).map(async (app) => {
       try {
-        const res = await api.get(app.kpi)
+        const res = await api.get(app.kpi_url)
         const d = res?.data ?? res
-        const val = app.field && d ? (d[app.field] ?? '—') : (Array.isArray(d) ? d.length : '—')
+        const val = app.kpi_field && d ? (d[app.kpi_field] ?? '—') : (Array.isArray(d) ? d.length : '—')
         const el = document.getElementById('app-badge-' + app.id)
         if (el) el.textContent = Number(val) > 999 ? (val / 1000).toFixed(1) + 'k' : val
       } catch {

@@ -1,0 +1,1099 @@
+{
+  "views": [
+    {
+      "xml_id": "crm_lead_view_form_inherit_mercadily",
+      "name": "crm.lead.form.inherit.mercadily",
+      "model": "crm.lead",
+      "type": "xpath",
+      "arch": {
+        "tag": "xpath",
+        "attrs": {
+          "expr": "//notebook",
+          "position": "inside"
+        },
+        "children": [
+          {
+            "tag": "page",
+            "attrs": {
+              "invisible": "not mercadily_backend_id",
+              "name": "mercadily_tab",
+              "string": "Mercadily"
+            },
+            "children": [
+              {
+                "tag": "group",
+                "children": [
+                  {
+                    "tag": "group",
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "mercadily_backend_id",
+                          "readonly": "1"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "mercadily_id",
+                          "readonly": "1"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "group",
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "mercadily_status",
+                          "readonly": "1"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "mercadily_source",
+                          "readonly": "1"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "mercadily_backend_id",
+          "attrs": {
+            "readonly": "1"
+          }
+        },
+        {
+          "name": "mercadily_id",
+          "attrs": {
+            "readonly": "1"
+          }
+        },
+        {
+          "name": "mercadily_status",
+          "attrs": {
+            "readonly": "1"
+          }
+        },
+        {
+          "name": "mercadily_source",
+          "attrs": {
+            "readonly": "1"
+          }
+        }
+      ]
+    },
+    {
+      "xml_id": "crm_lead_view_list_inherit_mercadily",
+      "name": "crm.lead.list.inherit.mercadily",
+      "model": "crm.lead",
+      "type": "xpath",
+      "arch": {
+        "tag": "xpath",
+        "attrs": {
+          "expr": "//field[@name='email_from']",
+          "position": "after"
+        },
+        "children": [
+          {
+            "tag": "field",
+            "attrs": {
+              "name": "mercadily_status",
+              "optional": "hide"
+            }
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "mercadily_status",
+          "attrs": {
+            "optional": "hide"
+          }
+        }
+      ]
+    },
+    {
+      "xml_id": "mercadily_backend_form_view",
+      "name": "mercadily.backend.form",
+      "model": "mercadily.backend",
+      "type": "form",
+      "arch": {
+        "tag": "form",
+        "attrs": {
+          "string": "Backend Mercadily"
+        },
+        "children": [
+          {
+            "tag": "header",
+            "children": [
+              {
+                "tag": "button",
+                "attrs": {
+                  "class": "oe_highlight",
+                  "icon": "fa-plug",
+                  "name": "action_test_connection",
+                  "string": "Probar Conexión",
+                  "type": "object"
+                }
+              },
+              {
+                "tag": "button",
+                "attrs": {
+                  "class": "oe_highlight",
+                  "icon": "fa-refresh",
+                  "name": "action_sync_all",
+                  "string": "Sincronizar Todo",
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "sheet",
+            "children": [
+              {
+                "tag": "div",
+                "attrs": {
+                  "class": "oe_button_box",
+                  "name": "button_box"
+                },
+                "children": [
+                  {
+                    "tag": "button",
+                    "attrs": {
+                      "class": "oe_stat_button",
+                      "icon": "fa-handshake-o",
+                      "name": "action_view_leads",
+                      "type": "object"
+                    },
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "lead_count",
+                          "string": "Leads",
+                          "widget": "statinfo"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "button",
+                    "attrs": {
+                      "class": "oe_stat_button",
+                      "icon": "fa-shopping-cart",
+                      "name": "action_view_orders",
+                      "type": "object"
+                    },
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "order_count",
+                          "string": "Pedidos",
+                          "widget": "statinfo"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "button",
+                    "attrs": {
+                      "class": "oe_stat_button",
+                      "icon": "fa-users",
+                      "name": "action_view_customers",
+                      "type": "object"
+                    },
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "customer_count",
+                          "string": "Clientes",
+                          "widget": "statinfo"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {
+                  "class": "oe_title"
+                },
+                "children": [
+                  {
+                    "tag": "h1",
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "name",
+                          "placeholder": "Nombre de la Tienda"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "group",
+                "children": [
+                  {
+                    "tag": "group",
+                    "attrs": {
+                      "string": "Configuración API"
+                    },
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "api_url",
+                          "placeholder": "https://tudominio.com",
+                          "widget": "url"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "api_key",
+                          "password": "True"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "groups": "base.group_multi_company",
+                          "name": "company_id"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "invisible": "1",
+                          "name": "active"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "group",
+                    "attrs": {
+                      "string": "Última Sincronización"
+                    },
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "last_lead_sync"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "last_order_sync"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "last_customer_sync"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "group",
+                "attrs": {
+                  "string": "Sincronización Manual"
+                },
+                "children": [
+                  {
+                    "tag": "div",
+                    "attrs": {
+                      "class": "text-muted"
+                    },
+                    "children": [
+                      {
+                        "tag": "p",
+                        "text": "Puedes sincronizar tipos de datos específicos:"
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "div",
+                    "children": [
+                      {
+                        "tag": "button",
+                        "attrs": {
+                          "class": "btn-secondary me-2",
+                          "icon": "fa-bullhorn",
+                          "name": "action_sync_leads",
+                          "string": "Sincronizar Leads",
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "tag": "button",
+                        "attrs": {
+                          "class": "btn-secondary me-2",
+                          "icon": "fa-users",
+                          "name": "action_sync_customers",
+                          "string": "Sincronizar Clientes",
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "tag": "button",
+                        "attrs": {
+                          "class": "btn-secondary",
+                          "icon": "fa-shopping-cart",
+                          "name": "action_sync_orders",
+                          "string": "Sincronizar Pedidos",
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "notebook",
+                "children": [
+                  {
+                    "tag": "page",
+                    "attrs": {
+                      "name": "sync_logs",
+                      "string": "Logs de Sincronización"
+                    },
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "sync_log_ids",
+                          "readonly": "1"
+                        },
+                        "children": [
+                          {
+                            "tag": "list",
+                            "children": [
+                              {
+                                "tag": "field",
+                                "attrs": {
+                                  "name": "create_date"
+                                }
+                              },
+                              {
+                                "tag": "field",
+                                "attrs": {
+                                  "name": "sync_type"
+                                }
+                              },
+                              {
+                                "tag": "field",
+                                "attrs": {
+                                  "name": "created_count"
+                                }
+                              },
+                              {
+                                "tag": "field",
+                                "attrs": {
+                                  "name": "updated_count"
+                                }
+                              },
+                              {
+                                "tag": "field",
+                                "attrs": {
+                                  "decoration-danger": "error_count > 0",
+                                  "name": "error_count"
+                                }
+                              },
+                              {
+                                "tag": "field",
+                                "attrs": {
+                                  "name": "error_details",
+                                  "optional": "hide"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "chatter"
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "lead_count",
+          "string": "Leads",
+          "widget": "statinfo"
+        },
+        {
+          "name": "order_count",
+          "string": "Pedidos",
+          "widget": "statinfo"
+        },
+        {
+          "name": "customer_count",
+          "string": "Clientes",
+          "widget": "statinfo"
+        },
+        {
+          "name": "name",
+          "attrs": {
+            "placeholder": "Nombre de la Tienda"
+          }
+        },
+        {
+          "name": "api_url",
+          "widget": "url",
+          "attrs": {
+            "placeholder": "https://tudominio.com"
+          }
+        },
+        {
+          "name": "api_key",
+          "attrs": {
+            "password": "True"
+          }
+        },
+        {
+          "name": "company_id",
+          "attrs": {
+            "groups": "base.group_multi_company"
+          }
+        },
+        {
+          "name": "active",
+          "attrs": {
+            "invisible": "1"
+          }
+        },
+        {
+          "name": "last_lead_sync"
+        },
+        {
+          "name": "last_order_sync"
+        },
+        {
+          "name": "last_customer_sync"
+        },
+        {
+          "name": "sync_log_ids",
+          "attrs": {
+            "readonly": "1"
+          }
+        },
+        {
+          "name": "create_date"
+        },
+        {
+          "name": "sync_type"
+        },
+        {
+          "name": "created_count"
+        },
+        {
+          "name": "updated_count"
+        },
+        {
+          "name": "error_count",
+          "attrs": {
+            "decoration-danger": "error_count > 0"
+          }
+        },
+        {
+          "name": "error_details",
+          "attrs": {
+            "optional": "hide"
+          }
+        }
+      ],
+      "buttons": [
+        {
+          "name": "action_test_connection",
+          "string": "Probar Conexión",
+          "type": "object",
+          "class": "oe_highlight"
+        },
+        {
+          "name": "action_sync_all",
+          "string": "Sincronizar Todo",
+          "type": "object",
+          "class": "oe_highlight"
+        },
+        {
+          "name": "action_view_leads",
+          "type": "object",
+          "class": "oe_stat_button"
+        },
+        {
+          "name": "action_view_orders",
+          "type": "object",
+          "class": "oe_stat_button"
+        },
+        {
+          "name": "action_view_customers",
+          "type": "object",
+          "class": "oe_stat_button"
+        },
+        {
+          "name": "action_sync_leads",
+          "string": "Sincronizar Leads",
+          "type": "object",
+          "class": "btn-secondary me-2"
+        },
+        {
+          "name": "action_sync_customers",
+          "string": "Sincronizar Clientes",
+          "type": "object",
+          "class": "btn-secondary me-2"
+        },
+        {
+          "name": "action_sync_orders",
+          "string": "Sincronizar Pedidos",
+          "type": "object",
+          "class": "btn-secondary"
+        }
+      ]
+    },
+    {
+      "xml_id": "mercadily_backend_list_view",
+      "name": "mercadily.backend.list",
+      "model": "mercadily.backend",
+      "type": "tree",
+      "arch": {
+        "tag": "list",
+        "attrs": {
+          "string": "Backends Mercadily"
+        },
+        "children": [
+          {
+            "tag": "field",
+            "attrs": {
+              "name": "name"
+            }
+          },
+          {
+            "tag": "field",
+            "attrs": {
+              "name": "api_url",
+              "widget": "url"
+            }
+          },
+          {
+            "tag": "field",
+            "attrs": {
+              "groups": "base.group_multi_company",
+              "name": "company_id"
+            }
+          },
+          {
+            "tag": "field",
+            "attrs": {
+              "name": "last_lead_sync"
+            }
+          },
+          {
+            "tag": "field",
+            "attrs": {
+              "name": "last_order_sync"
+            }
+          },
+          {
+            "tag": "field",
+            "attrs": {
+              "name": "last_customer_sync"
+            }
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "name"
+        },
+        {
+          "name": "api_url",
+          "widget": "url"
+        },
+        {
+          "name": "company_id",
+          "attrs": {
+            "groups": "base.group_multi_company"
+          }
+        },
+        {
+          "name": "last_lead_sync"
+        },
+        {
+          "name": "last_order_sync"
+        },
+        {
+          "name": "last_customer_sync"
+        }
+      ]
+    },
+    {
+      "xml_id": "mercadily_sync_log_list_view",
+      "name": "mercadily.sync.log.list",
+      "model": "mercadily.sync.log",
+      "type": "tree",
+      "arch": {
+        "tag": "list",
+        "attrs": {
+          "create": "false",
+          "edit": "false",
+          "string": "Logs de Sincronización"
+        },
+        "children": [
+          {
+            "tag": "field",
+            "attrs": {
+              "name": "create_date"
+            }
+          },
+          {
+            "tag": "field",
+            "attrs": {
+              "name": "backend_id"
+            }
+          },
+          {
+            "tag": "field",
+            "attrs": {
+              "name": "sync_type"
+            }
+          },
+          {
+            "tag": "field",
+            "attrs": {
+              "name": "created_count"
+            }
+          },
+          {
+            "tag": "field",
+            "attrs": {
+              "name": "updated_count"
+            }
+          },
+          {
+            "tag": "field",
+            "attrs": {
+              "decoration-danger": "error_count > 0",
+              "name": "error_count"
+            }
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "create_date"
+        },
+        {
+          "name": "backend_id"
+        },
+        {
+          "name": "sync_type"
+        },
+        {
+          "name": "created_count"
+        },
+        {
+          "name": "updated_count"
+        },
+        {
+          "name": "error_count",
+          "attrs": {
+            "decoration-danger": "error_count > 0"
+          }
+        }
+      ]
+    },
+    {
+      "xml_id": "mercadily_sync_log_form_view",
+      "name": "mercadily.sync.log.form",
+      "model": "mercadily.sync.log",
+      "type": "form",
+      "arch": {
+        "tag": "form",
+        "attrs": {
+          "create": "false",
+          "edit": "false",
+          "string": "Log de Sincronización"
+        },
+        "children": [
+          {
+            "tag": "sheet",
+            "children": [
+              {
+                "tag": "group",
+                "children": [
+                  {
+                    "tag": "group",
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "backend_id"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "sync_type"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "create_date"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "group",
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "created_count"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "updated_count"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "error_count"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "group",
+                "attrs": {
+                  "invisible": "not error_details",
+                  "string": "Detalle de Errores"
+                },
+                "children": [
+                  {
+                    "tag": "field",
+                    "attrs": {
+                      "name": "error_details",
+                      "nolabel": "1"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "backend_id"
+        },
+        {
+          "name": "sync_type"
+        },
+        {
+          "name": "create_date"
+        },
+        {
+          "name": "created_count"
+        },
+        {
+          "name": "updated_count"
+        },
+        {
+          "name": "error_count"
+        },
+        {
+          "name": "error_details",
+          "attrs": {
+            "nolabel": "1"
+          }
+        }
+      ]
+    },
+    {
+      "xml_id": "res_partner_view_form_inherit_mercadily",
+      "name": "res.partner.form.inherit.mercadily",
+      "model": "res.partner",
+      "type": "xpath",
+      "arch": {
+        "tag": "xpath",
+        "attrs": {
+          "expr": "//notebook",
+          "position": "inside"
+        },
+        "children": [
+          {
+            "tag": "page",
+            "attrs": {
+              "invisible": "not mercadily_backend_id",
+              "name": "mercadily_tab",
+              "string": "Mercadily"
+            },
+            "children": [
+              {
+                "tag": "group",
+                "children": [
+                  {
+                    "tag": "field",
+                    "attrs": {
+                      "name": "mercadily_backend_id",
+                      "readonly": "1"
+                    }
+                  },
+                  {
+                    "tag": "field",
+                    "attrs": {
+                      "name": "mercadily_id",
+                      "readonly": "1"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "mercadily_backend_id",
+          "attrs": {
+            "readonly": "1"
+          }
+        },
+        {
+          "name": "mercadily_id",
+          "attrs": {
+            "readonly": "1"
+          }
+        }
+      ]
+    },
+    {
+      "xml_id": "sale_order_view_form_inherit_mercadily",
+      "name": "sale.order.form.inherit.mercadily",
+      "model": "sale.order",
+      "type": "xpath",
+      "arch": {
+        "tag": "xpath",
+        "attrs": {
+          "expr": "//notebook",
+          "position": "inside"
+        },
+        "children": [
+          {
+            "tag": "page",
+            "attrs": {
+              "invisible": "not mercadily_backend_id",
+              "name": "mercadily_tab",
+              "string": "Mercadily"
+            },
+            "children": [
+              {
+                "tag": "group",
+                "children": [
+                  {
+                    "tag": "group",
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "mercadily_backend_id",
+                          "readonly": "1"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "mercadily_id",
+                          "readonly": "1"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "group",
+                    "children": [
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "mercadily_status",
+                          "readonly": "1"
+                        }
+                      },
+                      {
+                        "tag": "field",
+                        "attrs": {
+                          "name": "mercadily_payment_method",
+                          "readonly": "1"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "group",
+                "attrs": {
+                  "invisible": "not mercadily_shipping_address",
+                  "string": "Dirección de Envío Mercadily"
+                },
+                "children": [
+                  {
+                    "tag": "field",
+                    "attrs": {
+                      "name": "mercadily_shipping_address",
+                      "nolabel": "1",
+                      "readonly": "1"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "mercadily_backend_id",
+          "attrs": {
+            "readonly": "1"
+          }
+        },
+        {
+          "name": "mercadily_id",
+          "attrs": {
+            "readonly": "1"
+          }
+        },
+        {
+          "name": "mercadily_status",
+          "attrs": {
+            "readonly": "1"
+          }
+        },
+        {
+          "name": "mercadily_payment_method",
+          "attrs": {
+            "readonly": "1"
+          }
+        },
+        {
+          "name": "mercadily_shipping_address",
+          "attrs": {
+            "nolabel": "1",
+            "readonly": "1"
+          }
+        }
+      ]
+    },
+    {
+      "xml_id": "sale_order_view_list_inherit_mercadily",
+      "name": "sale.order.list.inherit.mercadily",
+      "model": "sale.order",
+      "type": "xpath",
+      "arch": {
+        "tag": "xpath",
+        "attrs": {
+          "expr": "//field[@name='state']",
+          "position": "after"
+        },
+        "children": [
+          {
+            "tag": "field",
+            "attrs": {
+              "name": "mercadily_status",
+              "optional": "hide",
+              "string": "Estatus Tienda"
+            }
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "mercadily_status",
+          "string": "Estatus Tienda",
+          "attrs": {
+            "optional": "hide"
+          }
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "xml_id": "mercadily_backend_action",
+      "name": "Configuración Mercadily",
+      "res_model": "mercadily.backend",
+      "view_mode": "list,form"
+    },
+    {
+      "xml_id": "mercadily_sync_log_action",
+      "name": "Logs de Sincronización",
+      "res_model": "mercadily.sync.log",
+      "view_mode": "list,form"
+    }
+  ],
+  "menus": [
+    {
+      "xml_id": "mercadily_menu_root",
+      "name": "Mercadily",
+      "sequence": "90"
+    },
+    {
+      "xml_id": "mercadily_menu_config",
+      "name": "Configuración",
+      "parent": "mercadily_menu_root",
+      "sequence": "10"
+    },
+    {
+      "xml_id": "mercadily_menu_backend",
+      "name": "Backends",
+      "parent": "mercadily_menu_config",
+      "action": "mercadily_backend_action",
+      "sequence": "10"
+    },
+    {
+      "xml_id": "mercadily_menu_sync_logs",
+      "name": "Logs de Sincronización",
+      "parent": "mercadily_menu_config",
+      "action": "mercadily_sync_log_action",
+      "sequence": "20"
+    }
+  ]
+}

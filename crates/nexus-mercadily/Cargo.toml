@@ -1,0 +1,12 @@
+[package]
+name = "nexus-mercadily"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+nexus-orm = { path = "../nexus-orm" }
+nexus-py = { path = "../nexus-py" }
+anyhow.workspace = true
+async-trait.workspace = true

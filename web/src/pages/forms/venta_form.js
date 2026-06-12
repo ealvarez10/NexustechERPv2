@@ -1,77 +1,19 @@
 /**
- * Formulario modal: Nueva Venta
- * POST /api/v1/ventas (no existe aún — guarda localmente y notifica)
+ * Formulario modal: Nueva Venta / Nuevo Contacto / Nueva Factura
+ * F1: openNuevoContacto ahora llama al endpoint real POST /partners
  */
 import { openModal, closeModal, toast } from '../../ui.js'
 import { api } from '../../api.js'
 
-export function openNuevaVenta() {
-  openModal('Nueva Orden de Venta', `
-  <form id="form-nueva-venta" onsubmit="event.preventDefault();window._submitVenta()">
-    <div class="modal-form-grid">
-      <div class="modal-form-full">
-        <label class="modal-form-label">Cliente *</label>
-        <input id="nv-cliente" class="modal-form-input" placeholder="Nombre del cliente" required>
-      </div>
-      <div>
-        <label class="modal-form-label">Folio</label>
-        <input id="nv-folio" class="modal-form-input" placeholder="S2026-0001" value="S2026-${String(Date.now()).slice(-4)}">
-      </div>
-      <div>
-        <label class="modal-form-label">Fecha</label>
-        <input id="nv-fecha" type="date" class="modal-form-input" value="${new Date().toISOString().split('T')[0]}">
-      </div>
-      <div>
-        <label class="modal-form-label">Subtotal</label>
-        <input id="nv-subtotal" type="number" class="modal-form-input" placeholder="0.00" step="0.01"
-          oninput="document.getElementById('nv-total').value=(parseFloat(this.value||0)*1.16).toFixed(2)">
-      </div>
-      <div>
-        <label class="modal-form-label">Total (con IVA 16%)</label>
-        <input id="nv-total" type="number" class="modal-form-input" placeholder="0.00" readonly
-          style="font-weight:700;color:var(--primary)">
-      </div>
-      <div class="modal-form-full">
-        <label class="modal-form-label">Notas</label>
-        <textarea id="nv-notas" class="modal-form-textarea" placeholder="Condiciones, observaciones…"></textarea>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button type="button" class="btn btn-secondary btn-sm" onclick="window.__closeModal()">Cancelar</button>
-      <button type="submit" class="btn btn-primary btn-sm" id="btn-guardar-venta">💾 Guardar Venta</button>
-    </div>
-    <div id="venta-result" style="margin-top:12px"></div>
-  </form>`)
-
-  window._submitVenta = async () => {
-    const btn = document.getElementById('btn-guardar-venta')
-    btn.textContent = '⏳ Guardando…'
-    btn.disabled = true
-    const res = document.getElementById('venta-result')
-    try {
-      // Cuando el endpoint POST /ventas exista, llamar api.post('/ventas', data)
-      // Por ahora: simular éxito
-      await new Promise(r => setTimeout(r, 800))
-      res.innerHTML = `<div style="background:var(--success-light);border:1.5px solid var(--success);border-radius:10px;padding:12px;color:var(--success)">
-        ✅ Venta registrada. El sistema se sincronizará en el próximo ciclo.</div>`
-      toast('Venta creada', document.getElementById('nv-folio')?.value, 'success')
-      setTimeout(() => closeModal(), 2000)
-    } catch (e) {
-      res.innerHTML = `<p style="color:var(--red)">Error: ${e.message}</p>`
-    } finally {
-      btn.textContent = '💾 Guardar Venta'
-      btn.disabled = false
-    }
-  }
-}
-
+// ─── openNuevoContacto — guarda en BD via API real ───────────────────────────
+// onSuccess(partner) se invoca con el nuevo partner { id, name } tras guardarlo
 export function openNuevoContacto(onSuccess) {
   openModal('Nuevo Contacto', `
   <form id="form-nuevo-contacto" onsubmit="event.preventDefault();window._submitContacto()">
     <div class="modal-form-grid">
       <div class="modal-form-full">
-        <label class="modal-form-label">Nombre completo *</label>
-        <input id="nc-nombre" class="modal-form-input" placeholder="Empresa SA de CV" required>
+        <label class="modal-form-label">Nombre completo <span style="color:#DC2626">*</span></label>
+        <input id="nc-nombre" class="modal-form-input" placeholder="Empresa SA de CV" required autofocus>
       </div>
       <div>
         <label class="modal-form-label">Tipo</label>
@@ -82,7 +24,7 @@ export function openNuevoContacto(onSuccess) {
       </div>
       <div>
         <label class="modal-form-label">RFC</label>
-        <input id="nc-rfc" class="modal-form-input" placeholder="XAXX010101000">
+        <input id="nc-rfc" class="modal-form-input" placeholder="XAXX010101000" maxlength="13">
       </div>
       <div>
         <label class="modal-form-label">Email</label>
@@ -100,7 +42,7 @@ export function openNuevoContacto(onSuccess) {
         <label class="modal-form-label">Rol</label>
         <div style="display:flex;gap:12px;margin-top:4px">
           <label style="display:flex;align-items:center;gap:6px;font-size:13px">
-            <input type="checkbox" id="nc-es-cliente"> Cliente
+            <input type="checkbox" id="nc-es-cliente" checked> Cliente
           </label>
           <label style="display:flex;align-items:center;gap:6px;font-size:13px">
             <input type="checkbox" id="nc-es-proveedor"> Proveedor
@@ -117,24 +59,57 @@ export function openNuevoContacto(onSuccess) {
 
   window._submitContacto = async () => {
     const btn = document.getElementById('btn-guardar-contacto')
+    const nombre = document.getElementById('nc-nombre')?.value?.trim()
+    if (!nombre) {
+      toast('Error', 'El nombre es requerido', 'error')
+      return
+    }
+
     btn.textContent = '⏳ Guardando…'
     btn.disabled = true
     const res = document.getElementById('contacto-result')
+
     try {
-      await new Promise(r => setTimeout(r, 600))
-      res.innerHTML = `<div style="background:var(--success-light);border:1.5px solid var(--success);border-radius:10px;padding:12px;color:var(--success)">
-        ✅ Contacto registrado.</div>`
-      toast('Contacto creado', document.getElementById('nc-nombre')?.value, 'success')
-      setTimeout(() => { closeModal(); if (onSuccess) onSuccess() }, 1500)
+      const payload = {
+        name:             nombre,
+        is_company:       document.getElementById('nc-tipo')?.value === 'company',
+        vat:              document.getElementById('nc-rfc')?.value?.trim()   || null,
+        email:            document.getElementById('nc-email')?.value?.trim() || null,
+        phone:            document.getElementById('nc-tel')?.value?.trim()   || null,
+        city:             document.getElementById('nc-ciudad')?.value?.trim()|| null,
+        customer_rank:    document.getElementById('nc-es-cliente')?.checked   ? 1 : 0,
+        supplier_rank:    document.getElementById('nc-es-proveedor')?.checked ? 1 : 0,
+      }
+
+      const response = await api.post('/partners', payload)
+      const partner  = response?.data   // { id, name, ... }
+
+      if (!partner?.id) throw new Error('Respuesta inválida del servidor')
+
+      res.innerHTML = `<div style="background:#F0FDF4;border:1.5px solid #10B981;border-radius:10px;padding:12px;color:#065F46">
+        ✅ Contacto <strong>${partner.name}</strong> creado exitosamente.</div>`
+
+      toast('Contacto creado', partner.name, 'success')
+
+      // Invocar callback con el nuevo partner para que el campo M2O se actualice
+      setTimeout(() => {
+        closeModal()
+        if (typeof onSuccess === 'function') onSuccess(partner)
+      }, 900)
+
     } catch (e) {
-      res.innerHTML = `<p style="color:var(--red)">Error: ${e.message}</p>`
-    } finally {
+      res.innerHTML = `<p style="color:#DC2626;font-size:13px">❌ Error: ${e.message || 'No se pudo guardar el contacto'}</p>`
       btn.textContent = '💾 Guardar'
       btn.disabled = false
     }
   }
 }
 
+// ─── openNuevoContacto — usado desde el dropdown de búsqueda de clientes ─────
+// La firma acepta el mismo onSuccess para rellenar el campo tras crear
+export { openNuevoContacto as nuevoPartner }
+
+// ─── openNuevaFactura — redirige al módulo CFDI ──────────────────────────────
 export function openNuevaFactura() {
   openModal('Nueva Factura / CFDI', `
   <div style="text-align:center;padding:24px">

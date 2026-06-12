@@ -10,6 +10,7 @@ let _currentPage = 1
 let _records     = []
 let _searchQuery = ''
 let _filtro      = ''      // '' | 'clientes' | 'proveedores'
+let cfg = {}
 
 /* ═══════════════════════════════════════════════
    ENTRY POINT
@@ -21,6 +22,13 @@ export async function renderPartners() {
   _searchQuery = ''
   _filtro      = ''
   setBreadcrumb([{ label: 'Clientes / Proveedores' }])
+  
+  cfg = {
+    geolocalizacion: false, validar_vat: true, limite_credito: false, alerta_credito: false,
+    niveles_partner: false, comisiones: false,
+    ...JSON.parse(localStorage.getItem('nexus_config_contactos') || '{}')
+  }
+  
   _renderControlPanel()
   await _loadAndRender()
 }
@@ -50,6 +58,7 @@ function _renderControlPanel() {
       </div>
     </div>
     <div class="o-cp-right">
+      <button class="o-btn-secondary" style="margin-right:8px;font-size:16px;padding:4px 8px" onclick="window._go('config_contactos')" title="Ajustes">⚙️</button>
       <div class="o-view-switcher">
         <button class="o-view-btn" data-active title="Vista Lista">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>

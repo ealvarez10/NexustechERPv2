@@ -97,13 +97,13 @@ export function skeletonKpis(count=5) {
 
 // Badge helper
 const BADGE_MAP = {
-  'sale':'emerald','done':'indigo','draft':'gray','sent':'sky',
+  'sale':'emerald','done':'indigo','draft':'sky','sent':'violet',
   'cancel':'red','posted':'emerald','in_payment':'violet','paid':'emerald','partial':'amber',
 }
 
 export function stateBadge(state, label) {
   const cls = BADGE_MAP[state] || 'gray'
-  return `<span class="badge badge-${cls} badge-dot">${label}</span>`
+  return `<span class="badge badge-${cls} badge-dot" style="font-weight:600">${label}</span>`
 }
 
 // Pagination

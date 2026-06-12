@@ -1,3 +1,4 @@
+pub mod account;
 pub mod auth;
 pub mod cfdi;
 pub mod cfdi_timbrados;
@@ -5,6 +6,8 @@ pub mod compras;
 pub mod dashboard;
 pub mod facturas;
 pub mod health;
+pub mod ir_views;
+pub mod orm;
 pub mod nomina;
 pub mod partners;
 pub mod products;
@@ -12,3 +15,4 @@ pub mod search;
 pub mod stock;
 pub mod ventas;
 pub mod sale;
+pub mod apps;

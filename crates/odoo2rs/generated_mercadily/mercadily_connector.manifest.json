@@ -1,0 +1,21 @@
+{
+  "name": "Mercadily Connector",
+  "version": "19.0.1.0.0",
+  "depends": [
+    "crm",
+    "sale_management",
+    "contacts",
+    "mail"
+  ],
+  "data": [
+    "security/ir.model.access.csv",
+    "data/ir_cron.xml",
+    "data/ir_sequence.xml",
+    "views/mercadily_backend_views.xml",
+    "views/mercadily_sync_log_views.xml",
+    "views/crm_lead_views.xml",
+    "views/sale_order_views.xml",
+    "views/res_partner_views.xml",
+    "views/menu.xml"
+  ]
+}

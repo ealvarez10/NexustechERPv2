@@ -4,10 +4,11 @@ import { api } from '../api.js'
 import { editarCompra } from './forms/edit_forms.js'
 
 /* ─── Estado ─── */
-let _currentView = 'list'   // 'list' | 'kanban'
+let _currentView = 'list'
 let _currentPage = 1
 let _records     = []
 let _searchQuery = ''
+let cfg = {}
 
 const ESTADO = {
   draft:    { lbl: 'Borrador',        cls: 'o-badge-gray',    kanban: 'Borrador'             },
@@ -19,22 +20,26 @@ const ESTADO = {
 
 const STATUS_BAR = ['draft', 'sent', 'purchase', 'done']
 
-/* ═══════════════════════════════════════════════
-   ENTRY POINT
-   ═══════════════════════════════════════════════ */
 export async function renderCompras() {
   ensureLayout()
   _currentView = 'list'
   _currentPage = 1
   _searchQuery = ''
+  
+  // Data Binding: Cargar Configuración de Compras
+  cfg = {
+    bloquear_confirmado: false, advertencias: false, precio_compra: true, descuentos: false,
+    politica_facturacion: 'cantidad_pedida', bloquear_factura: false,
+    variantes: false, unidades_medida: false, empaquetado: false,
+    presupuesto_solicitud: false, recordatorio_recepcion: 0, costos_aterrizaje: false,
+    ...JSON.parse(localStorage.getItem('nexus_config_compras') || '{}')
+  }
+
   setBreadcrumb([{ label: 'Compras' }])
   _renderControlPanel()
   await _loadAndRender()
 }
 
-/* ═══════════════════════════════════════════════
-   CONTROL PANEL
-   ═══════════════════════════════════════════════ */
 function _renderControlPanel() {
   setPage(`
   <div class="o-cp" id="compras-cp">
@@ -43,6 +48,7 @@ function _renderControlPanel() {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Nuevo
       </button>
+      ${cfg.presupuesto_solicitud ? `<button class="o-btn-secondary" onclick="alert('Pedir Presupuestos')">Solicitar Presupuestos</button>` : ''}
     </div>
     <div class="o-cp-center">
       <div class="o-search-bar">
@@ -56,13 +62,10 @@ function _renderControlPanel() {
       </div>
     </div>
     <div class="o-cp-right">
+      <button class="o-btn-secondary" style="margin-right:8px;font-size:16px;padding:4px 8px" onclick="window._go('config_compras')" title="Ajustes">⚙️</button>
       <div class="o-view-switcher">
-        <button class="o-view-btn o-active" onclick="window._compraSetView('list')" title="Lista">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        </button>
-        <button class="o-view-btn" onclick="window._compraSetView('kanban')" title="Kanban">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="6" height="16" rx="1"/><rect x="9" y="4" width="6" height="10" rx="1"/><rect x="17" y="4" width="6" height="13" rx="1"/></svg>
-        </button>
+        <button class="o-view-btn o-active" onclick="window._compraSetView('list')" title="Lista">☰</button>
+        <button class="o-view-btn" onclick="window._compraSetView('kanban')" title="Kanban">⬜</button>
       </div>
     </div>
   </div>
@@ -84,9 +87,6 @@ function _filterTableLocal() {
   })
 }
 
-/* ═══════════════════════════════════════════════
-   LOAD & RENDER
-   ═══════════════════════════════════════════════ */
 async function _loadAndRender() {
   try {
     const res  = await api.compras(_currentPage)
@@ -103,9 +103,6 @@ async function _loadAndRender() {
   }
 }
 
-/* ═══════════════════════════════════════════════
-   VISTA LISTA
-   ═══════════════════════════════════════════════ */
 function _renderList(records, hasMore) {
   if (!records.length) return `<div class="o-empty-state"><p>Sin órdenes de compra</p></div>`
 
@@ -115,12 +112,12 @@ function _renderList(records, hasMore) {
       <thead>
         <tr>
           <th class="o-list-chk"><input type="checkbox" class="o-chk" onclick="window._chkAllCompras(this)"></th>
-          <th class="o-col-sortable">Número</th>
+          <th class="o-col-sortable">Referencia</th>
           <th class="o-col-sortable">Proveedor</th>
-          <th>Fecha</th>
-          <th>Fecha Esperada</th>
-          <th>Estado</th>
+          ${cfg.recordatorio_recepcion > 0 ? '<th>Recepción Esperada</th>' : ''}
+          <th>Fecha límite</th>
           <th class="o-col-right">Total</th>
+          <th>Estado</th>
         </tr>
       </thead>
       <tbody>
@@ -129,26 +126,23 @@ function _renderList(records, hasMore) {
           return `
           <tr class="o-list-row" onclick="window._verCompra(${c.id})">
             <td class="o-list-chk"><input type="checkbox" class="o-chk" onclick="event.stopPropagation()"></td>
-            <td class="o-td-mono o-td-primary">${c.name || `#${c.id}`}</td>
-            <td class="o-td-primary">${c.partner_name || '—'}</td>
+            <td class="o-td-mono o-td-primary" style="font-weight:700">${c.name || `#${c.id}`}</td>
+            <td class="o-td-primary">${c.partner_name || '—'} ${cfg.advertencias ? '<span style="color:#DC2626;font-size:11px" title="Alerta configurada">⚠️</span>' : ''}</td>
+            ${cfg.recordatorio_recepcion > 0 ? `<td><span style="color:var(--text-400)">⏳ En ${cfg.recordatorio_recepcion} días</span></td>` : ''}
             <td class="o-td-muted">${fmtDate(c.date_order)}</td>
-            <td class="o-td-muted">${fmtDate(c.date_planned)}</td>
-            <td><span class="o-badge ${e.cls}">${e.lbl}</span></td>
             <td class="o-td-amount" style="font-weight:700">${fmtMxn(parseFloat(c.amount_total || 0))}</td>
+            <td><span class="o-badge ${e.cls}">${e.lbl}</span></td>
           </tr>`
         }).join('')}
       </tbody>
     </table>
     <div class="o-list-footer">
-      <span class="o-list-count">${records.length} orden${records.length !== 1 ? 'es' : ''}</span>
+      <span class="o-list-count">${records.length} registros</span>
       ${paginationHtml(_currentPage, hasMore, (p) => { _currentPage = p; _loadAndRender() })}
     </div>
   </div>`
 }
 
-/* ═══════════════════════════════════════════════
-   VISTA KANBAN  (columnas por estado)
-   ═══════════════════════════════════════════════ */
 function _renderKanban(records) {
   const cols = ['draft', 'sent', 'purchase', 'done']
   return `
@@ -168,7 +162,7 @@ function _renderKanban(records) {
           ${group.map(c => `
           <div class="o-kanban-card" onclick="window._verCompra(${c.id})">
             <div class="o-kanban-title">${c.name || '#' + c.id}</div>
-            <div class="o-kanban-sub">${c.partner_name || '—'}</div>
+            <div class="o-kanban-sub">${c.partner_name || '—'} ${cfg.advertencias ? '⚠️' : ''}</div>
             <div style="display:flex;justify-content:space-between;margin-top:8px">
               <span class="o-td-muted" style="font-size:12px">${fmtDate(c.date_order)}</span>
               <strong>${fmtMxn(parseFloat(c.amount_total || 0))}</strong>
@@ -181,9 +175,6 @@ function _renderKanban(records) {
   </div>`
 }
 
-/* ═══════════════════════════════════════════════
-   VISTA FORMULARIO
-   ═══════════════════════════════════════════════ */
 window._verCompra = async (id) => {
   setBreadcrumb([
     { label: 'Compras', onclick: () => renderCompras() },
@@ -192,7 +183,6 @@ window._verCompra = async (id) => {
   setPage(`<div class="o-form-loading">${skeletonTable(4, 3)}</div>`)
 
   try {
-    // Try fetching single record; fallback to cached
     let c = _records.find(x => x.id === id)
     try {
       const fresh = await api.compra(id)
@@ -205,21 +195,19 @@ window._verCompra = async (id) => {
 
     const e = ESTADO[c.state] || { lbl: c.state || '—', cls: 'o-badge-gray' }
     const statusIdx = STATUS_BAR.indexOf(c.state)
-
-    // Build lineas if available
     const lineas = c.order_line || c.lineas || []
+
+    const readonly = cfg.bloquear_confirmado && (c.state === 'purchase' || c.state === 'done')
 
     setPage(`
     <div class="o-form-topbar">
-      <button class="o-back-btn" onclick="window._comprasBack()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-        Compras
-      </button>
+      <button class="o-back-btn" onclick="window._comprasBack()">← Compras</button>
       <div class="o-form-actions">
-        ${c.state === 'draft' ? `<button class="o-btn-primary" onclick="alert('Confirmar OC — próximamente')">Confirmar OC</button>` : ''}
-        ${c.state === 'purchase' ? `<button class="o-btn-secondary" onclick="alert('Recibir mercancía — próximamente')">Recibir</button>` : ''}
-        <button class="o-btn-secondary" onclick="alert('Crear factura — próximamente')">Crear Factura</button>
-        <button class="o-btn-secondary" onclick="window._editarCompraForm(${c.id})">Editar</button>
+        ${c.state === 'draft' ? `<button class="o-btn-primary" onclick="alert('Confirmar OC')">Confirmar OC</button>` : ''}
+        ${c.state === 'purchase' ? `<button class="o-btn-secondary" onclick="alert('Recibir mercancía')">Recibir Productos</button>` : ''}
+        ${c.state === 'purchase' || c.state === 'done' ? `<button class="o-btn-secondary" onclick="alert('Crear Factura de Proveedor')">Crear Factura</button>` : ''}
+        ${!readonly ? `<button class="o-btn-secondary" onclick="window._editarCompraForm(${c.id})">Editar</button>` : ''}
+        ${readonly ? `<span style="font-size:11px;color:var(--text-400);margin-left:10px">Bloqueado por configuración</span>` : ''}
       </div>
     </div>
 
@@ -233,62 +221,64 @@ window._verCompra = async (id) => {
       }).join('<div class="o-status-arrow">›</div>')}
     </div>
 
-    <!-- SMART BUTTONS -->
     <div class="o-smart-buttons">
-      <button class="o-smart-btn" onclick="alert('Facturas de esta OC')">
-        <span class="o-smart-count">0</span>
-        <span class="o-smart-label">Facturas</span>
-      </button>
-      <button class="o-smart-btn" onclick="alert('Recepciones de esta OC')">
-        <span class="o-smart-count">0</span>
-        <span class="o-smart-label">Recepciones</span>
-      </button>
+      <button class="o-smart-btn"><span class="o-smart-count">0</span><span class="o-smart-label">Recepciones</span></button>
+      <button class="o-smart-btn"><span class="o-smart-count">0</span><span class="o-smart-label">Facturas</span></button>
+      ${cfg.costos_aterrizaje ? `<button class="o-smart-btn"><span class="o-smart-count" style="color:var(--primary)">$0</span><span class="o-smart-label">Costos Aterr.</span></button>` : ''}
     </div>
 
-    <!-- FORM SHEET -->
     <div class="o-form-sheet">
       <div class="o-sheet-header">
-        <div class="o-sheet-title-block">
-          <h1 class="o-form-title">${c.name || 'Nueva Orden de Compra'}</h1>
-          <span class="o-badge ${e.cls}">${e.lbl}</span>
-        </div>
+        <h1 class="o-form-title">${c.name || 'Nueva Orden'}</h1>
+        <span class="o-badge ${e.cls}">${e.lbl}</span>
       </div>
 
       <div class="o-form-grid">
         <div class="o-form-col">
           <div class="o-field-group"><label class="o-field-label">Proveedor</label><div class="o-field-value o-td-primary">${c.partner_name || '—'}</div></div>
-          <div class="o-field-group"><label class="o-field-label">Fecha de Orden</label><div class="o-field-value">${fmtDate(c.date_order)}</div></div>
-          <div class="o-field-group"><label class="o-field-label">Referencia Proveedor</label><div class="o-field-value o-td-mono">${c.partner_ref || '—'}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Referencia Proveedor</label><div class="o-field-value">${c.partner_ref || '—'}</div></div>
+          ${cfg.presupuesto_solicitud ? `<div class="o-field-group"><label class="o-field-label">Acuerdo / Licitación</label><div class="o-field-value">Ninguno</div></div>` : ''}
         </div>
         <div class="o-form-col">
-          <div class="o-field-group"><label class="o-field-label">Responsable</label><div class="o-field-value">${c.user_name || c.user || '—'}</div></div>
-          <div class="o-field-group"><label class="o-field-label">Empresa</label><div class="o-field-value">${c.company_name || c.company || 'NexusTech'}</div></div>
-          <div class="o-field-group"><label class="o-field-label">Términos de Pago</label><div class="o-field-value">${c.payment_term_name || c.payment_term || '—'}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Fecha Límite</label><div class="o-field-value">${fmtDate(c.date_order)}</div></div>
+          <div class="o-field-group"><label class="o-field-label">Facturar por</label><div class="o-field-value">${cfg.politica_facturacion === 'cantidad_pedida' ? 'Cantidades pedidas' : 'Cantidades recibidas'}</div></div>
         </div>
       </div>
 
-      <!-- NOTEBOOK -->
       <div class="o-notebook">
         <div class="o-tabs" id="compra-tabs">
           <button class="o-tab active" onclick="window._compraTab('productos', this)">Productos</button>
-          <button class="o-tab" onclick="window._compraTab('adicional', this)">Información Adicional</button>
+          <button class="o-tab" onclick="window._compraTab('adicional', this)">Información</button>
         </div>
 
         <div class="o-tab-pane" id="tab-productos">
           ${lineas.length ? `
           <table class="o-list-table">
-            <thead><tr><th>Producto</th><th>Descripción</th><th class="o-col-right">Cantidad</th><th class="o-col-right">Precio</th><th class="o-col-right">Subtotal</th></tr></thead>
+            <thead><tr>
+              <th>Producto</th>
+              ${cfg.variantes ? '<th>Variante</th>' : ''}
+              ${cfg.empaquetado ? '<th>Empaque</th>' : ''}
+              <th class="o-col-right">Qty</th>
+              ${cfg.unidades_medida ? '<th>UdM</th>' : ''}
+              <th class="o-col-right">Precio</th>
+              ${cfg.descuentos ? '<th class="o-col-right">Desc.%</th>' : ''}
+              <th class="o-col-right">Subtotal</th>
+            </tr></thead>
             <tbody>
               ${lineas.map(l => `
               <tr>
                 <td class="o-td-primary">${l.product_name || l.name || '—'}</td>
-                <td class="o-td-muted">${l.name || l.description || '—'}</td>
+                ${cfg.variantes ? `<td><span style="font-size:11px;background:#E5E7EB;padding:2px 6px;border-radius:4px">Predeterminada</span></td>` : ''}
+                ${cfg.empaquetado ? `<td>Caja x1</td>` : ''}
                 <td class="o-td-amount">${fmtNum(parseFloat(l.product_qty || l.qty || 0))}</td>
+                ${cfg.unidades_medida ? `<td>PZ</td>` : ''}
                 <td class="o-td-amount">${fmtMxn(parseFloat(l.price_unit || 0))}</td>
+                ${cfg.descuentos ? `<td class="o-td-amount o-td-muted">0%</td>` : ''}
                 <td class="o-td-amount" style="font-weight:700">${fmtMxn(parseFloat(l.price_subtotal || 0))}</td>
               </tr>`).join('')}
             </tbody>
-          </table>` : `<div class="o-empty-state" style="padding:32px 0"><p>Sin líneas de productos</p></div>`}
+          </table>` : `<div class="o-empty-state"><p>Sin líneas</p></div>`}
+          
           <div class="o-form-totals">
             <div class="o-total-row"><span>Subtotal</span><span>${fmtMxn(parseFloat(c.amount_untaxed || 0))}</span></div>
             <div class="o-total-row"><span>IVA</span><span>${fmtMxn(parseFloat(c.amount_tax || 0))}</span></div>
@@ -296,30 +286,11 @@ window._verCompra = async (id) => {
           </div>
         </div>
         <div class="o-tab-pane" id="tab-adicional" style="display:none">
-          <div class="o-field-group"><label class="o-field-label">Nota / Términos</label>
-            <textarea class="o-textarea" rows="4">${c.notes || c.note || ''}</textarea></div>
+          <div class="o-field-group"><label class="o-field-label">Notas</label><textarea class="o-textarea" rows="3" ${readonly ? 'disabled' : ''}>${c.notes || ''}</textarea></div>
         </div>
       </div>
     </div>
-
-    <!-- CHATTER -->
-    <div class="o-chatter">
-      <div class="o-chatter-header">Registro de actividad</div>
-      <div class="o-chatter-composer">
-        <div class="o-avatar o-avatar-sm" style="background:var(--o-primary)">U</div>
-        <input class="o-chatter-input" type="text" placeholder="Escribe un mensaje o nota interna…">
-        <button class="o-btn-primary o-btn-sm">Enviar</button>
-      </div>
-      <div class="o-chatter-messages">
-        <div class="o-msg">
-          <div class="o-avatar o-avatar-sm" style="background:var(--o-primary)">S</div>
-          <div class="o-msg-body">
-            <div class="o-msg-meta"><strong>Sistema</strong> <span>${fmtDate(c.date_order || new Date().toISOString())}</span></div>
-            <div class="o-msg-text">Orden de compra creada.</div>
-          </div>
-        </div>
-      </div>
-    </div>`)
+    `)
 
     window._editarCompraForm = (cid) => editarCompra({ id: cid, ...c }, () => window._verCompra(cid))
     window._compraTab = (tab, btn) => {
@@ -329,35 +300,13 @@ window._verCompra = async (id) => {
       const pane = document.getElementById(`tab-${tab}`)
       if (pane) pane.style.display = ''
     }
-
   } catch (err) {
-    console.error(err)
     toast('Error', err.message, 'error')
   }
 }
 
-/* ═══════════════════════════════════════════════
-   GLOBAL HANDLERS
-   ═══════════════════════════════════════════════ */
 window._comprasBack = () => renderCompras()
 window._compraNueva = () => { import('./forms/create_forms.js').then(m => m.nuevaCompra(() => renderCompras())) }
-
-window._compraSetView = (view) => {
-  _currentView = view
-  document.querySelectorAll('#compras-cp .o-view-btn').forEach(b => b.classList.remove('o-active'))
-  const idx = view === 'list' ? 0 : 1
-  document.querySelectorAll('#compras-cp .o-view-btn')[idx]?.classList.add('o-active')
-  const el = document.getElementById('compras-content')
-  if (el) {
-    if (view === 'kanban') el.innerHTML = _renderKanban(_records)
-    else el.innerHTML = _renderList(_records, false)
-  }
-}
-
-window._compraFiltroEstado = (estado) => {
-  const filtered = _records.filter(c => c.state === estado)
-  const el = document.getElementById('compras-content')
-  if (el) el.innerHTML = _renderList(filtered, false)
-}
-
-window._chkAllCompras = (master) => document.querySelectorAll('#compras-content .o-chk').forEach(c => c.checked = master.checked)
+window._compraSetView = (view) => { _currentView = view; _renderControlPanel(); _loadAndRender() }
+window._compraFiltroEstado = (e) => { _searchQuery = e; _filterTableLocal() }
+window._chkAllCompras = (m) => document.querySelectorAll('#compras-content .o-chk').forEach(c => c.checked = m.checked)
