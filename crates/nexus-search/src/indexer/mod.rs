@@ -4,7 +4,6 @@
 //! motor de búsqueda de ultra alta velocidad en lotes eficientes.
 
 use anyhow::Result;
-use rust_decimal::Decimal;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use tracing::{error, info, warn};

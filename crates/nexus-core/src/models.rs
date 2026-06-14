@@ -6,11 +6,10 @@
 //! - Option<T> para columnas IS NULLABLE = YES
 //! - Compatible con SQLx (derive FromRow)
 
-use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use chrono::{NaiveDate, NaiveDateTime};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use uuid::Uuid;
 
 // ═══════════════════════════════════════════════════════════════
 //  RES_PARTNER — Contactos / Clientes / Proveedores
@@ -198,10 +197,10 @@ pub struct ProductTemplate {
     // Fechas
     pub create_date:         Option<NaiveDateTime>,
     pub write_date:          Option<NaiveDateTime>,
-    // JSONB multiidioma
-    pub name:                serde_json::Value,
-    pub description:         Option<serde_json::Value>,
-    pub description_sale:    Option<serde_json::Value>,
+    // JSONB multiidioma — extraído como texto por SQL
+    pub name:                Option<String>,
+    pub description:         Option<String>,
+    pub description_sale:    Option<String>,
     pub product_properties:  Option<serde_json::Value>,
     pub property_account_income_id: Option<serde_json::Value>,
 }
@@ -214,8 +213,8 @@ pub struct ProductSummary {
     pub list_price:   Option<Decimal>,
     pub active:       Option<bool>,
     pub categ_id:     Option<i32>,
-    /// Nombre del producto (JSONB — se extrae en el handler)
-    pub name:         serde_json::Value,
+    /// Nombre extraído del JSONB multiidioma (es_MX o en_US)
+    pub name:         Option<String>,
     pub type_:        Option<String>,
     /// Nombre de categoría (JOIN)
     pub categ_name:   Option<String>,

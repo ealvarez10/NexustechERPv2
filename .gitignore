@@ -6,3 +6,12 @@
 *.key
 *.cer
 Cargo.lock
+
+# Archivos de runtime, cache y logs — no deben subirse al repositorio
+model_views_cache.json
+nexustech-erp.log
+*.log
+__pycache__/
+**/__pycache__/
+**/*.pyc
+**/*.pyo

@@ -311,7 +311,7 @@ pub fn generar_pdf(
     texto(&layer, &f_bold, 7.0, margen, y, "Verificar CFDI en:");
     y -= 4.5;
     texto(&layer, &f_mono, 5.5, margen, y, &trunc(&url_sat, 110));
-    y -= 5.0;
+    let _ = y - 5.0;  // y no se usa después de esta sección
 
 
     // ── PIE DE PÁGINA ─────────────────────────────────────────────────────────

@@ -5,7 +5,7 @@
 //! El cargo sqlx prepare genera el cache offline cuando la DB está disponible.
 
 use sqlx::PgPool;
-use crate::models::{ResPartner, ResPartnerSummary};
+use crate::models::ResPartnerSummary;
 use crate::error::CoreError;
 use serde::{Deserialize, Serialize};
 

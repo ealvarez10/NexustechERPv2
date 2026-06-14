@@ -9,6 +9,7 @@ use serde_json::Value;
 use crate::state::AppState;
 use nexus_orm::prelude::*;
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 pub struct CallKwPayload {
     pub args: Vec<Value>,
@@ -16,11 +17,13 @@ pub struct CallKwPayload {
     pub kwargs: Value,
 }
 
+#[allow(dead_code)]
 #[derive(Serialize)]
 pub struct CallKwResponse {
     pub result: Value,
 }
 
+#[allow(dead_code)]
 pub async fn call_kw(
     State(state): State<AppState>,
     Path((model_name, method_name)): Path<(String, String)>,
@@ -56,7 +59,7 @@ pub async fn call_kw(
     let rs = env.browse(&model_name, record_ids).map_err(|e| crate::api::error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
 
     // Llamamos al método
-    let result = rs.call(&method_name, &args_oval).await.map_err(|e| crate::api::error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    let _result = rs.call(&method_name, &args_oval).await.map_err(|e| crate::api::error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
 
     // Convertir OVal a JSON (Aproximación simple para prueba de concepto)
     // Odoo suele retornar diccionarios con tag y params.

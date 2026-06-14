@@ -1,5 +1,5 @@
 # Proyecto: NexusTech ERP v2
-**Última actualización:** 2026-06-10
+**Última actualización:** 2026-06-12
 **Stack:** Rust, Axum 0.8, SQLx, PostgreSQL (schema Odoo 19), Redis, Meilisearch, ring (criptografía), async-trait, quick-xml, CFDI 4.0
 **Ruta raíz:** /home/ealvarez/workspace/NexustechERPv2
 
@@ -154,3 +154,41 @@ El test tests/codegen_compiles.rs compila el Rust generado contra el kernel real
 Pendiente (Fase 3): traducción de cuerpos de métodos Python a Rust (3a) y nexus-pyvm/RustPython
 como vía de escape (3b); _inherits (delegación), selections dinámicas y defaults callables se
 reportan como avisos y quedan para esa fase.
+
+
+## Backend Odoo-Compatible — Estado actual (2026-06-13)
+## Backend Odoo-Compatible (app/src/handlers/web.rs)
+
+### Puerto y proceso
+- Servicio: nexustech-erp (systemd --user)
+- Puerto: 8090 (configurable en .env)
+- DB: nexustech_db (PostgreSQL)
+- Comando: systemctl --user restart nexustech-erp.service
+
+### Métodos ORM implementados en dispatch_orm_rust()
+- search_read: lectura con filtros domain
+- web_search_read: lectura paginada con campos SQL+computados
+- read: lectura por IDs
+- search: búsqueda retorna IDs
+- write: actualización de registros
+- create: creación de registros
+- unlink: borrado de registros
+- name_get: [id, name] para many2one
+- get_views / load_views: CLAVE — lee arch_db (JSONB) de ir_ui_view. Para ir.module.module usa arches hardcoded (sin js_class).
+- read_group: agrupación con GROUP BY
+- fields_get: schema de campos desde information_schema
+- onchange: stub vacío
+- name_search: búsqueda por nombre
+
+### Reglas críticas del handler get_views
+- La columna de arch en ir_ui_view es 'arch_db' (JSONB), NO 'arch'
+- arch_db format: {"en_US": "<list>...</list>", "es_MX": "..."}
+- Si arch_db vacío (<20 chars), usar archivos hardcoded por modelo
+- NUNCA usar js_class en arches si el componente JS no está compilado en el bundle
+- Siempre inyectar campos computados del modelo en fields_map
+
+### Modelos con arches hardcoded
+- ir.module.module: list (shortdesc, name, state, author, website, installed_version), kanban (icon_image, name, shortdesc, summary, state, to_buy), search, form
+
+### Prueba de funcionamiento
+curl -s -b /tmp/cookie.txt -X POST 'http://localhost:8090/nexustech/dataset/call_kw/ir.module.module/get_views' -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"call","id":1,"params":{"model":"ir.module.module","method":"get_views","args":[[]],"kwargs":{"views":[[false,"list"],[false,"kanban"]]}}}'

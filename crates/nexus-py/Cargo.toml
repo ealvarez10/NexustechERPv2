@@ -4,16 +4,20 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Intérprete Python embebido (RustPython) para los métodos Odoo intraducibles, sobre el Env de nexus-orm"
+description = "Interoperabilidad CPython con PyO3 sobre nexus-orm"
+
+[lib]
+name = "_nexus"
+crate-type = ["rlib", "cdylib"]
+
+[features]
+default = []
+extension-module = ["pyo3/extension-module"]
 
 [dependencies]
+pyo3 = { version = "0.22" }
 nexus-orm = { path = "../nexus-orm" }
-
-rustpython-vm = { workspace = true }
-pollster = { workspace = true }
-
-tokio = { workspace = true }
-async-trait = { workspace = true }
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio", "uuid", "chrono", "rust_decimal"] }
 serde_json = { workspace = true }
-rust_decimal = { workspace = true }
 tracing = { workspace = true }
+tokio = { workspace = true }

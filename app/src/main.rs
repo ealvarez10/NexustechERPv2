@@ -23,12 +23,13 @@ use std::sync::Arc;
 use std::time::Duration;
 use tower_http::{
     compression::CompressionLayer,
-    cors::{Any, CorsLayer},
+    cors::Any,
     trace::TraceLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 use nexus_core::config::Config;
 use state::AppState;
+use pyo3::prelude::PyAnyMethods;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -56,6 +57,7 @@ async fn main() -> anyhow::Result<()> {
         .connect(&config.database_url)
         .await?;
     tracing::info!("Conexión a la base de datos establecida ✓");
+    ::_nexus::init_db_pool(db.clone());
 
     // ── Redis (opcional) ────────────────────────────────────────────────────
     let redis_conn = match redis::Client::open(config.redis_url.as_str()) {
@@ -102,54 +104,50 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    // ── Fase 3: ORM Dinámico & RustPython ──────────────────────────────────
-    tracing::info!("Inicializando entorno Python (Seguro de Vida)...");
-    let py_runtime = nexus_py::PyRuntime::new().ok();
+    // ── Fase 3: ORM Dinámico & CPython Embebido (PyO3) ──────────────────────
+    tracing::info!("Inicializando entorno CPython Embebido con PyO3...");
     
-    let mut registry_opt = None;
-    if let Some(py) = &py_runtime {
-        tracing::info!("Registrando fragmentos Odoo2Rs...");
-        
-        // 1. Cargamos el fragmento Python con el método "intraducible"
-        let py_frag = py.register_fragment(nexus_py::PyModelSpec {
-            model: "mercadily.backend".into(),
-            module: "mercadily_connector".into(),
-            extension: true,
-            methods: vec![nexus_py::PyMethod::new("action_test_connection", r#"
-def action_test_connection(self):
-    return {"type": "ir.actions.client", "tag": "display_notification", "params": {"title": "Éxito", "message": "¡Conexión a Mercadily establecida desde Python!", "type": "success"}}
-"#)],
-        }).await?;
+    // 1. Agregar el módulo nativo _nexus a la tabla de inicialización de Python
+    use _nexus::_nexus;
+    pyo3::append_to_inittab!(_nexus);
 
-        // 3. Construimos el ORM Registry
-        let reg = nexus_orm::registry::RegistryBuilder::new()
-            .module("base", &[])
-            .module("crm", &[])
-            .module("sale", &[])
-            .module("mercadily_connector", &["base", "crm", "sale"])
-            .register_ir_json(r#"[
-                {"model": "crm.lead", "module": "crm", "inherit": false},
-                {"model": "sale.order", "module": "sale", "inherit": false},
-                {"model": "res.partner", "module": "base", "inherit": false}
-            ]"#)?
-            .module("mail", &["base"])
-            .register_ir_json(include_str!("../../crates/odoo2rs/generated_mail/mail.models.json"))?
-            .module("account", &["base", "mail"])
-            .register_ir_json(include_str!("../../crates/odoo2rs/generated_account/account.models.json"))?
-            .register(Arc::new(nexus_mercadily::CrmLeadExtFragment))
-            .register(Arc::new(nexus_mercadily::MercadilyBackendFragment))
-            .register(Arc::new(nexus_mercadily::SaleOrderExtFragment))
-            .register(Arc::new(nexus_mercadily::ResPartnerExtFragment))
-            .register(Arc::new(nexus_mercadily::MercadilySyncLogFragment))
-            .register(py_frag)
-            .build()?;
-            
-        registry_opt = Some(Arc::new(reg));
-        tracing::info!("Kernel ORM inicializado con Mercadily ✓");
-    }
+    // 2. Inicializar el runtime de Python
+    pyo3::prepare_freethreaded_python();
+
+    let registry_opt = pyo3::Python::with_gil(|py| -> Result<Arc<nexus_orm::registry::Registry>, pyo3::PyErr> {
+        let sys = py.import_bound("sys")?;
+        let path = sys.getattr("path")?;
+        path.call_method1("insert", (0, "/home/ealvarez/workspace/NexustechERPv2/shim"))?;
+        path.call_method1("insert", (0, "/home/ealvarez/workspace/NexustechERPv2"))?; // para demo_addons
+
+        tracing::info!("Cargando addons de Odoo en CPython...");
+        let odoo_modules = py.import_bound("odoo.modules")?;
+        odoo_modules.call_method1("load_addons", (
+            vec!["/home/ealvarez/workspace/NexustechERPv2/demo_addons"],
+            vec!["sale_mini"]
+        ))?;
+
+        // Consolidar el Registry final de Rust desde el estado estático de PyO3
+        let reg = ::_nexus::build_registry_from_state()
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(format!("Fallo al construir registry: {:?}", e)))?;
+        let reg_arc = Arc::new(reg);
+        ::_nexus::init_registry(reg_arc.clone());
+        Ok(reg_arc)
+    });
+
+    let registry_opt = match registry_opt {
+        Ok(reg) => {
+            tracing::info!("Kernel ORM inicializado con addons de Odoo en CPython ✓");
+            Some(reg)
+        }
+        Err(e) => {
+            tracing::error!("Fallo en inicialización de Python/Registry: {:?}", e);
+            None
+        }
+    };
 
     // ── AppState ────────────────────────────────────────────────────────────
-    let state = AppState::nueva(db, config.clone(), redis_conn, pac, search_client, registry_opt, py_runtime);
+    let state = AppState::nueva(db, config.clone(), redis_conn, pac, search_client, registry_opt);
 
     // ── Router ─────────────────────────────────────────────────────────────
     // Rutas de autenticación — sin middleware JWT
@@ -245,7 +243,7 @@ def action_test_connection(self):
         .route("/search/sync",          post(handlers::search::sync))
         .route("/search/status",        get(handlers::search::status))
         // ── Fase 3: ORM Dinámico Universal ──────────────────────────────────
-        .route("/orm/{model}/{method}",   post(handlers::orm::call_kw))
+        .route("/orm/{model}/{method}", post(handlers::orm_rpc::orm_rpc))
         // ── App Store ────────────────────────────────────────────────────────
         .route("/apps",                 get(handlers::apps::listar_apps))
         .route("/apps/{id}/install",    post(handlers::apps::instalar_app))
@@ -261,6 +259,85 @@ def action_test_connection(self):
 
     let app = Router::new()
         .route("/health", get(handlers::health::health))
+        
+        // Original /web routes
+        .route("/web", get(handlers::web::bootstrap))
+        .route("/web/login", get(handlers::web::login_page).post(handlers::web::web_login))
+        .route("/web/logout", get(handlers::web::web_logout))
+        .route("/web/webclient/load_menus", get(handlers::web::load_menus))
+        .route("/web/webclient/bootstrap_translations", post(handlers::web::bootstrap_translations))
+        .route("/web/webclient/translations", get(handlers::web::translations))
+        .route("/web/webclient/version_info", post(handlers::web::version_info))
+        .route("/web/dataset/call_kw", post(handlers::web::dispatch_jsonrpc))
+        .route("/web/dataset/search_read", post(handlers::web::dispatch_jsonrpc))
+        // Odoo 17: /web/dataset/call_kw/{model}/{method} and /web/dataset/call_button
+        .route("/web/dataset/call_kw/{model}/{method}", post(handlers::web::dispatch_jsonrpc))
+        .route("/web/dataset/call_button", post(handlers::web::dispatch_jsonrpc))
+        .route("/web/dataset/call_button/{model}/{method}", post(handlers::web::dispatch_jsonrpc))
+        .route("/web/action/load", post(handlers::web::action_load))
+        .route("/web/action/run", post(handlers::web::action_run))
+        .route("/web/action/load_breadcrumbs", post(handlers::web::action_load_breadcrumbs))
+        .route("/web/assets/{*path}", get(handlers::web::serve_attachment))
+        .route("/web/content/{*path}", get(handlers::web::serve_attachment))
+        .route("/web/image/{*path}", get(handlers::web::serve_attachment))
+        .route("/web/image", get(handlers::web::serve_attachment))
+        .route("/web/bundle/{bundle_name}", get(handlers::web::serve_bundle))
+        
+        // Rebranded /nexustech routes
+        .route("/nexustech", get(handlers::web::bootstrap))
+        .route("/nexustech/{*path}", get(handlers::web::bootstrap))
+        .route("/nexustech/login", get(handlers::web::login_page).post(handlers::web::web_login))
+        .route("/nexustech/logout", get(handlers::web::web_logout))
+        .route("/nexustech/webclient/load_menus", get(handlers::web::load_menus))
+        .route("/nexustech/webclient/bootstrap_translations", post(handlers::web::bootstrap_translations))
+        .route("/nexustech/webclient/translations", get(handlers::web::translations))
+        .route("/nexustech/webclient/version_info", post(handlers::web::version_info))
+        .route("/nexustech/dataset/call_kw", post(handlers::web::dispatch_jsonrpc))
+        .route("/nexustech/dataset/search_read", post(handlers::web::dispatch_jsonrpc))
+        // Odoo 17: /nexustech/dataset/call_kw/{model}/{method} and call_button
+        .route("/nexustech/dataset/call_kw/{model}/{method}", post(handlers::web::dispatch_jsonrpc))
+        .route("/nexustech/dataset/call_button", post(handlers::web::dispatch_jsonrpc))
+        .route("/nexustech/dataset/call_button/{model}/{method}", post(handlers::web::dispatch_jsonrpc))
+        .route("/nexustech/action/load", post(handlers::web::action_load))
+        .route("/nexustech/action/run", post(handlers::web::action_run))
+        .route("/nexustech/action/load_breadcrumbs", post(handlers::web::action_load_breadcrumbs))
+        .route("/nexustech/assets/{*path}", get(handlers::web::serve_attachment))
+        .route("/nexustech/content/{*path}", get(handlers::web::serve_attachment))
+        .route("/nexustech/image/{*path}", get(handlers::web::serve_attachment))
+        .route("/nexustech/image", get(handlers::web::serve_attachment))
+        .route("/nexustech/bundle/{bundle_name}", get(handlers::web::serve_bundle))
+        
+        // Static routes
+        .route("/{addon}/static/{*path}", get(handlers::web::serve_static))
+
+        // ── Mail bus / longpolling (causa principal de 'Connection lost') ──
+        .route("/mail/data",                 post(handlers::web::mail_data))
+        .route("/nexustech/mail/data",       post(handlers::web::mail_data))
+        .route("/mail/message/fetch",        post(handlers::web::mail_data))
+        .route("/nexustech/mail/message/fetch", post(handlers::web::mail_data))
+        .route("/mail/thread/messages",      post(handlers::web::mail_data))
+        .route("/nexustech/mail/thread/messages", post(handlers::web::mail_data))
+        .route("/mail/thread/data",          post(handlers::web::mail_data))
+        .route("/nexustech/mail/thread/data", post(handlers::web::mail_data))
+
+        // ── PWA / Service Worker ──────────────────────────────────────────
+        .route("/web/manifest.webmanifest",        get(handlers::web::serve_manifest))
+        .route("/nexustech/manifest.webmanifest",  get(handlers::web::serve_manifest))
+        .route("/web/service-worker.js",           get(handlers::web::serve_service_worker))
+        .route("/nexustech/service-worker.js",     get(handlers::web::serve_service_worker))
+
+        // Bus / Websocket routes
+        .route("/websocket", get(handlers::web::serve_websocket))
+        .route("/websocket/health", get(handlers::web::websocket_health))
+        .route("/websocket/peek_notifications", post(handlers::web::websocket_peek_notifications))
+        .route("/websocket/on_closed", post(handlers::web::websocket_on_closed))
+        .route("/bus/websocket_worker_bundle", get(handlers::web::serve_websocket_worker_bundle))
+        
+        .route("/nexustech/websocket", get(handlers::web::serve_websocket))
+        .route("/nexustech/websocket/health", get(handlers::web::websocket_health))
+        .route("/nexustech/websocket/peek_notifications", post(handlers::web::websocket_peek_notifications))
+        .route("/nexustech/websocket/on_closed", post(handlers::web::websocket_on_closed))
+        .route("/nexustech/bus/websocket_worker_bundle", get(handlers::web::serve_websocket_worker_bundle))
         .nest("/api/v1", api_v1.merge(
             Router::new()
                 .route("/health", get(handlers::health::health))

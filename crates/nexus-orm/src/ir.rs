@@ -51,6 +51,28 @@ pub struct ModelIr {
     pub rec_name: Option<String>,
     #[serde(default)]
     pub fields: Vec<FieldIr>,
+    #[serde(default)]
+    pub methods: Vec<MethodOrString>,
+}
+
+/// Representa un método que puede venir como un string simple (en el shim de Python)
+/// o como un objeto estructurado con "name" (en la extracción de odoo2rs).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum MethodOrString {
+    String(String),
+    Struct {
+        name: String,
+    },
+}
+
+impl MethodOrString {
+    pub fn as_str(&self) -> &str {
+        match self {
+            MethodOrString::String(s) => s.as_str(),
+            MethodOrString::Struct { name } => name.as_str(),
+        }
+    }
 }
 
 /// IR de un campo (`fields.*` extraído del AST).
@@ -226,6 +248,10 @@ impl ModelFragment for IrFragment {
                 }
             }
         }
+    }
+
+    fn methods(&self) -> Vec<&str> {
+        self.ir.methods.iter().map(|m| m.as_str()).collect()
     }
 }
 

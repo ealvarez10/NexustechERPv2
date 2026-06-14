@@ -3,7 +3,6 @@
 use axum::{
     extract::{Path, Query, State, Extension},
     response::IntoResponse,
-    Json,
 };
 use nexus_core::db::partner as db;
 use crate::state::AppState;

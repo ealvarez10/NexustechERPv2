@@ -3,7 +3,7 @@
 use sqlx::PgPool;
 use crate::models::{ProductTemplate, ProductProduct, ProductSummary};
 use crate::error::CoreError;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use rust_decimal::Decimal;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -24,7 +24,13 @@ const SUMMARY_COLS: &str = r#"
     pt.list_price,
     pt.active,
     pt.categ_id,
-    pt.name,
+    COALESCE(
+        pt.name->>'es_MX',
+        pt.name->>'en_US',
+        pt.name->>0,
+        pt.name::text,
+        '(sin nombre)'
+    ) AS name,
     "type" AS type_,
     pc.name AS categ_name
 "#;
@@ -42,7 +48,15 @@ const TEMPLATE_COLS: &str = r#"
     list_price, volume, weight,
     sale_ok, purchase_ok, active, is_favorite,
     create_date, write_date,
-    name, description, description_sale,
+    COALESCE(
+        name->>'es_MX',
+        name->>'en_US',
+        name->>0,
+        name::text,
+        '(sin nombre)'
+    ) AS name,
+    description::text AS description,
+    description_sale::text AS description_sale,
     product_properties, property_account_income_id
 "#;
 

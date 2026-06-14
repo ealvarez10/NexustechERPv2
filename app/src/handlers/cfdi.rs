@@ -27,6 +27,7 @@ pub struct TimbrarRequest {
     /// Clave privada CSD en base64 (.key en DER)
     pub key_b64: String,
     /// Contraseña del CSD (no usada en ring, pero se recibe para compatibilidad futura)
+    #[allow(dead_code)]
     pub key_password: String,
 }
 
@@ -269,6 +270,7 @@ pub async fn pdf_por_uuid(
 
 /// POST /api/v1/cfdi/pdf — Genera PDF con datos completos del comprobante
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct PdfRequest {
     pub cfdi: nexus_cfdi::CfdiData,
     pub uuid: String,
@@ -279,6 +281,7 @@ pub struct PdfRequest {
     pub cert_sat: String,
 }
 
+#[allow(dead_code)]
 pub async fn pdf(
     Json(req): Json<PdfRequest>,
 ) -> impl IntoResponse {

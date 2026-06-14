@@ -5,7 +5,15 @@
 BINARY="/home/ealvarez/workspace/NexustechERPv2/target/debug/nexustech-erp"
 PIDFILE="/tmp/nexus-erp.pid"
 LOGFILE="/tmp/nexus-backend.log"
+ENVFILE="/home/ealvarez/workspace/NexustechERPv2/.env"
 PORT=8090
+
+# Cargar variables de entorno desde .env
+if [ -f "$ENVFILE" ]; then
+  set -a
+  source "$ENVFILE"
+  set +a
+fi
 
 case "${1:-start}" in
   start)

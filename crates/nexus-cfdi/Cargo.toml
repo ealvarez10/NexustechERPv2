@@ -8,6 +8,10 @@ license = "MIT"
 keywords = ["cfdi", "sat", "mexico", "facturacion", "rfc"]
 categories = ["finance", "api-bindings"]
 
+[features]
+default = []
+qr = ["qrcode/image", "image"]
+
 [dependencies]
 serde       = { workspace = true }
 serde_json  = { workspace = true }
@@ -22,20 +26,16 @@ base64      = { version = "0.22" }
 quick-xml   = { version = "0.36", features = ["serialize"] }
 # Tipos numéricos exactos (montos)
 rust_decimal = { version = "1", features = ["serde"] }
+rust_decimal_macros = "1"
 # Fechas
 chrono      = { version = "0.4", features = ["serde"] }
 # Async trait para PACs
 async-trait = "0.1"
+# PDF representación impresa
 printpdf = { version = "0.7", features = ["embedded_images"] }
-qrcode = "0.14"
-image = { version = "0.25", features = ["png"] }
-rust_decimal_macros = "1"
+# QR (opcional, activado con feature "qr")
+qrcode = { version = "0.14", optional = true }
+image = { version = "0.25", features = ["png", "jpeg"], optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
-
-# PDF representación impresa
-printpdf = { version = "0.7", features = ["embedded_images"] }
-image    = { version = "0.25", features = ["png", "jpeg"] }
-qrcode   = { version = "0.14", features = ["image"] }
-rust_decimal_macros = "1"

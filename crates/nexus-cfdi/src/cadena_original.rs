@@ -9,7 +9,7 @@
 //! - Campos vacíos/nulos se omiten
 //! - Sin espacios extra, sin saltos de línea
 
-use crate::builder::{CfdiData, Concepto as CfdiConcepto};
+use crate::builder::CfdiData;
 
 /// Genera la cadena original de un CFDI 4.0 según el Anexo 20 del SAT
 ///

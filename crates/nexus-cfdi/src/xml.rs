@@ -9,11 +9,11 @@
 //! 3. `sellado::sellar(cadena, llave, cer)` → Sello { valor, no_certificado, certificado_b64 }
 //! 4. `generar_sellado(cfdi, sello)` → XML completo listo para enviar al PAC
 
-use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
+use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, Event};
 use quick_xml::Writer;
 use std::io::Cursor;
 use rust_decimal::Decimal;
-use crate::builder::{CfdiData, Concepto, Impuestos, Traslado, RetencionGlobal};
+use crate::builder::{CfdiData, Concepto, Impuestos, Traslado};
 use crate::sellado::Sello;
 use crate::error::CfdiError;
 

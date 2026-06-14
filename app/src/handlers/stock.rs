@@ -60,6 +60,7 @@ pub async fn bajo(
     }
 }
 
+#[allow(dead_code)]
 pub async fn ajustar(
     State(state): State<AppState>,
     Extension(claims): Extension<JwtClaims>,
@@ -79,6 +80,7 @@ use serde::Deserialize;
 pub struct PickingParams {
     pub sale_id: Option<i32>,
     pub state:   Option<String>,
+    #[allow(dead_code)]
     pub pagina:  Option<i64>,
 }
 

@@ -68,6 +68,7 @@ struct TimbreRaw {
     #[serde(rename = "Data")]
     data: Option<String>,    // XML timbrado en Base64
     #[serde(rename = "Warnings")]
+    #[allow(dead_code)]
     warnings: Option<Vec<String>>,
 }
 

@@ -2,7 +2,7 @@
 
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
-use nexus_core::auth::{generar_tokens, validar_refresh_token, renovar_access_token, DatosUsuario};
+use nexus_core::auth::{generar_tokens, renovar_access_token};
 use nexus_core::db::user as db_user;
 use crate::state::AppState;
 use crate::api::{self, ApiOk};

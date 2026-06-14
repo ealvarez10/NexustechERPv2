@@ -5,7 +5,7 @@ use axum::{
 };
 use nexus_core::db::sale_order as db;
 use crate::state::AppState;
-use crate::api::{self, PaginaParams, from_core_error};
+use crate::api::{self, from_core_error};
 use crate::middleware::JwtClaims;
 use serde::Deserialize;
 

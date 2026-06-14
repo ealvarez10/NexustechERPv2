@@ -129,7 +129,7 @@ impl Env {
 
     // ─── Caché ──────────────────────────────────────────────────────────
 
-    pub(crate) fn cache_get(&self, model: ModelId, id: RecordId, field: &str) -> Option<OVal> {
+    pub fn cache_get(&self, model: ModelId, id: RecordId, field: &str) -> Option<OVal> {
         self.cache()
             .recs
             .get(&(model, id))
@@ -137,7 +137,7 @@ impl Env {
             .cloned()
     }
 
-    pub(crate) fn cache_put(&self, model: ModelId, id: RecordId, field: &str, v: OVal) {
+    pub fn cache_put(&self, model: ModelId, id: RecordId, field: &str, v: OVal) {
         self.cache()
             .recs
             .entry((model, id))
@@ -218,7 +218,7 @@ impl Env {
     }
 
     /// Lee columnas de la BD y las deja en caché (el `read()`/prefetch).
-    pub(crate) async fn fetch_into_cache(
+    pub async fn fetch_into_cache(
         &self,
         model: ModelId,
         ids: &[RecordId],
@@ -277,7 +277,7 @@ impl Env {
 
     /// Escritura de valores: UPDATE (si hay pool y columnas) + caché +
     /// disparo de recálculo de computados dependientes.
-    pub(crate) async fn write_values(
+    pub async fn write_values(
         &self,
         rs: &Recordset,
         vals: &[(String, OVal)],

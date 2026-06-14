@@ -107,6 +107,7 @@ pub struct RetencionGlobal {
 /// Builder fluido para construir un CFDI paso a paso
 #[derive(Default)]
 pub struct CfdiBuilder {
+    #[allow(dead_code)]
     data: Option<CfdiData>,
     serie: Option<String>,
     folio: Option<String>,
